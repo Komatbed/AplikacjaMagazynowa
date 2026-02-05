@@ -18,10 +18,21 @@
 
 ### 1. Ekran Główny (Dashboard)
 Dostępny natychmiast po uruchomieniu (Kiosk Mode).
-*   **Duży Przycisk 1**: "SKANUJ" (Kamera/OCR) - zajmuje 50% ekranu.
-*   **Przycisk 2**: "POBIERZ RĘCZNIE" (Lista).
-*   **Przycisk 3**: "ODŁÓŻ ODPAD".
-*   **Status Bar**: Ikona Wi-Fi (Zielona/Czerwona), Stan baterii.
+*   **Widget Aktualności**: Wyświetla ostatnie 5 komunikatów (np. dostawy, awarie).
+*   **Kafelki Statystyczne**: 
+    *   Stan Całkowity, Rezerwacje, Wolne Palety, Zajętość.
+    *   Wartości liczbowe + wskaźnik zmiany procentowej.
+    *   Responsywny układ (4 kolumny desktop / 2 kolumny tablet).
+*   **Menu Nawigacyjne (Kafelki)**:
+    *   SKANUJ (Kamera/OCR).
+    *   POBIERZ RĘCZNIE.
+    *   ODŁÓŻ ODPAD.
+    *   MAPA MAGAZYNU.
+    *   REZERWACJE (Nowość).
+    *   KALKULATOR SZPROSÓW (Nowość).
+    *   INWENTARYZACJA.
+    *   KALKULATOR OKIEN.
+    *   USTAWIENIA / KONFIGURACJA.
 
 ### 2. Ekran Skanowania (OCR/Camera)
 *   Podgląd z kamery na pełny ekran.
@@ -41,7 +52,25 @@ Kontekstowy, zależny od tego co zeskanowano.
 *   **Przycisk Akcji**: "POBIERAM" (Slide-to-confirm, aby uniknąć przypadkowych kliknięć w kieszeni? Nie, w rękawicach slide jest trudny. Lepiej Long Press lub fizyczny przycisk głośności).
     *   *Decyzja*: Zwykły duży przycisk z lekkim opóźnieniem (debounce).
 
-### 4. Ekran Błędu / Ostrzeżenia
+### 4. Ekran Kalkulatora Szprosów (Nowość)
+*   **Wybór Typu**: Szybkie przyciski (1 Pion, 1 Poziom, Krzyż, Niestandardowy).
+*   **Interaktywny Schemat**:
+    *   Wizualizacja okna.
+    *   Kliknięcie w obszar dodaje/usuwa szpros (inteligentne wykrywanie pion/poziom).
+*   **Parametry**: Szerokość/Wysokość skrzydła, Szerokość szprosa, Kąt listwy.
+*   **Wyniki**: Automatyczne przeliczanie długości szprosów i segmentów (wewn./zewn.).
+
+### 5. Ekran Rezerwacji (Nowość)
+*   Lista sztang zarezerwowanych ("RESERVED", "IN_PROGRESS").
+*   Filtrowanie po dacie i użytkowniku.
+*   Możliwość podglądu szczegółów.
+
+### 6. Ekran Ustawień
+*   Konfiguracja adresu API (domyślnie 51.77.59.105).
+*   **Status Backend**: Wskaźnik Online/Offline z czasem ostatniego pinga i opóźnieniem.
+*   Konfiguracja drukarki etykiet.
+
+### 7. Ekran Błędu / Ostrzeżenia
 *   Tło zmienia kolor na Żółty (Ostrzeżenie) lub Czerwony (Błąd).
 *   Komunikat wielką czcionką: "NIE TA PALETA!".
 *   Wymaga potwierdzenia fizycznego (np. kliknięcie "Rozumiem").

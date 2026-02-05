@@ -5,8 +5,8 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object NetworkModule {
-    // Default to local PC IP
-    private var currentUrl = "http://192.168.1.101:8080/api/v1/"
+    // Default to VPS IP
+    private var currentUrl = "http://51.77.59.105:8080/api/v1/"
     
     private var retrofit: Retrofit = createRetrofit(currentUrl)
 

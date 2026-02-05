@@ -15,6 +15,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.warehouse.ui.theme.SafetyOrange
 import com.example.warehouse.ui.viewmodel.SettingsViewModel
 
+import com.example.warehouse.ui.viewmodel.BackendStatus
+import java.text.SimpleDateFormat
+import java.util.Locale
+
 @Composable
 fun SettingsScreen(
     onBackClick: () -> Unit,
@@ -27,13 +31,14 @@ fun SettingsScreen(
     val currentScrapThreshold by viewModel.scrapThreshold.collectAsState()
     val currentReservedLengths by viewModel.reservedWasteLengths.collectAsState()
     val printerStatus by viewModel.printerStatus
-
+    val backendStatus by viewModel.backendStatus
+    
     var apiUrl by remember(currentApiUrl) { mutableStateOf(currentApiUrl) }
     var printerIp by remember(currentPrinterIp) { mutableStateOf(currentPrinterIp) }
     var printerPort by remember(currentPrinterPort) { mutableStateOf(currentPrinterPort.toString()) }
     var scrapThreshold by remember(currentScrapThreshold) { mutableStateOf(currentScrapThreshold.toString()) }
     var reservedLengths by remember(currentReservedLengths) { mutableStateOf(currentReservedLengths) }
-
+    
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
@@ -51,8 +56,45 @@ fun SettingsScreen(
                 style = MaterialTheme.typography.displaySmall,
                 color = Color.White
             )
-
+            
             Divider(color = SafetyOrange)
+            
+            // Backend Status
+            Text("Status Połączenia", style = MaterialTheme.typography.titleMedium, color = SafetyOrange)
+            Card(
+                colors = CardDefaults.cardColors(containerColor = DarkGrey),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        when (val status = backendStatus) {
+                            is BackendStatus.Online -> {
+                                Text("ONLINE", color = Color.Green, fontWeight = FontWeight.Bold)
+                                Text("Ping: ${status.latencyMs}ms", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                                Text("Ostatnie sprawdzenie: ${SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(status.lastCheck)}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                            }
+                            is BackendStatus.Offline -> {
+                                Text("OFFLINE", color = Color.Red, fontWeight = FontWeight.Bold)
+                                Text("Błąd: ${status.message}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                                Text("Ostatnie sprawdzenie: ${SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(status.lastCheck)}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                            }
+                            is BackendStatus.Checking -> {
+                                Text("Sprawdzanie...", color = SafetyOrange)
+                            }
+                            is BackendStatus.Unknown -> {
+                                Text("Nieznany", color = Color.Gray)
+                            }
+                        }
+                    }
+                    IconButton(onClick = { viewModel.checkBackendConnection() }) {
+                        Icon(Icons.Default.Refresh, "Odśwież", tint = Color.White)
+                    }
+                }
+            }
 
             // API Section
             Text("Backend API", style = MaterialTheme.typography.titleMedium, color = SafetyOrange)

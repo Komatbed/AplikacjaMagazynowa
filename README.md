@@ -5,6 +5,7 @@ Kompletne rozwiązanie do zarządzania magazynem profili, integrujące aplikacj�
 ## Struktura Projektu
 
 *   `/app` - Aplikacja mobilna Android (Kotlin, Jetpack Compose).
+    *   **Nowe Moduły (v2.1)**: Kalkulator Szprosów (interaktywny), Rezerwacje, Mapa 90°, Status Backend.
 *   `/backend` - Serwer API (Spring Boot, Kotlin).
 *   `/ai-service` - Moduł inteligencji i optymalizacji (Python, FastAPI).
 *   `/docs` - Dokumentacja techniczna i instrukcje.

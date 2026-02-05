@@ -37,6 +37,12 @@ data class InventoryItem(
     @Enumerated(EnumType.STRING)
     var status: ItemStatus = ItemStatus.AVAILABLE,
 
+    @Column(name = "reserved_by")
+    var reservedBy: String? = null,
+
+    @Column(name = "reservation_date")
+    var reservationDate: LocalDateTime? = null,
+
     @Column(name = "created_at")
     val createdAt: LocalDateTime = LocalDateTime.now(),
 
@@ -45,5 +51,5 @@ data class InventoryItem(
 )
 
 enum class ItemStatus {
-    AVAILABLE, RESERVED, DAMAGED
+    AVAILABLE, RESERVED, IN_PROGRESS, DAMAGED, WASTE, FULL
 }

@@ -34,6 +34,7 @@ import com.example.warehouse.ui.viewmodel.SettingsViewModel
 import com.example.warehouse.util.OcrProcessor
 import com.example.warehouse.util.ZplPrinter
 import com.example.warehouse.ui.screens.InventoryScreen
+import com.example.warehouse.ui.screens.ReservedItemsScreen
 import com.example.warehouse.ui.screens.WindowCalculatorScreen
 import kotlinx.coroutines.launch
 
@@ -105,12 +106,17 @@ class MainActivity : ComponentActivity() {
                                 onMuntinClick = { navController.navigate("muntin") },
                                 onInventoryClick = { navController.navigate("inventory") },
                                 onWindowCalcClick = { navController.navigate("window_calc") },
+                                onReservationsClick = { navController.navigate("reservations") },
                                 isOffline = isOffline
                             )
                         }
 
                         composable("inventory") {
                             InventoryScreen(onBackClick = { navController.popBackStack() })
+                        }
+
+                        composable("reservations") {
+                            ReservedItemsScreen(onBackClick = { navController.popBackStack() })
                         }
 
                         composable("window_calc") {

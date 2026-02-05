@@ -9,7 +9,9 @@ data class InventoryItemDto(
     val coreColor: String? = null,
     val lengthMm: Int,
     val quantity: Int,
-    val status: String
+    val status: String,
+    val reservedBy: String? = null,
+    val reservationDate: String? = null
 )
 
 data class LocationDto(

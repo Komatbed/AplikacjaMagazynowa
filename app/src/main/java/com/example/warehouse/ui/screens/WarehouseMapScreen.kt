@@ -3,9 +3,8 @@ package com.example.warehouse.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -17,7 +16,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.warehouse.data.model.LocationStatusDto
 import com.example.warehouse.ui.theme.SafetyOrange
@@ -34,6 +32,16 @@ fun WarehouseMapScreen(
     val locations by viewModel.locations
     val isLoading by viewModel.isLoading
     val error by viewModel.error
+
+    // Group by palette number (Column A, B, C)
+    // Assuming paletteNumber 1=A, 2=B, 3=C
+    // We want 3 columns: A, B, C
+    // Inside each column, we sort by rowNumber (1..25)
+    val columns = remember(locations) {
+        locations.groupBy { it.paletteNumber }
+            .toSortedMap() // 1, 2, 3
+            .mapValues { (_, locs) -> locs.sortedByDescending { it.rowNumber } }
+    }
 
     Scaffold(
         topBar = {
@@ -76,18 +84,34 @@ fun WarehouseMapScreen(
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     LegendItem(color = Color.Gray, text = "Puste")
-                    LegendItem(color = Color(0xFF4CAF50), text = "Pełne")
+                    LegendItem(color = Color(0xFF4CAF50), text = "Zajęte")
+                    LegendItem(color = Color.Red, text = "Pełne (>50)")
                     LegendItem(color = SafetyOrange, text = "Odpady")
                 }
 
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(3),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                // Vertical Layout: Columns for A, B, C
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier.fillMaxSize()
                 ) {
-                    items(locations) { loc ->
-                        LocationCell(location = loc, onClick = { onLocationClick(loc.label ?: "") })
+                    items(columns.entries.toList()) { (paletteNum, locs) ->
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.width(100.dp) // Fixed width for columns
+                        ) {
+                            // Column Header
+                            val columnLabel = locs.firstOrNull()?.label?.lastOrNull()?.toString() ?: "?"
+                            Text(
+                                text = "Rząd $columnLabel",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = SafetyOrange,
+                                modifier = Modifier.align(Alignment.CenterHorizontally)
+                            )
+                            
+                            locs.forEach { loc ->
+                                LocationCell(location = loc, onClick = { onLocationClick(loc.label ?: "") })
+                            }
+                        }
                     }
                 }
             }
@@ -110,15 +134,18 @@ fun LegendItem(color: Color, text: String) {
 
 @Composable
 fun LocationCell(location: LocationStatusDto, onClick: () -> Unit) {
+    val isFull = location.itemCount >= 50 // Threshold for "Full"
     val backgroundColor = when {
         location.itemCount == 0 -> Color.Gray.copy(alpha = 0.3f)
         location.isWaste -> SafetyOrange.copy(alpha = 0.8f) // Waste palette
-        else -> Color(0xFF4CAF50).copy(alpha = 0.8f) // Standard palette
+        isFull -> Color.Red.copy(alpha = 0.8f) // Full palette
+        else -> Color(0xFF4CAF50).copy(alpha = 0.8f) // Standard occupied palette
     }
 
     Card(
         modifier = Modifier
-            .aspectRatio(1f)
+            .height(80.dp) // Fixed height for vertical stacking
+            .fillMaxWidth()
             .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
         shape = RoundedCornerShape(8.dp)

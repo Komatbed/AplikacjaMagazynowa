@@ -14,12 +14,38 @@ import com.example.warehouse.device.PrinterService
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.State
 
+import kotlinx.coroutines.delay
+import java.util.Date
+
+sealed class BackendStatus {
+    object Unknown : BackendStatus()
+    object Checking : BackendStatus()
+    data class Online(val latencyMs: Long, val lastCheck: Date) : BackendStatus()
+    data class Offline(val message: String, val lastCheck: Date) : BackendStatus()
+}
+
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
     private val settingsDataStore = SettingsDataStore(application)
     private val printerService = PrinterService()
 
     private val _printerStatus = mutableStateOf<String?>(null)
     val printerStatus: State<String?> = _printerStatus
+
+    private val _backendStatus = mutableStateOf<BackendStatus>(BackendStatus.Unknown)
+    val backendStatus: State<BackendStatus> = _backendStatus
+
+    init {
+        startPeriodicCheck()
+    }
+
+    private fun startPeriodicCheck() {
+        viewModelScope.launch {
+            while (true) {
+                checkBackendConnection()
+                delay(30000) // Check every 30 seconds
+            }
+        }
+    }
 
     val apiUrl = settingsDataStore.apiUrl.stateIn(
         viewModelScope,
@@ -67,6 +93,22 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
             // Update Network Module immediately
             NetworkModule.updateUrl(url)
+            checkBackendConnection()
+        }
+    }
+
+    fun checkBackendConnection() {
+        viewModelScope.launch {
+            _backendStatus.value = BackendStatus.Checking
+            val start = System.currentTimeMillis()
+            try {
+                // Use a lightweight call to check connection
+                NetworkModule.api.getConfig() // or getProfiles()
+                val latency = System.currentTimeMillis() - start
+                _backendStatus.value = BackendStatus.Online(latency, Date())
+            } catch (e: Exception) {
+                _backendStatus.value = BackendStatus.Offline(e.message ?: "Błąd połączenia", Date())
+            }
         }
     }
 
