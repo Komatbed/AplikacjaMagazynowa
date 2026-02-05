@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Cyfrowy Model Hali - Dashboard Kierownika</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background: #222; color: #fff; margin: 0; padding: 20px; }
+        h1 { text-align: center; }
+        #warehouse-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 100px); /* 3 Palety A, B, C */
+            grid-template-rows: repeat(25, 40px);    /* 25 Rzędów */
+            gap: 5px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .cell {
+            background: #444;
+            border: 1px solid #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .cell:hover .tooltip { display: block; }
+        .tooltip {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.9);
+            padding: 5px;
+            border-radius: 4px;
+            white-space: nowrap;
+            z-index: 10;
+        }
+        .legend { text-align: center; margin-bottom: 20px; }
+        .legend span { display: inline-block; width: 20px; height: 20px; margin-right: 5px; vertical-align: middle; }
+    </style>
+</head>
+<body>
+
+    <h1>Cyfrowy Model Hali (Live)</h1>
+    
+    <div class="legend">
+        <span style="background:green"></span> Wolne (<20%)
+        <span style="background:orange"></span> Średnie
+        <span style="background:red"></span> Pełne (>80%)
+        <span style="background:black; border:1px solid white"></span> Przeciążenie
+    </div>
+
+    <div id="warehouse-grid"></div>
+
+    <script>
+        const rows = 25;
+        const cols = ['A', 'B', 'C'];
+        const grid = document.getElementById('warehouse-grid');
+
+        // Initialize Grid
+        function initGrid() {
+            for (let r = 1; r <= rows; r++) {
+                cols.forEach(c => {
+                    const id = (r < 10 ? '0' + r : r) + c;
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.id = 'cell-' + id;
+                    cell.innerText = id;
+                    
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'tooltip';
+                    tooltip.id = 'tooltip-' + id;
+                    tooltip.innerText = 'Brak danych';
+                    
+                    cell.appendChild(tooltip);
+                    grid.appendChild(cell);
+                });
+            }
+        }
+
+        initGrid();
+
+        // WebSocket Connection
+        var stompClient = null;
+
+        function connect() {
+            var socket = new SockJS('http://localhost:8080/ws-warehouse');
+            stompClient = Stomp.over(socket);
+            stompClient.connect({}, function (frame) {
+                console.log('Connected: ' + frame);
+                stompClient.subscribe('/topic/warehouse/map', function (message) {
+                    updateMap(JSON.parse(message.body));
+                });
+            });
+        }
+
+        function updateMap(data) {
+            const cell = document.getElementById('cell-' + data.locationLabel);
+            const tooltip = document.getElementById('tooltip-' + data.locationLabel);
+            
+            if (cell) {
+                // Update Color based on Alert/Occupancy
+                if (data.alertLevel === 'CRITICAL') {
+                    cell.style.backgroundColor = 'black';
+                    cell.style.color = 'red';
+                    cell.style.fontWeight = 'bold';
+                } else if (data.alertLevel === 'WARNING') {
+                    cell.style.backgroundColor = 'red';
+                } else {
+                    if (data.occupancyPercentage < 20) cell.style.backgroundColor = 'green';
+                    else cell.style.backgroundColor = 'orange';
+                }
+
+                // Update Tooltip
+                tooltip.innerText = `Stan: ${data.itemsCount} szt. (${data.occupancyPercentage}%)`;
+            }
+        }
+
+        // Auto-connect on load
+        connect();
+    </script>
+</body>
+</html>

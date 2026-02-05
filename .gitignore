@@ -1,0 +1,80 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Gradle / Android
+.gradle/
+build/
+app/build/
+backend/build/
+!gradle-wrapper.jar
+!gradle-wrapper.properties
+local.properties
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+output.json
+
+# Android Studio Navigation Editor temp files
+.navigation/
+
+# Android Local configuration file (sdk path, etc)
+local.properties
+
+# Keystore files
+*.jks
+*.keystore
+
+# Python / AI Service
+ai-service/app/algorithm/__pycache__/
+ai-service/app/models/__pycache__/
+ai-service/__pycache__/
+*.py[cod]
+*$py.class
+ai-service/.env
+ai-service/venv/
+ai-service/.pytest_cache/
+
+# Backend / Spring Boot
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.properties
+backend/logs/
+backend/help.md
+!backend/mvnw
+!backend/mvnw.cmd
+
+# Node / Frontend (if any future addition)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Docker / Infrastructure
+postgres_data/
+postgres_data_prod/
+.env
+*.log
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Warehouse specific logs and backups
+logs/
+backups/
+warehouse_setup.log
+
+# Temporary scripts output
+scripts/deploy_full.log
