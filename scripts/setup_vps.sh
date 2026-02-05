@@ -80,8 +80,15 @@ else
     useradd -m -s /bin/bash deployer
     usermod -aG sudo deployer
     usermod -aG docker deployer
-    # Hasło zostanie ustawione ręcznie lub klucz SSH zostanie dodany później
-    log "Użytkownik deployer utworzony. Pamiętaj o dodaniu klucza SSH!"
+    
+    # Generowanie losowego hasła dla użytkownika deployer
+    RANDOM_PASS=$(date +%s | sha256sum | base64 | head -c 16)
+    echo "deployer:$RANDOM_PASS" | chpasswd
+    
+    log "Użytkownik deployer utworzony."
+    log "!!! WAŻNE !!! Wygenerowane hasło dla 'deployer': $RANDOM_PASS"
+    echo -e "${YELLOW}!!! WAŻNE !!! Wygenerowane hasło dla 'deployer': $RANDOM_PASS${NC}"
+    echo -e "${YELLOW}Zapisz je, aby móc się zalogować!${NC}"
 fi
 
 # 6. Przygotowanie katalogów aplikacji
