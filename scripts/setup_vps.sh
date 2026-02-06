@@ -98,27 +98,39 @@ mkdir -p "$APP_DIR/logs"
 mkdir -p "$APP_DIR/backups/db"
 mkdir -p "$APP_DIR/backups/app"
 mkdir -p "$APP_DIR/nginx"
-mkdir -p "$APP_DIR/certbot/conf"
-mkdir -p "$APP_DIR/certbot/www"
+chown -R deployer:deployer "$APP_DIR"
 
-# Nadanie uprawnień
-chown -R deployer:deployer /home/deployer/warehouse
+log "Struktura katalogów gotowa."
 
-# 7. Instalacja dodatkowych narzędzi (opcjonalnie: Node, Python)
-# W kontenerach nie jest to wymagane na hoście, ale może się przydać do skryptów pomocniczych
-log "Instalacja Python3 i pip..."
-apt-get install -y python3 python3-pip
+# 7. Konfiguracja Autostartu (Systemd)
+log "Konfiguracja serwisu systemd..."
+SERVICE_FILE="/etc/systemd/system/warehouse.service"
 
-# 8. Utwardzanie SSH (Ostrożnie!)
-SSH_CONFIG="/etc/ssh/sshd_config"
-log "Utwardzanie SSH..."
-if grep -q "PermitRootLogin yes" "$SSH_CONFIG"; then
-    sed -i 's/PermitRootLogin yes/PermitRootLogin no/' "$SSH_CONFIG"
-    log "Zablokowano logowanie roota przez SSH."
-fi
-# Opcjonalnie wyłącz logowanie hasłem (wymaga wgranego klucza!)
-# sed -i 's/PasswordAuthentication yes/PasswordAuthentication no/' "$SSH_CONFIG"
+cat > "$SERVICE_FILE" <<EOF
+[Unit]
+Description=Warehouse System Docker Compose Service
+Requires=docker.service
+After=docker.service
 
-systemctl restart ssh
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=$APP_DIR
+ExecStart=/usr/bin/docker compose -f docker-compose.prod.yml up -d
+ExecStop=/usr/bin/docker compose -f docker-compose.prod.yml down
+User=deployer
+Group=docker
+TimeoutStartSec=0
 
-log "Konfiguracja zakończona sukcesem! Przejdź do użytkownika deployer: 'su - deployer'"
+[Install]
+WantedBy=multi-user.target
+EOF
+
+chmod 644 "$SERVICE_FILE"
+systemctl daemon-reload
+systemctl enable warehouse.service
+
+log "Serwis warehouse.service został utworzony i włączony."
+
+log "============================================================"
+log " INSTALACJA ZAKOŃCZONA SUKCESEM"

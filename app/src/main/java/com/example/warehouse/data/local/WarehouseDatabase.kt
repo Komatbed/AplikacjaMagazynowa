@@ -19,7 +19,7 @@ import com.example.warehouse.data.local.entity.ProfileEntity
         ProfileEntity::class,
         ColorEntity::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class WarehouseDatabase : RoomDatabase() {
