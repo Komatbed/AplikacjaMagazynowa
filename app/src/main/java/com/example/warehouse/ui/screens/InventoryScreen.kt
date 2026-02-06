@@ -19,6 +19,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.platform.LocalContext
+import com.example.warehouse.util.HapticFeedbackManager
 import com.example.warehouse.data.model.InventoryItemDto
 import com.example.warehouse.data.model.InventoryTakeRequest
 import com.example.warehouse.ui.theme.SafetyOrange
@@ -63,6 +65,8 @@ fun InventoryScreen(
             externalColor = selectedExternalColor
         )
     }
+
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {

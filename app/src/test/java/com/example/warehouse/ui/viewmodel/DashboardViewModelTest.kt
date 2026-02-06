@@ -10,8 +10,8 @@ import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -22,6 +22,8 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestRule
+import com.example.warehouse.ui.viewmodel.DashboardStats
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class DashboardViewModelTest {
@@ -47,7 +49,7 @@ class DashboardViewModelTest {
     }
 
     @Test
-    fun `stats updates correctly based on items flow`() = runTest(testDispatcher) {
+    fun `stats updates correctly based on items flow`() = runTest {
         // Given
         val mockItems = listOf(
             InventoryItemDto("id1", LocationDto(1, 1, 1, "loc1"), "P1", "White", "White", null, 6500, 10, "FULL"), // Full (length > 6000)
@@ -59,15 +61,26 @@ class DashboardViewModelTest {
 
         viewModel = DashboardViewModel(application, repository)
 
-        // When
-        // Must collect to trigger WhileSubscribed
+        // When & Then
+        // We expect emissions.
+        val results = mutableListOf<DashboardStats>()
         backgroundScope.launch {
-            viewModel.stats.collect()
+            viewModel.stats.collect { 
+                println("Collected: $it")
+                results.add(it) 
+            }
         }
+        
         testDispatcher.scheduler.advanceUntilIdle()
-
-        // Then
-        val stats = viewModel.stats.value
+        
+        println("Results size: ${results.size}")
+        
+        // We expect the LAST item to be the correct one.
+        // Even if we only get 1 item (if initial was skipped or fast-forwarded), it should be the calculated one?
+        // No, initial is empty.
+        
+        val stats = results.last()
+        println("Last stats: $stats")
         
         // Total items: 10 + 5 + 8 + 2 = 25
         assertEquals(25, stats.totalItems)
@@ -87,7 +100,5 @@ class DashboardViewModelTest {
         // Occupied palettes: loc1 (1), loc2 (2) -> 2 distinct
         // Mock capacity 500. Free = 498
         assertEquals(498, stats.freePalettes)
-        
-        // No need to cancel job manually with backgroundScope
     }
 }

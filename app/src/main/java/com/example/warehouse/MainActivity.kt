@@ -36,6 +36,9 @@ import com.example.warehouse.util.ZplPrinter
 import com.example.warehouse.ui.screens.InventoryScreen
 import com.example.warehouse.ui.screens.ReservedItemsScreen
 import com.example.warehouse.ui.screens.WindowCalculatorScreen
+import com.example.warehouse.ui.screens.WasteFinderScreen
+import com.example.warehouse.ui.screens.HardwarePickerScreen
+import com.example.warehouse.ui.screens.CatalogNavigation
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -107,8 +110,23 @@ class MainActivity : ComponentActivity() {
                                 onInventoryClick = { navController.navigate("inventory") },
                                 onWindowCalcClick = { navController.navigate("window_calc") },
                                 onReservationsClick = { navController.navigate("reservations") },
+                                onWasteFinderClick = { navController.navigate("waste_finder") },
+                                onHardwareClick = { navController.navigate("hardware_picker") },
+                                onCatalogClick = { navController.navigate("catalog") },
                                 isOffline = isOffline
                             )
+                        }
+
+                        composable("catalog") {
+                            CatalogNavigation(onBackClick = { navController.popBackStack() })
+                        }
+
+                        composable("waste_finder") {
+                            WasteFinderScreen(onBackClick = { navController.popBackStack() })
+                        }
+
+                        composable("hardware_picker") {
+                            HardwarePickerScreen(onBackClick = { navController.popBackStack() })
                         }
 
                         composable("inventory") {

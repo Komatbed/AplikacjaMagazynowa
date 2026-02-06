@@ -1,10 +1,12 @@
 package com.example.warehouse.data.repository
 
 import android.content.Context
+import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
+import java.util.concurrent.TimeUnit
 import com.example.warehouse.data.NetworkModule
 import com.example.warehouse.data.local.WarehouseDatabase
 import com.example.warehouse.data.local.entity.ColorEntity
@@ -221,6 +223,23 @@ class InventoryRepository(
         }
     }
 
+    // Assembler Tools
+    suspend fun findOptimalWaste(profileCode: String, minLength: Int): InventoryItemDto? {
+        return inventoryDao.findBestWaste(profileCode, minLength)?.let { entity ->
+            InventoryItemDto(
+                id = entity.id,
+                location = LocationDto(0, 0, 0, entity.locationLabel),
+                profileCode = entity.profileCode,
+                internalColor = entity.internalColor,
+                externalColor = entity.externalColor,
+                coreColor = entity.coreColor,
+                lengthMm = entity.lengthMm,
+                quantity = entity.quantity,
+                status = entity.status
+            )
+        }
+    }
+
     private fun scheduleSync() {
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -228,6 +247,11 @@ class InventoryRepository(
 
         val syncRequest = OneTimeWorkRequestBuilder<SyncWorker>()
             .setConstraints(constraints)
+            .setBackoffCriteria(
+                BackoffPolicy.EXPONENTIAL,
+                10,
+                TimeUnit.SECONDS
+            )
             .build()
 
         workManager.enqueue(syncRequest)

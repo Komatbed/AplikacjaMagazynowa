@@ -29,4 +29,15 @@ interface InventoryDao {
 
     @Query("UPDATE inventory_items SET lengthMm = :newLength WHERE id = :id")
     suspend fun updateLength(id: String, newLength: Int)
+
+    // Assembler Tool: Find the smallest piece that is long enough (reduces waste of full bars)
+    @Query("""
+        SELECT * FROM inventory_items 
+        WHERE profileCode = :profileCode 
+        AND lengthMm >= :minLength 
+        AND status != 'RESERVED'
+        ORDER BY lengthMm ASC 
+        LIMIT 1
+    """)
+    suspend fun findBestWaste(profileCode: String, minLength: Int): InventoryItemEntity?
 }

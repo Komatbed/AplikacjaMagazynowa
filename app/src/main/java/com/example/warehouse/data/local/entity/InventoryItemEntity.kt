@@ -1,9 +1,17 @@
 package com.example.warehouse.data.local.entity
 
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "inventory_items")
+@Entity(
+    tableName = "inventory_items",
+    indices = [
+        Index(value = ["profileCode"]),
+        Index(value = ["internalColor"]),
+        Index(value = ["locationLabel"])
+    ]
+)
 data class InventoryItemEntity(
     @PrimaryKey val id: String,
     val locationLabel: String,
