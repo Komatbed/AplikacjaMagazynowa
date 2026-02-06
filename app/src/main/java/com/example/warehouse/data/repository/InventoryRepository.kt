@@ -19,20 +19,32 @@ import com.example.warehouse.data.model.InventoryWasteRequest
 import com.example.warehouse.data.model.LocationDto
 import com.example.warehouse.data.model.InventoryItemUpdatePayload
 import com.example.warehouse.work.SyncWorker
+import com.example.warehouse.data.api.WarehouseApi
+import com.example.warehouse.data.local.dao.ConfigDao
+import com.example.warehouse.data.local.dao.InventoryDao
+import com.example.warehouse.data.local.dao.PendingOperationDao
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 import android.util.Log
 
-class InventoryRepository(context: Context) {
+class InventoryRepository(
+    private val inventoryDao: InventoryDao,
+    private val pendingDao: PendingOperationDao,
+    private val configDao: ConfigDao,
+    private val workManager: WorkManager,
+    private val apiProvider: () -> WarehouseApi = { NetworkModule.api }
+) {
+    constructor(context: Context) : this(
+        WarehouseDatabase.getDatabase(context).inventoryDao(),
+        WarehouseDatabase.getDatabase(context).pendingOperationDao(),
+        WarehouseDatabase.getDatabase(context).configDao(),
+        WorkManager.getInstance(context)
+    )
+
     private val TAG = "WAREHOUSE_DEBUG"
-    private val api get() = NetworkModule.api
-    private val db = WarehouseDatabase.getDatabase(context)
-    private val inventoryDao = db.inventoryDao()
-    private val pendingDao = db.pendingOperationDao()
-    private val configDao = db.configDao()
-    private val workManager by lazy { WorkManager.getInstance(context) }
+    private val api get() = apiProvider()
     private val gson = Gson()
 
     // Read from DB (Offline-first)
@@ -122,6 +134,15 @@ class InventoryRepository(context: Context) {
         scheduleSync()
     }
     
+    suspend fun checkConnection(): Result<Unit> {
+        return try {
+            api.getConfig() // Lightweight call
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     // Config Methods
     fun getProfilesFlow(): Flow<List<ProfileEntity>> = configDao.getProfiles()
     fun getColorsFlow(): Flow<List<ColorEntity>> = configDao.getColors()

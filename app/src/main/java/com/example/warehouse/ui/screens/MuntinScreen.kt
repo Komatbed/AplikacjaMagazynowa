@@ -122,11 +122,12 @@ fun MuntinScreen(
                             val hf = horizontalFields.toIntOrNull() ?: 1
                             
                             val aspectRatio = if (h > 0) w / h else 1f
-                            val canvasW = size.width
-                            val canvasH = size.height
+                            val canvasW = size.width.toFloat()
+                            val canvasH = size.height.toFloat()
                             
-                            var drawW = canvasW
-                            var drawH = canvasW / aspectRatio
+                            var drawW: Float = canvasW
+                            var drawH: Float = canvasW / aspectRatio
+                            
                             if (drawH > canvasH) {
                                 drawH = canvasH
                                 drawW = canvasH * aspectRatio

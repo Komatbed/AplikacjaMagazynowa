@@ -16,6 +16,7 @@ import androidx.compose.runtime.State
 
 import kotlinx.coroutines.delay
 import java.util.Date
+import com.example.warehouse.data.repository.InventoryRepository
 
 sealed class BackendStatus {
     object Unknown : BackendStatus()
@@ -24,7 +25,10 @@ sealed class BackendStatus {
     data class Offline(val message: String, val lastCheck: Date) : BackendStatus()
 }
 
-class SettingsViewModel(application: Application) : AndroidViewModel(application) {
+class SettingsViewModel @JvmOverloads constructor(
+    application: Application,
+    private val repository: InventoryRepository = InventoryRepository(application)
+) : AndroidViewModel(application) {
     private val settingsDataStore = SettingsDataStore(application)
     private val printerService = PrinterService()
 
@@ -102,12 +106,16 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             _backendStatus.value = BackendStatus.Checking
             val start = System.currentTimeMillis()
             try {
-                // Use a lightweight call to check connection
-                NetworkModule.api.getConfig() // or getProfiles()
-                val latency = System.currentTimeMillis() - start
-                _backendStatus.value = BackendStatus.Online(latency, Date())
+                // Use repository to check connection
+                val result = repository.checkConnection()
+                if (result.isSuccess) {
+                    val latency = System.currentTimeMillis() - start
+                    _backendStatus.value = BackendStatus.Online(latency, Date())
+                } else {
+                    _backendStatus.value = BackendStatus.Offline(result.exceptionOrNull()?.message ?: "Błąd połączenia", Date())
+                }
             } catch (e: Exception) {
-                _backendStatus.value = BackendStatus.Offline(e.message ?: "Błąd połączenia", Date())
+                _backendStatus.value = BackendStatus.Offline(e.message ?: "Błąd krytyczny", Date())
             }
         }
     }

@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,8 +26,8 @@ fun ReservedItemsScreen(
     viewModel: ReservedItemsViewModel = viewModel()
 ) {
     val items by viewModel.items.collectAsState()
-    val isLoading by viewModel.isLoading
-    val error by viewModel.error
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
     val filterUser by viewModel.filterUser.collectAsState()
     val filterDate by viewModel.filterDate.collectAsState()
 

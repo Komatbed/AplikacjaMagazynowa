@@ -35,8 +35,11 @@ data class DashboardStats(
     val news: List<NewsItem> = emptyList()
 )
 
-class DashboardViewModel(application: Application) : AndroidViewModel(application) {
-    private val repository = InventoryRepository(application)
+class DashboardViewModel @JvmOverloads constructor(
+    application: Application,
+    repo: InventoryRepository? = null
+) : AndroidViewModel(application) {
+    private val repository = repo ?: InventoryRepository(application)
 
     val stats: StateFlow<DashboardStats> = repository.getItemsFlow()
         .map { items -> calculateStats(items) }
@@ -53,11 +56,11 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
         val uniqueProfiles = items.map { it.profileCode }.distinct().count()
         
         val reservationCount = items.filter { it.status == "RESERVED" || it.status == "IN_PROGRESS" }.sumOf { it.quantity }
-        
-        // Mocking warehouse capacity data since LocationRepository is separate
-        // Assuming total capacity ~500 palettes
-        val occupiedPalettes = items.map { it.paletteNumber }.distinct().count()
-        val totalPalettes = 500
+            
+            // Mocking warehouse capacity data since LocationRepository is separate
+            // Assuming total capacity ~500 palettes
+            val occupiedPalettes = items.map { it.location.paletteNumber }.distinct().count()
+            val totalPalettes = 500
         val freePalettes = totalPalettes - occupiedPalettes
         val occupancyPercent = (occupiedPalettes.toDouble() / totalPalettes.toDouble()) * 100.0
 

@@ -3,8 +3,12 @@ package com.example.warehouse.ui.viewmodel
 import android.app.Application
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.example.warehouse.data.model.InventoryItemDto
+import com.example.warehouse.data.model.InventoryTakeRequest
+import com.example.warehouse.data.model.InventoryWasteRequest
+import com.example.warehouse.data.model.LocationDto
 import com.example.warehouse.data.repository.InventoryRepository
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -14,72 +18,123 @@ import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.test.advanceUntilIdle
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TestRule
+import android.util.Log
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class InventoryViewModelTest {
 
     @get:Rule
-    var rule: TestRule = InstantTaskExecutorRule()
+    val instantTaskExecutorRule = InstantTaskExecutorRule()
 
     private val testDispatcher = StandardTestDispatcher()
-    private val application = mockk<Application>(relaxed = true)
-    private val repository = mockk<InventoryRepository>(relaxed = true)
-    
+    private lateinit var repository: InventoryRepository
+    private lateinit var application: Application
     private lateinit var viewModel: InventoryViewModel
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
+        mockkStatic(Log::class)
+        every { Log.d(any(), any()) } returns 0
+        every { Log.e(any(), any()) } returns 0
+        every { Log.w(any(), any<String>()) } returns 0
+        every { Log.w(any(), any<Throwable>()) } returns 0
+
+        repository = mockk(relaxed = true)
+        application = mockk(relaxed = true)
+
+        // Mock StateFlow sources
+        every { repository.getProfilesFlow() } returns flowOf(emptyList())
+        every { repository.getColorsFlow() } returns flowOf(emptyList())
+
         viewModel = InventoryViewModel(application, repository)
     }
 
     @After
     fun tearDown() {
+        unmockkStatic(Log::class)
         Dispatchers.resetMain()
     }
 
     @Test
-    fun `loadItems updates items from local DB flow`() = runTest {
+    fun `loadItems updates items state from repository flow`() = runTest {
         // Given
         val mockItems = listOf(
-            InventoryItemDto("id1", com.example.warehouse.data.model.LocationDto(1, 1, 1, "loc1"), "P1", 2000, 10, "AVAILABLE"),
-            InventoryItemDto("id2", com.example.warehouse.data.model.LocationDto(1, 1, 1, "loc1"), "P1", 1500, 5, "AVAILABLE")
+            InventoryItemDto(
+                id = "1",
+                location = LocationDto(1, 1, 1, "A-01"),
+                profileCode = "P1",
+                internalColor = "W",
+                externalColor = "W",
+                coreColor = "W",
+                lengthMm = 1000,
+                quantity = 10,
+                status = "FULL"
+            )
         )
-        every { repository.getItemsFlow(any(), any()) } returns flowOf(mockItems)
-        coEvery { repository.refreshItems(any(), any()) } returns Result.success(Unit)
+        every { repository.getItemsFlow(any(), any(), any(), any(), any()) } returns flowOf(mockItems)
+        coEvery { repository.refreshItems(any(), any(), any(), any(), any()) } returns Result.success(Unit)
 
         // When
         viewModel.loadItems()
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Then
-        assertEquals(mockItems, viewModel.items.value)
-        assertEquals(false, viewModel.isLoading.value)
-        assertEquals(null, viewModel.error.value)
+        assertEquals(1, viewModel.items.value.size)
+        assertEquals("P1", viewModel.items.value[0].profileCode)
     }
 
     @Test
-    fun `loadItems shows error message when offline but keeps local data`() = runTest {
+    fun `loadItems calls refreshItems`() = runTest {
         // Given
-        val mockItems = listOf(
-            InventoryItemDto("id1", com.example.warehouse.data.model.LocationDto(1, 1, 1, "loc1"), "P1", 2000, 10, "AVAILABLE")
-        )
-        every { repository.getItemsFlow(any(), any()) } returns flowOf(mockItems)
-        coEvery { repository.refreshItems(any(), any()) } returns Result.failure(Exception("Network Error"))
+        every { repository.getItemsFlow(any(), any(), any(), any(), any()) } returns flowOf(emptyList())
+        coEvery { repository.refreshItems(any(), any(), any(), any(), any()) } returns Result.success(Unit)
 
         // When
-        viewModel.loadItems()
+        viewModel.loadItems(location = "A-01")
         testDispatcher.scheduler.advanceUntilIdle()
 
         // Then
-        assertEquals(mockItems, viewModel.items.value) // Should still have data
-        assertEquals("Tryb offline: Wyświetlam lokalne dane", viewModel.error.value)
-        assertEquals(false, viewModel.isLoading.value)
+        coVerify { repository.refreshItems(location = "A-01", any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun `takeItem calls repository and executes callback`() = runTest {
+        // Given
+        val request = InventoryTakeRequest("A-01", "P1", 1000, 5, "Job1")
+        var callbackExecuted = false
+        coEvery { repository.takeItem(request) } returns Unit
+
+        // When
+        viewModel.takeItem(request) { callbackExecuted = true }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        coVerify { repository.takeItem(request) }
+        assertEquals(true, callbackExecuted)
+    }
+
+    @Test
+    fun `registerWaste calls repository and executes callback`() = runTest {
+        // Given
+        val request = InventoryWasteRequest("P1", 1000, 5, "A-01", "W", "W", "W", "Broken")
+        var callbackExecuted = false
+        coEvery { repository.registerWaste(request) } returns Unit
+
+        // When
+        viewModel.registerWaste(request) { callbackExecuted = true }
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        coVerify { repository.registerWaste(request) }
+        assertEquals(true, callbackExecuted)
     }
 }

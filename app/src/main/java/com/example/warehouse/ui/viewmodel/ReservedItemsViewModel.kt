@@ -11,8 +11,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
-class ReservedItemsViewModel(application: Application) : AndroidViewModel(application) {
-    private val repository = InventoryRepository(application)
+class ReservedItemsViewModel @JvmOverloads constructor(
+    application: Application,
+    repo: InventoryRepository? = null
+) : AndroidViewModel(application) {
+    private val repository = repo ?: InventoryRepository(application)
 
     private val _items = MutableStateFlow<List<InventoryItemDto>>(emptyList())
     val items: StateFlow<List<InventoryItemDto>> = _items.asStateFlow()
