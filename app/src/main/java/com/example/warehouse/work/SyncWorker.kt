@@ -11,6 +11,8 @@ import com.example.warehouse.data.model.InventoryWasteRequest
 import com.example.warehouse.data.model.InventoryItemUpdatePayload
 import com.google.gson.Gson
 
+import com.example.warehouse.data.repository.ConfigRepository
+
 class SyncWorker(
     context: Context,
     workerParams: WorkerParameters
@@ -20,8 +22,17 @@ class SyncWorker(
     private val pendingDao = db.pendingOperationDao()
     private val api = NetworkModule.api
     private val gson = Gson()
+    private val configRepository = ConfigRepository(api, db.configDao())
 
     override suspend fun doWork(): Result {
+        // 1. Sync Configuration (Profiles, Colors, Core Rules)
+        try {
+            configRepository.syncConfiguration()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // Config sync fail shouldn't stop operation sync, but good to log
+        }
+
         val pendingOps = pendingDao.getAllPending()
         
         if (pendingOps.isEmpty()) {

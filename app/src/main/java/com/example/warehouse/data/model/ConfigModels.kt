@@ -8,7 +8,9 @@ data class ProfileDefinition(
     val widthMm: Int = 0,
     val beadHeightMm: Int = 0,
     val beadAngle: Double = 0.0,
-    val standardLengthMm: Int = 6500
+    val standardLengthMm: Int = 6500,
+    val system: String = "",
+    val manufacturer: String = ""
 )
 
 data class ColorDefinition(
@@ -17,5 +19,7 @@ data class ColorDefinition(
     val description: String = "",
     val name: String = "",
     val paletteCode: String = "",
-    val vekaCode: String = ""
+    val vekaCode: String = "",
+    val type: String = "smooth",
+    val foilManufacturer: String = ""
 )

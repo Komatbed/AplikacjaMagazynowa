@@ -17,8 +17,9 @@ object HardwareCalculator {
     /**
      * Calculates the required hardware components for Winkhaus activPilot.
      * Dimensions are in millimeters (Rebate Dimensions - Wymiar we wrębie).
+     * @param profileCode Optional profile code to determine specific frame keeps.
      */
-    fun calculate(system: FittingSystem, ffb: Int, ffh: Int): List<FittingComponent> {
+    fun calculate(system: FittingSystem, ffb: Int, ffh: Int, profileCode: String? = null): List<FittingComponent> {
         val components = mutableListOf<FittingComponent>()
 
         // 1. Zasuwnica (Drive Gear) - Zależna od FFH
@@ -49,8 +50,12 @@ object HardwareCalculator {
         }
 
         // 5. Zaczepy (Keeps) - Ilość zależna od obwodu (uproszczona logika)
+        // Zaczepy są ściśle zależne od profilu
         val securityKeeps = calculateSecurityKeeps(ffb, ffh)
-        components.add(FittingComponent("Zaczep Obwodowy (SBS)", null, securityKeeps))
+        val keepName = if (profileCode != null) "Zaczep Ramowy (Profil $profileCode)" else "Zaczep Ramowy (Uniwersalny)"
+        val keepArticle = if (profileCode != null) "SBS.$profileCode" else "SBS.UNI"
+        
+        components.add(FittingComponent(keepName, keepArticle, securityKeeps, "Rozmieszczenie wg schematu"))
 
         // 6. Blokada Błędnego Położenia Klamki (DFE)
         if (ffh > 800) {

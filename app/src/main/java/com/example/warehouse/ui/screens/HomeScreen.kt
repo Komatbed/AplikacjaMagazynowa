@@ -39,6 +39,9 @@ fun HomeScreen(
     onWasteFinderClick: () -> Unit,
     onHardwareClick: () -> Unit,
     onCatalogClick: () -> Unit,
+    onTrainingClick: () -> Unit,
+    onAddInventoryClick: () -> Unit,
+    onAuditLogClick: () -> Unit,
     isOffline: Boolean = false,
     viewModel: DashboardViewModel = viewModel()
 ) {
@@ -190,7 +193,10 @@ fun HomeScreen(
                     Triple("REZERWACJE", Icons.Default.Bookmark, onReservationsClick),
                     Triple("SZPERACZ ODPADÓW", Icons.Default.Search, onWasteFinderClick),
                     Triple("ASYSTENT OKUĆ", Icons.Default.Build, onHardwareClick),
-                    Triple("KATALOG PRODUKTÓW", Icons.Default.MenuBook, onCatalogClick)
+                    Triple("KATALOG PRODUKTÓW", Icons.Default.MenuBook, onCatalogClick),
+                    Triple("BAZA WIEDZY", Icons.Default.Info, onTrainingClick),
+                    Triple("DODAJ ELEMENT", Icons.Default.Add, onAddInventoryClick),
+                    Triple("HISTORIA ZMIAN", Icons.Default.History, onAuditLogClick)
                 )
 
                 val cols = if (isDesktop) 4 else if (isTablet) 3 else 2

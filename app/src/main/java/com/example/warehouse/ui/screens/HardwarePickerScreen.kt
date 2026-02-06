@@ -1,12 +1,15 @@
 package com.example.warehouse.ui.screens
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Build
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,10 +30,14 @@ fun HardwarePickerScreen(
 ) {
     val components by viewModel.components.collectAsState()
     val error by viewModel.error.collectAsState()
+    val presets by viewModel.presets.collectAsState()
+    val profiles by viewModel.profiles.collectAsState()
+    val selectedProfile by viewModel.selectedProfile.collectAsState()
 
     var ffb by remember { mutableStateOf("") }
     var ffh by remember { mutableStateOf("") }
     var selectedSystem by remember { mutableStateOf(FittingSystem.ACTIVPILOT_CONCEPT) }
+    var expandedProfile by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -57,6 +64,41 @@ fun HardwarePickerScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Presets Row
+            if (presets.isNotEmpty()) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "Ulubione (Presety):",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(horizontal = 4.dp)
+                    )
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        items(presets) { preset ->
+                            AssistChip(
+                                onClick = { viewModel.loadPreset(preset) },
+                                label = { Text(preset.name) },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.Star,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(16.dp),
+                                        tint = SafetyOrange
+                                    )
+                                },
+                                colors = AssistChipDefaults.assistChipColors(
+                                    containerColor = MaterialTheme.colorScheme.surface,
+                                    labelColor = Color.White
+                                )
+                            )
+                        }
+                    }
+                }
+            }
+
             // Configuration Card
             Card(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -64,6 +106,43 @@ fun HardwarePickerScreen(
             ) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("Parametry Skrzydła (We Wrębie)", style = MaterialTheme.typography.titleMedium, color = Color.White)
+
+                    // Profile Selection
+                    ExposedDropdownMenuBox(
+                        expanded = expandedProfile,
+                        onExpandedChange = { expandedProfile = !expandedProfile }
+                    ) {
+                        OutlinedTextField(
+                            value = selectedProfile?.code ?: "Wybierz profil (Opcjonalne)",
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("System Profilowy") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedProfile) },
+                            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                            modifier = Modifier.menuAnchor().fillMaxWidth()
+                        )
+                        ExposedDropdownMenu(
+                            expanded = expandedProfile,
+                            onDismissRequest = { expandedProfile = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Brak (Uniwersalny)") },
+                                onClick = {
+                                    viewModel.selectProfile(null)
+                                    expandedProfile = false
+                                }
+                            )
+                            profiles.forEach { profile ->
+                                DropdownMenuItem(
+                                    text = { Text("${profile.code} (${profile.system})") },
+                                    onClick = {
+                                        viewModel.selectProfile(profile)
+                                        expandedProfile = false
+                                    }
+                                )
+                            }
+                        }
+                    }
 
                     // System Selection
                     Column {

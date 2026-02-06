@@ -10,7 +10,10 @@ import com.example.warehouse.data.local.SettingsDataStore
 import com.example.warehouse.data.model.CutPlanResponse
 import com.example.warehouse.data.model.OptimizationRequest
 import com.example.warehouse.data.repository.InventoryRepository
+import com.example.warehouse.util.CuttingOptimizer
+import com.example.warehouse.util.OptimizationMode
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class OptimizationViewModel(application: Application) : AndroidViewModel(application) {
@@ -31,6 +34,8 @@ class OptimizationViewModel(application: Application) : AndroidViewModel(applica
 
     private val _colors = mutableStateOf<List<String>>(emptyList())
     val colors: State<List<String>> = _colors
+
+    val selectedMode = mutableStateOf(OptimizationMode.MIN_WASTE)
 
     private var reservedWasteLengths: List<Int> = emptyList()
 
@@ -65,18 +70,28 @@ class OptimizationViewModel(application: Application) : AndroidViewModel(applica
             _error.value = null
             _result.value = null
             try {
-                val request = OptimizationRequest(
+                // Local Optimization
+                // 1. Fetch available waste from DB
+                val waste = repository.getItemsFlow(
                     profileCode = profile,
                     internalColor = internalColor,
                     externalColor = externalColor,
-                    coreColor = coreColor,
+                    coreColor = coreColor
+                ).first() // Take snapshot
+
+                // 2. Run Algorithm
+                val plan = CuttingOptimizer.calculate(
                     requiredPieces = pieces,
-                    preferWaste = true,
-                    reserveWasteLengths = reservedWasteLengths
+                    availableWaste = waste,
+                    mode = selectedMode.value,
+                    usefulWasteMinLength = reservedWasteLengths.firstOrNull() ?: 1000
                 )
-                _result.value = NetworkModule.api.calculateOptimization(request)
+
+                _result.value = plan
+
             } catch (e: Exception) {
                 _error.value = "Błąd: ${e.message}"
+                e.printStackTrace()
             } finally {
                 _isLoading.value = false
             }

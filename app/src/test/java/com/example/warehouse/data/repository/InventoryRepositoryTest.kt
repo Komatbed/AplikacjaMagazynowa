@@ -5,6 +5,7 @@ import androidx.work.Operation
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import com.example.warehouse.data.api.WarehouseApi
+import com.example.warehouse.data.local.dao.AuditLogDao
 import com.example.warehouse.data.local.dao.ConfigDao
 import com.example.warehouse.data.local.dao.InventoryDao
 import com.example.warehouse.data.local.dao.PendingOperationDao
@@ -40,6 +41,7 @@ class InventoryRepositoryTest {
     private lateinit var inventoryDao: InventoryDao
     private lateinit var pendingDao: PendingOperationDao
     private lateinit var configDao: ConfigDao
+    private lateinit var auditLogDao: AuditLogDao
     private lateinit var workManager: WorkManager
     private lateinit var api: WarehouseApi
     private lateinit var repository: InventoryRepository
@@ -55,6 +57,7 @@ class InventoryRepositoryTest {
         inventoryDao = mockk(relaxed = true)
         pendingDao = mockk(relaxed = true)
         configDao = mockk(relaxed = true)
+        auditLogDao = mockk(relaxed = true)
         workManager = mockk(relaxed = true)
         api = mockk(relaxed = true)
         
@@ -65,6 +68,7 @@ class InventoryRepositoryTest {
             inventoryDao,
             pendingDao,
             configDao,
+            auditLogDao,
             workManager
         ) { api }
     }

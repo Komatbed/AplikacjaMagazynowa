@@ -3,6 +3,7 @@ package com.example.warehouse.ui.viewmodel
 import android.app.Application
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.warehouse.data.model.InventoryItemDto
@@ -15,7 +16,11 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-import android.util.Log
+import android.content.Context
+import android.content.Intent
+import androidx.core.content.FileProvider
+import java.io.File
+import java.io.FileWriter
 
 class InventoryViewModel @JvmOverloads constructor(
     application: Application,
@@ -105,9 +110,50 @@ class InventoryViewModel @JvmOverloads constructor(
 
     fun updateItemLength(item: InventoryItemDto, newLength: Int) {
         viewModelScope.launch {
-            _isLoading.value = true
             repository.updateItemLength(item, newLength)
-            _isLoading.value = false
+            // Refresh list
+            val currentItems = _items.value.toMutableList()
+            val index = currentItems.indexOfFirst { it.id == item.id }
+            if (index != -1) {
+                currentItems[index] = item.copy(lengthMm = newLength)
+                _items.value = currentItems
+            }
+        }
+    }
+
+    fun exportToCsv(context: Context) {
+        viewModelScope.launch {
+            try {
+                val file = File(context.cacheDir, "inventory_export.csv")
+                val writer = FileWriter(file)
+                
+                // Header
+                writer.append("ID,Status,Profil,Kolor Wew,Kolor Zew,Dlugosc(mm),Lokalizacja\n")
+                
+                // Data
+                _items.value.forEach { item ->
+                    writer.append("${item.id},${item.status},${item.profileCode},${item.internalColor},${item.externalColor},${item.lengthMm},${item.location.label}\n")
+                }
+                
+                writer.flush()
+                writer.close()
+
+                // Share Intent
+                val uri = FileProvider.getUriForFile(context, "${context.packageName}.provider", file)
+                val intent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/csv"
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                
+                val shareIntent = Intent.createChooser(intent, "Eksportuj Magazyn (CSV)")
+                shareIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(shareIntent)
+                
+            } catch (e: Exception) {
+                e.printStackTrace()
+                _error.value = "Błąd eksportu: ${e.message}"
+            }
         }
     }
 }

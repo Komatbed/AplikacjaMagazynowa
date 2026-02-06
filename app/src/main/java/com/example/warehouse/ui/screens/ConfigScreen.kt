@@ -3,16 +3,22 @@ package com.example.warehouse.ui.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -26,6 +32,7 @@ import com.example.warehouse.ui.viewmodel.ConfigViewModel
 @Composable
 fun ConfigScreen(
     onBackClick: () -> Unit,
+    onHistoryClick: () -> Unit = {},
     viewModel: ConfigViewModel = viewModel()
 ) {
     val profiles by viewModel.profiles.collectAsState()
@@ -37,22 +44,53 @@ fun ConfigScreen(
     
     // Dialog State
     var showAddDialog by remember { mutableStateOf(false) }
+    var editingProfile by remember { mutableStateOf<ProfileDefinition?>(null) }
+    var editingColor by remember { mutableStateOf<ColorDefinition?>(null) }
 
     LaunchedEffect(Unit) {
         viewModel.refresh()
     }
 
     if (showAddDialog) {
-        AddConfigDialog(
-            isProfile = selectedTab == 0,
-            onDismiss = { showAddDialog = false },
-            onConfirm = { code, desc ->
-                if (selectedTab == 0) {
-                    viewModel.addProfile(code, desc)
-                } else {
-                    viewModel.addColor(code, desc)
+        if (selectedTab == 0) {
+            EditProfileDialog(
+                initial = null,
+                onDismiss = { showAddDialog = false },
+                onConfirm = { 
+                    viewModel.addProfile(it)
+                    showAddDialog = false
                 }
-                showAddDialog = false
+            )
+        } else {
+            EditColorDialog(
+                initial = null,
+                onDismiss = { showAddDialog = false },
+                onConfirm = {
+                    viewModel.addColor(it)
+                    showAddDialog = false
+                }
+            )
+        }
+    }
+
+    if (editingProfile != null) {
+        EditProfileDialog(
+            initial = editingProfile,
+            onDismiss = { editingProfile = null },
+            onConfirm = {
+                viewModel.updateProfile(it)
+                editingProfile = null
+            }
+        )
+    }
+
+    if (editingColor != null) {
+        EditColorDialog(
+            initial = editingColor,
+            onDismiss = { editingColor = null },
+            onConfirm = {
+                viewModel.updateColor(it)
+                editingColor = null
             }
         )
     }
@@ -77,15 +115,65 @@ fun ConfigScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Header
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth()
+            ) {
                 IconButton(onClick = onBackClick) {
                     Icon(Icons.Default.ArrowBack, contentDescription = "Wstecz")
                 }
                 Text(
-                    text = "KONFIGURACJA SŁOWNIKÓW",
+                    text = "KONFIGURACJA",
                     style = MaterialTheme.typography.titleLarge,
-                    color = SafetyOrange
+                    color = SafetyOrange,
+                    modifier = Modifier.weight(1f)
                 )
+                
+                // Import/Export Menu
+                Box {
+                    var showMenu by remember { mutableStateOf(false) }
+                    val clipboardManager = LocalClipboardManager.current
+                    
+                    IconButton(onClick = { showMenu = true }) {
+                        Icon(Icons.Default.MoreVert, "Opcje", tint = Color.White)
+                    }
+                    
+                    DropdownMenu(
+                        expanded = showMenu,
+                        onDismissRequest = { showMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Historia Zmian") },
+                            onClick = {
+                                showMenu = false
+                                onHistoryClick()
+                            },
+                            leadingIcon = { Icon(Icons.Default.DateRange, null) }
+                        )
+                        Divider()
+                        DropdownMenuItem(
+                            text = { Text("Eksportuj do schowka") },
+                            onClick = {
+                                viewModel.exportConfig { json ->
+                                    if (json != null) {
+                                        clipboardManager.setText(AnnotatedString(json))
+                                    }
+                                }
+                                showMenu = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Importuj ze schowka") },
+                            onClick = {
+                                val clipData = clipboardManager.getText()
+                                if (clipData != null) {
+                                    viewModel.importConfig(clipData.text)
+                                }
+                                showMenu = false
+                            }
+                        )
+                    }
+                }
             }
 
             // Tabs
@@ -139,7 +227,21 @@ fun ConfigScreen(
                             ConfigItemRow(
                                 code = profile.code,
                                 description = profile.description,
-                                onDelete = { viewModel.deleteProfile(profile.id.toString()) } // UUID to String
+                                onClick = {
+                                    editingProfile = ProfileDefinition(
+                                        id = profile.id,
+                                        code = profile.code,
+                                        description = profile.description,
+                                        heightMm = profile.heightMm,
+                                        widthMm = profile.widthMm,
+                                        beadHeightMm = profile.beadHeightMm,
+                                        beadAngle = profile.beadAngle,
+                                        standardLengthMm = profile.standardLengthMm,
+                                        system = profile.system,
+                                        manufacturer = profile.manufacturer
+                                    )
+                                },
+                                onDelete = { viewModel.deleteProfile(profile.id.toString()) }
                             )
                         }
                     } else {
@@ -147,7 +249,19 @@ fun ConfigScreen(
                             ConfigItemRow(
                                 code = color.code,
                                 description = color.description,
-                                onDelete = { viewModel.deleteColor(color.id.toString()) } // UUID to String
+                                onClick = {
+                                    editingColor = ColorDefinition(
+                                        id = color.id,
+                                        code = color.code,
+                                        description = color.description,
+                                        name = color.name,
+                                        paletteCode = color.paletteCode,
+                                        vekaCode = color.vekaCode,
+                                        type = color.type,
+                                        foilManufacturer = color.foilManufacturer
+                                    )
+                                },
+                                onDelete = { viewModel.deleteColor(color.id.toString()) }
                             )
                         }
                     }
@@ -158,9 +272,10 @@ fun ConfigScreen(
 }
 
 @Composable
-fun ConfigItemRow(code: String, description: String, onDelete: () -> Unit) {
+fun ConfigItemRow(code: String, description: String, onClick: () -> Unit, onDelete: () -> Unit) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        onClick = onClick
     ) {
         Row(
             modifier = Modifier
@@ -183,52 +298,87 @@ fun ConfigItemRow(code: String, description: String, onDelete: () -> Unit) {
 }
 
 @Composable
-fun AddConfigDialog(
-    isProfile: Boolean,
+fun EditProfileDialog(
+    initial: ProfileDefinition? = null,
     onDismiss: () -> Unit,
-    onConfirm: (String, String) -> Unit
+    onConfirm: (ProfileDefinition) -> Unit
 ) {
-    var code by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-
+    var code by remember { mutableStateOf(initial?.code ?: "") }
+    var description by remember { mutableStateOf(initial?.description ?: "") }
+    var system by remember { mutableStateOf(initial?.system ?: "") }
+    var manufacturer by remember { mutableStateOf(initial?.manufacturer ?: "") }
+    var standardLengthMm by remember { mutableStateOf(initial?.standardLengthMm?.toString() ?: "6500") }
+    var heightMm by remember { mutableStateOf(initial?.heightMm?.toString() ?: "0") }
+    var widthMm by remember { mutableStateOf(initial?.widthMm?.toString() ?: "0") }
+    
+    // Additional fields if needed, kept simple for now
+    
     AlertDialog(
         containerColor = MaterialTheme.colorScheme.surface,
         titleContentColor = SafetyOrange,
         textContentColor = Color.White,
         onDismissRequest = onDismiss,
-        title = { Text(if (isProfile) "Dodaj Profil" else "Dodaj Kolor") },
+        title = { Text(if (initial == null) "Dodaj Profil" else "Edytuj Profil") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 OutlinedTextField(
                     value = code,
                     onValueChange = { code = it },
-                    label = { Text("Kod (np. 504010)") },
+                    label = { Text("Kod") },
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedLabelColor = SafetyOrange,
-                        unfocusedLabelColor = Color.Gray,
-                        cursorColor = SafetyOrange,
-                        focusedBorderColor = SafetyOrange,
-                        unfocusedBorderColor = Color.Gray
-                    )
+                    colors = configInputColors()
                 )
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Opis (Opcjonalny)") },
+                    label = { Text("Opis") },
                     singleLine = true,
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White,
-                        focusedLabelColor = SafetyOrange,
-                        unfocusedLabelColor = Color.Gray,
-                        cursorColor = SafetyOrange,
-                        focusedBorderColor = SafetyOrange,
-                        unfocusedBorderColor = Color.Gray
+                    colors = configInputColors()
+                )
+                OutlinedTextField(
+                    value = system,
+                    onValueChange = { system = it },
+                    label = { Text("System (np. Veka 82)") },
+                    singleLine = true,
+                    colors = configInputColors()
+                )
+                OutlinedTextField(
+                    value = manufacturer,
+                    onValueChange = { manufacturer = it },
+                    label = { Text("Producent") },
+                    singleLine = true,
+                    colors = configInputColors()
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = heightMm,
+                        onValueChange = { heightMm = it },
+                        label = { Text("Wys. (mm)") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.weight(1f),
+                        colors = configInputColors()
                     )
+                    OutlinedTextField(
+                        value = widthMm,
+                        onValueChange = { widthMm = it },
+                        label = { Text("Szer. (mm)") },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        modifier = Modifier.weight(1f),
+                        colors = configInputColors()
+                    )
+                }
+                OutlinedTextField(
+                    value = standardLengthMm,
+                    onValueChange = { standardLengthMm = it },
+                    label = { Text("Długość Std (mm)") },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    colors = configInputColors()
                 )
             }
         },
@@ -236,18 +386,129 @@ fun AddConfigDialog(
             Button(
                 onClick = {
                     if (code.isNotBlank()) {
-                        onConfirm(code, description)
+                        onConfirm(
+                            ProfileDefinition(
+                                id = initial?.id,
+                                code = code,
+                                description = description,
+                                system = system,
+                                manufacturer = manufacturer,
+                                heightMm = heightMm.toIntOrNull() ?: 0,
+                                widthMm = widthMm.toIntOrNull() ?: 0,
+                                standardLengthMm = standardLengthMm.toIntOrNull() ?: 6500,
+                                beadHeightMm = initial?.beadHeightMm ?: 0,
+                                beadAngle = initial?.beadAngle ?: 0.0
+                            )
+                        )
                     }
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = SafetyOrange)
             ) {
-                Text("DODAJ")
+                Text(if (initial == null) "DODAJ" else "ZAPISZ")
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("ANULUJ", color = Color.Gray)
-            }
+            TextButton(onClick = onDismiss) { Text("ANULUJ", color = Color.Gray) }
         }
     )
 }
+
+@Composable
+fun EditColorDialog(
+    initial: ColorDefinition? = null,
+    onDismiss: () -> Unit,
+    onConfirm: (ColorDefinition) -> Unit
+) {
+    var code by remember { mutableStateOf(initial?.code ?: "") }
+    var description by remember { mutableStateOf(initial?.description ?: "") }
+    var name by remember { mutableStateOf(initial?.name ?: "") }
+    var paletteCode by remember { mutableStateOf(initial?.paletteCode ?: "") }
+    var vekaCode by remember { mutableStateOf(initial?.vekaCode ?: "") }
+    
+    AlertDialog(
+        containerColor = MaterialTheme.colorScheme.surface,
+        titleContentColor = SafetyOrange,
+        textContentColor = Color.White,
+        onDismissRequest = onDismiss,
+        title = { Text(if (initial == null) "Dodaj Kolor" else "Edytuj Kolor") },
+        text = {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedTextField(
+                    value = code,
+                    onValueChange = { code = it },
+                    label = { Text("Kod") },
+                    singleLine = true,
+                    colors = configInputColors()
+                )
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Opis") },
+                    singleLine = true,
+                    colors = configInputColors()
+                )
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Nazwa Handlowa") },
+                    singleLine = true,
+                    colors = configInputColors()
+                )
+                OutlinedTextField(
+                    value = paletteCode,
+                    onValueChange = { paletteCode = it },
+                    label = { Text("Kod Palety") },
+                    singleLine = true,
+                    colors = configInputColors()
+                )
+                OutlinedTextField(
+                    value = vekaCode,
+                    onValueChange = { vekaCode = it },
+                    label = { Text("Kod Veka") },
+                    singleLine = true,
+                    colors = configInputColors()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (code.isNotBlank()) {
+                        onConfirm(
+                            ColorDefinition(
+                                id = initial?.id,
+                                code = code,
+                                description = description,
+                                name = name,
+                                paletteCode = paletteCode,
+                                vekaCode = vekaCode,
+                                type = initial?.type ?: "smooth",
+                                foilManufacturer = initial?.foilManufacturer ?: ""
+                            )
+                        )
+                    }
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = SafetyOrange)
+            ) {
+                Text(if (initial == null) "DODAJ" else "ZAPISZ")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("ANULUJ", color = Color.Gray) }
+        }
+    )
+}
+
+@Composable
+fun configInputColors() = OutlinedTextFieldDefaults.colors(
+    focusedTextColor = Color.White,
+    unfocusedTextColor = Color.White,
+    focusedLabelColor = SafetyOrange,
+    unfocusedLabelColor = Color.Gray,
+    cursorColor = SafetyOrange,
+    focusedBorderColor = SafetyOrange,
+    unfocusedBorderColor = Color.Gray
+)

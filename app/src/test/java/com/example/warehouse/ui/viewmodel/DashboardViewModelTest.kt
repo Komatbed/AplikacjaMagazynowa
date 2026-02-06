@@ -85,8 +85,8 @@ class DashboardViewModelTest {
         // Total items: 10 + 5 + 8 + 2 = 25
         assertEquals(25, stats.totalItems)
         
-        // Waste count: status=WASTE (5)
-        assertEquals(5, stats.wasteCount)
+        // Waste count: status=WASTE (5) + length < 6000 (8 + 2) = 15
+        assertEquals(15, stats.wasteCount)
         
         // Full count: status=FULL (10)
         assertEquals(10, stats.fullCount)

@@ -27,6 +27,7 @@ import java.util.Locale
 fun SettingsScreen(
     onBackClick: () -> Unit,
     onConfigClick: () -> Unit,
+    onAuditLogClick: () -> Unit,
     viewModel: SettingsViewModel = viewModel()
 ) {
     val currentApiUrl by viewModel.apiUrl.collectAsState()
@@ -187,6 +188,14 @@ fun SettingsScreen(
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
             ) {
                 Text("Edytuj Profile i Kolory (Master Data)")
+            }
+
+            Button(
+                onClick = onAuditLogClick,
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+            ) {
+                Text("Rejestr Zmian (Audit Log)")
             }
 
             Spacer(modifier = Modifier.weight(1f))

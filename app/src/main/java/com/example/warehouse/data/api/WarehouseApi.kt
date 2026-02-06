@@ -30,6 +30,9 @@ interface WarehouseApi {
     @POST("config/profiles")
     suspend fun addProfile(@Body profile: ProfileDefinition): ProfileDefinition
 
+    @PUT("config/profiles/{id}")
+    suspend fun updateProfile(@Path("id") id: String, @Body profile: ProfileDefinition): ProfileDefinition
+
     @DELETE("config/profiles/{id}")
     suspend fun deleteProfile(@Path("id") id: String)
 
@@ -39,8 +42,14 @@ interface WarehouseApi {
     @POST("config/colors")
     suspend fun addColor(@Body color: ColorDefinition): ColorDefinition
 
+    @PUT("config/colors/{id}")
+    suspend fun updateColor(@Path("id") id: String, @Body color: ColorDefinition): ColorDefinition
+
     @DELETE("config/colors/{id}")
     suspend fun deleteColor(@Path("id") id: String)
+
+    @GET("config/core-rules")
+    suspend fun getCoreRules(): Map<String, String>
 
     @POST("optimization/calculate")
     suspend fun calculateOptimization(@Body request: OptimizationRequest): com.example.warehouse.data.model.CutPlanResponse

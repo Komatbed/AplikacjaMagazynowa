@@ -6,6 +6,7 @@ import androidx.work.OneTimeWorkRequest
 import androidx.work.Operation
 import androidx.work.WorkManager
 import com.example.warehouse.data.api.WarehouseApi
+import com.example.warehouse.data.local.dao.AuditLogDao
 import com.example.warehouse.data.local.dao.ConfigDao
 import com.example.warehouse.data.local.dao.InventoryDao
 import com.example.warehouse.data.local.dao.PendingOperationDao
@@ -41,6 +42,7 @@ class UserFlowRegressionTest {
     private val inventoryDao = mockk<InventoryDao>(relaxed = true)
     private val pendingDao = mockk<PendingOperationDao>(relaxed = true)
     private val configDao = mockk<ConfigDao>(relaxed = true)
+    private val auditLogDao = mockk<AuditLogDao>(relaxed = true)
     private val workManager = mockk<WorkManager>(relaxed = true)
     private val api = mockk<WarehouseApi>(relaxed = true)
     
@@ -64,6 +66,7 @@ class UserFlowRegressionTest {
             inventoryDao,
             pendingDao,
             configDao,
+            auditLogDao,
             workManager
         ) { api }
         

@@ -4,12 +4,17 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.example.warehouse.data.local.dao.AuditLogDao
 import com.example.warehouse.data.local.dao.ConfigDao
 import com.example.warehouse.data.local.dao.InventoryDao
 import com.example.warehouse.data.local.dao.PendingOperationDao
+import com.example.warehouse.data.local.dao.PresetDao
+import com.example.warehouse.data.local.entity.AuditLogEntity
 import com.example.warehouse.data.local.entity.ColorEntity
+import com.example.warehouse.data.local.entity.CoreColorRuleEntity
 import com.example.warehouse.data.local.entity.InventoryItemEntity
 import com.example.warehouse.data.local.entity.PendingOperationEntity
+import com.example.warehouse.data.local.entity.PresetEntity
 import com.example.warehouse.data.local.entity.ProfileEntity
 
 @Database(
@@ -17,15 +22,20 @@ import com.example.warehouse.data.local.entity.ProfileEntity
         InventoryItemEntity::class, 
         PendingOperationEntity::class,
         ProfileEntity::class,
-        ColorEntity::class
+        ColorEntity::class,
+        CoreColorRuleEntity::class,
+        PresetEntity::class,
+        AuditLogEntity::class
     ],
-    version = 5,
+    version = 8,
     exportSchema = false
 )
 abstract class WarehouseDatabase : RoomDatabase() {
     abstract fun inventoryDao(): InventoryDao
     abstract fun pendingOperationDao(): PendingOperationDao
     abstract fun configDao(): ConfigDao
+    abstract fun presetDao(): PresetDao
+    abstract fun auditLogDao(): AuditLogDao
 
     companion object {
         @Volatile

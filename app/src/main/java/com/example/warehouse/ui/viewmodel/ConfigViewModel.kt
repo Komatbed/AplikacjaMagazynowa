@@ -39,13 +39,26 @@ class ConfigViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    fun addProfile(code: String, description: String) {
+    fun addProfile(profile: com.example.warehouse.data.model.ProfileDefinition) {
         viewModelScope.launch {
             _isLoading.value = true
-            val result = repository.addProfile(code, description)
+            val result = repository.addProfile(profile)
             result.onFailure { _error.value = it.message }
             _isLoading.value = false
         }
+    }
+
+    fun updateProfile(profile: com.example.warehouse.data.model.ProfileDefinition) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            val result = repository.updateProfile(profile)
+            result.onFailure { _error.value = it.message }
+            _isLoading.value = false
+        }
+    }
+
+    fun addProfile(code: String, description: String) {
+        addProfile(com.example.warehouse.data.model.ProfileDefinition(code = code, description = description))
     }
 
     fun deleteProfile(id: String) {
@@ -57,13 +70,26 @@ class ConfigViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    fun addColor(code: String, description: String) {
+    fun addColor(color: com.example.warehouse.data.model.ColorDefinition) {
         viewModelScope.launch {
             _isLoading.value = true
-            val result = repository.addColor(code, description)
+            val result = repository.addColor(color)
             result.onFailure { _error.value = it.message }
             _isLoading.value = false
         }
+    }
+
+    fun updateColor(color: com.example.warehouse.data.model.ColorDefinition) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            val result = repository.updateColor(color)
+            result.onFailure { _error.value = it.message }
+            _isLoading.value = false
+        }
+    }
+
+    fun addColor(code: String, description: String) {
+        addColor(com.example.warehouse.data.model.ColorDefinition(code = code, description = description))
     }
 
     fun deleteColor(id: String) {
@@ -77,5 +103,29 @@ class ConfigViewModel(application: Application) : AndroidViewModel(application) 
 
     fun clearError() {
         _error.value = null
+    }
+
+    fun exportConfig(onResult: (String?) -> Unit) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            try {
+                val json = repository.exportConfig()
+                onResult(json)
+            } catch (e: Exception) {
+                _error.value = "Eksport nieudany: ${e.message}"
+                onResult(null)
+            }
+            _isLoading.value = false
+        }
+    }
+
+    fun importConfig(json: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            val result = repository.importConfig(json)
+            result.onFailure { _error.value = "Import nieudany: ${it.message}" }
+            result.onSuccess { refresh() }
+            _isLoading.value = false
+        }
     }
 }

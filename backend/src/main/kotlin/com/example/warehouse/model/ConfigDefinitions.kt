@@ -30,7 +30,13 @@ data class ProfileDefinition(
     val beadAngle: Double = 0.0,
     
     @Column(name = "standard_length_mm")
-    val standardLengthMm: Int = 6500
+    val standardLengthMm: Int = 6500,
+
+    @Column(name = "system")
+    val system: String = "", // e.g. "Softline 82", "Veka 70"
+
+    @Column(name = "manufacturer")
+    val manufacturer: String = "" // e.g. "Veka", "Aluplast"
 )
 
 @Entity
@@ -53,5 +59,11 @@ data class ColorDefinition(
     val paletteCode: String = "", // Numer z kolornika
 
     @Column(name = "veka_code")
-    val vekaCode: String = "" // Numer wewnętrzny Veka
+    val vekaCode: String = "", // Numer wewnętrzny Veka
+
+    @Column(name = "type")
+    val type: String = "smooth", // wood, smooth, mat
+
+    @Column(name = "foil_manufacturer")
+    val foilManufacturer: String = "" // e.g. "Renolit", "Hornschuch"
 )

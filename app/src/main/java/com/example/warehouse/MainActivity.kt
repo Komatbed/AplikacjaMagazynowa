@@ -41,6 +41,11 @@ import com.example.warehouse.ui.screens.HardwarePickerScreen
 import com.example.warehouse.ui.screens.CatalogNavigation
 import kotlinx.coroutines.launch
 
+import com.example.warehouse.ui.screens.AddInventoryScreen
+import com.example.warehouse.ui.screens.AuditLogScreen
+import com.example.warehouse.ui.screens.FileOptimizationScreen
+import com.example.warehouse.ui.screens.TrainingScreen
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -113,8 +118,19 @@ class MainActivity : ComponentActivity() {
                                 onWasteFinderClick = { navController.navigate("waste_finder") },
                                 onHardwareClick = { navController.navigate("hardware_picker") },
                                 onCatalogClick = { navController.navigate("catalog") },
+                                onTrainingClick = { navController.navigate("training") },
+                                onAddInventoryClick = { navController.navigate("add_inventory") },
+                                onAuditLogClick = { navController.navigate("audit_log") },
                                 isOffline = isOffline
                             )
+                        }
+
+                        composable("training") {
+                            TrainingScreen(onBackClick = { navController.popBackStack() })
+                        }
+
+                        composable("add_inventory") {
+                            AddInventoryScreen(onBackClick = { navController.popBackStack() })
                         }
 
                         composable("catalog") {
@@ -193,6 +209,14 @@ class MainActivity : ComponentActivity() {
                         // OPTIMIZATION SCREEN
                         composable("optimization") {
                             OptimizationScreen(
+                                onBackClick = { navController.popBackStack() },
+                                onFileOptimizationClick = { navController.navigate("file_optimization") }
+                            )
+                        }
+
+                        // FILE OPTIMIZATION SCREEN
+                        composable("file_optimization") {
+                            FileOptimizationScreen(
                                 onBackClick = { navController.popBackStack() }
                             )
                         }
@@ -211,6 +235,7 @@ class MainActivity : ComponentActivity() {
                             SettingsScreen(
                                 onBackClick = { navController.popBackStack() },
                                 onConfigClick = { navController.navigate("config") },
+                                onAuditLogClick = { navController.navigate("audit_log") },
                                 viewModel = settingsViewModel
                             )
                         }
@@ -218,8 +243,13 @@ class MainActivity : ComponentActivity() {
                         // CONFIG SCREEN
                         composable("config") {
                             ConfigScreen(
-                                onBackClick = { navController.popBackStack() }
+                                onBackClick = { navController.popBackStack() },
+                                onHistoryClick = { navController.navigate("audit_log") }
                             )
+                        }
+
+                        composable("audit_log") {
+                            AuditLogScreen(onBackClick = { navController.popBackStack() })
                         }
 
                         // MUNTIN SCREEN

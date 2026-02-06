@@ -3,8 +3,10 @@ package com.example.warehouse.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -33,14 +35,16 @@ fun WarehouseMapScreen(
     val isLoading by viewModel.isLoading
     val error by viewModel.error
 
-    // Group by palette number (Column A, B, C)
-    // Assuming paletteNumber 1=A, 2=B, 3=C
-    // We want 3 columns: A, B, C
-    // Inside each column, we sort by rowNumber (1..25)
-    val columns = remember(locations) {
-        locations.groupBy { it.paletteNumber }
-            .toSortedMap() // 1, 2, 3
-            .mapValues { (_, locs) -> locs.sortedByDescending { it.rowNumber } }
+    // Group by Rack Column (1, 2, 3... 25)
+    // We want to display these groups horizontally (01, 02, 03...)
+    // Inside each group, we stack cells vertically (01A, 01B, 01C)
+    val rackColumns = remember(locations) {
+        locations.groupBy { it.rowNumber } // Group by 1..25
+            .toSortedMap()
+            .mapValues { (_, locs) -> 
+                // Sort by palette letter (A, B, C...)
+                locs.sortedBy { it.label?.lastOrNull { char -> char.isLetter() } ?: 'Z' }
+            }
     }
 
     Scaffold(
@@ -80,34 +84,44 @@ fun WarehouseMapScreen(
             } else {
                 // Legend
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
                     LegendItem(color = Color.Gray, text = "Puste")
                     LegendItem(color = Color(0xFF4CAF50), text = "Zajęte")
-                    LegendItem(color = Color.Red, text = "Pełne (>50)")
+                    LegendItem(color = Color.Red, text = "Pełne")
                     LegendItem(color = SafetyOrange, text = "Odpady")
                 }
 
-                // Vertical Layout: Columns for A, B, C
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    modifier = Modifier.fillMaxSize()
+                // Horizontal Scrollable Container for Rack Columns (01..25)
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    items(columns.entries.toList()) { (paletteNum, locs) ->
+                    rackColumns.forEach { (colNum, locs) ->
+                        // Vertical Strip for each Rack Column
                         Column(
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.width(100.dp) // Fixed width for columns
+                            modifier = Modifier
+                                .width(120.dp) // Fixed width for each vertical strip
+                                .wrapContentHeight()
+                                .background(DarkGrey.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                                .padding(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            // Column Header
-                            val columnLabel = locs.firstOrNull()?.label?.lastOrNull()?.toString() ?: "?"
+                            // Header (01, 02...)
                             Text(
-                                text = "Rząd $columnLabel",
-                                style = MaterialTheme.typography.titleMedium,
+                                text = "Kolumna $colNum",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
                                 color = SafetyOrange,
-                                modifier = Modifier.align(Alignment.CenterHorizontally)
+                                modifier = Modifier
+                                    .align(Alignment.CenterHorizontally)
+                                    .padding(bottom = 8.dp)
                             )
                             
+                            // Cells (A, B, C) - Just Column is fine for 3 items
                             locs.forEach { loc ->
                                 LocationCell(location = loc, onClick = { onLocationClick(loc.label ?: "") })
                             }

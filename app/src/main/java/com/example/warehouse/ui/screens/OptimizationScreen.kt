@@ -1,18 +1,26 @@
 package com.example.warehouse.ui.screens
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.example.warehouse.util.OptimizationMode
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -25,6 +33,7 @@ import com.example.warehouse.ui.viewmodel.OptimizationViewModel
 @Composable
 fun OptimizationScreen(
     onBackClick: () -> Unit,
+    onFileOptimizationClick: () -> Unit,
     viewModel: OptimizationViewModel = viewModel()
 ) {
     var profileCode by remember { mutableStateOf("") }
@@ -56,7 +65,12 @@ fun OptimizationScreen(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.background,
                     titleContentColor = SafetyOrange
-                )
+                ),
+                actions = {
+                    TextButton(onClick = onFileOptimizationClick) {
+                        Text("TRYB PLIKOWY", color = SafetyOrange)
+                    }
+                }
             )
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -69,46 +83,69 @@ fun OptimizationScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Configuration Section
-        Card(
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+            var isConfigExpanded by remember { mutableStateOf(true) }
+            val selectedMode by viewModel.selectedMode
+
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                modifier = Modifier.animateContentSize()
             ) {
-                DropdownField(
-                    label = "Kod Profila",
-                    options = profiles,
-                    selectedOption = profileCode,
-                    onOptionSelected = { profileCode = it },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().clickable { isConfigExpanded = !isConfigExpanded },
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Konfiguracja", style = MaterialTheme.typography.titleMedium, color = Color.White)
+                        Icon(
+                            if (isConfigExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                            contentDescription = null,
+                            tint = Color.Gray
+                        )
+                    }
 
-                DropdownField(
-                    label = "Kolor Wewnętrzny",
-                    options = colors,
-                    selectedOption = internalColor,
-                    onOptionSelected = { internalColor = it },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                    if (isConfigExpanded) {
+                        DropdownField(
+                            label = "Kod Profila",
+                            options = profiles,
+                            selectedOption = profileCode,
+                            onOptionSelected = { profileCode = it },
+                            modifier = Modifier.fillMaxWidth()
+                        )
 
-                DropdownField(
-                    label = "Kolor Zewnętrzny",
-                    options = colors,
-                    selectedOption = externalColor,
-                    onOptionSelected = { externalColor = it },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            DropdownField(
+                                label = "Kolor Wew.",
+                                options = colors,
+                                selectedOption = internalColor,
+                                onOptionSelected = { internalColor = it },
+                                modifier = Modifier.weight(1f)
+                            )
 
-                DropdownField(
-                    label = "Kolor Rdzenia (Opcjonalny)",
-                    options = colors + listOf("BRAK"),
-                    selectedOption = coreColor,
-                    onOptionSelected = { coreColor = if (it == "BRAK") "" else it },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                            DropdownField(
+                                label = "Kolor Zew.",
+                                options = colors,
+                                selectedOption = externalColor,
+                                onOptionSelected = { externalColor = it },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        DropdownField(
+                            label = "Tryb Optymalizacji",
+                            options = OptimizationMode.values().map { it.displayName },
+                            selectedOption = selectedMode.displayName,
+                            onOptionSelected = { name ->
+                                viewModel.selectedMode.value = OptimizationMode.values().find { it.displayName == name } ?: OptimizationMode.MIN_WASTE
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
             }
-        }
 
         // Add Pieces Section
         Row(
@@ -220,16 +257,30 @@ fun OptimizationScreen(
                             
                             Divider(Modifier.padding(vertical = 4.dp))
                             
-                            LazyColumn {
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(2),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                modifier = Modifier.weight(1f)
+                            ) {
                                 items(res.steps) { step ->
-                                    Column(modifier = Modifier.padding(vertical = 4.dp)) {
-                                        val source = if(step.isNewBar) "NOWA SZTANGA" else "ODPAD ${step.sourceItemId?.take(4)}..."
-                                        Text("$source (${step.sourceLengthMm}mm) @ ${step.locationLabel}", 
-                                            style = MaterialTheme.typography.bodySmall, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
-                                        Text("Cięcia: ${step.cuts.joinToString(", ")} mm", style = MaterialTheme.typography.bodySmall)
-                                        Text("Pozostało: ${step.remainingWasteMm} mm", style = MaterialTheme.typography.bodySmall, color = Color.Yellow)
+                                    Card(
+                                        colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.5f))
+                                    ) {
+                                        Column(modifier = Modifier.padding(8.dp)) {
+                                            val source = if(step.isNewBar) "NOWA" else "ODPAD"
+                                            Text("$source (${step.sourceLengthMm})", 
+                                                style = MaterialTheme.typography.labelMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, color = SafetyOrange)
+                                            if (!step.isNewBar) {
+                                                Text("ID: ${step.sourceItemId?.take(4)}...", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                                            }
+                                            Spacer(Modifier.height(4.dp))
+                                            Text("Cięcia: ${step.cuts.joinToString(", ")}", style = MaterialTheme.typography.bodySmall, color = Color.White)
+                                            Spacer(Modifier.height(4.dp))
+                                            Text("Odpad: ${step.remainingWasteMm} mm", style = MaterialTheme.typography.labelSmall, color = if(step.remainingWasteMm > 1000) Color.Green else Color.Yellow)
+                                            Text("@ ${step.locationLabel ?: "-"}", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                                        }
                                     }
-                                    Divider(color = Color.Gray)
                                 }
                             }
                         }

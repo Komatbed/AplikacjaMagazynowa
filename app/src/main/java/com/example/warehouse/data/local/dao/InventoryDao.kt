@@ -34,10 +34,17 @@ interface InventoryDao {
     @Query("""
         SELECT * FROM inventory_items 
         WHERE profileCode = :profileCode 
+        AND (:externalColor IS NULL OR externalColor = :externalColor)
+        AND (:internalColor IS NULL OR internalColor = :internalColor)
         AND lengthMm >= :minLength 
         AND status != 'RESERVED'
         ORDER BY lengthMm ASC 
         LIMIT 1
     """)
-    suspend fun findBestWaste(profileCode: String, minLength: Int): InventoryItemEntity?
+    suspend fun findBestWaste(
+        profileCode: String, 
+        minLength: Int, 
+        externalColor: String? = null, 
+        internalColor: String? = null
+    ): InventoryItemEntity?
 }

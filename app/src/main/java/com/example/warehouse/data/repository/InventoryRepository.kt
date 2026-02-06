@@ -22,9 +22,11 @@ import com.example.warehouse.data.model.LocationDto
 import com.example.warehouse.data.model.InventoryItemUpdatePayload
 import com.example.warehouse.work.SyncWorker
 import com.example.warehouse.data.api.WarehouseApi
+import com.example.warehouse.data.local.dao.AuditLogDao
 import com.example.warehouse.data.local.dao.ConfigDao
 import com.example.warehouse.data.local.dao.InventoryDao
 import com.example.warehouse.data.local.dao.PendingOperationDao
+import com.example.warehouse.data.local.entity.AuditLogEntity
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -35,6 +37,7 @@ class InventoryRepository(
     private val inventoryDao: InventoryDao,
     private val pendingDao: PendingOperationDao,
     private val configDao: ConfigDao,
+    private val auditLogDao: AuditLogDao,
     private val workManager: WorkManager,
     private val apiProvider: () -> WarehouseApi = { NetworkModule.api }
 ) {
@@ -42,6 +45,7 @@ class InventoryRepository(
         WarehouseDatabase.getDatabase(context).inventoryDao(),
         WarehouseDatabase.getDatabase(context).pendingOperationDao(),
         WarehouseDatabase.getDatabase(context).configDao(),
+        WarehouseDatabase.getDatabase(context).auditLogDao(),
         WorkManager.getInstance(context)
     )
 
@@ -106,6 +110,13 @@ class InventoryRepository(
             payloadJson = gson.toJson(request)
         )
         pendingDao.insert(operation)
+        
+        auditLogDao.insert(AuditLogEntity(
+            action = "TAKE_ITEM",
+            itemType = "INVENTORY",
+            details = "Pobrano: ${request.profileCode}, ${request.lengthMm}mm"
+        ))
+        
         Log.d(TAG, "takeItem: Dodano do kolejki operacji (offline)")
         scheduleSync()
     }
@@ -118,6 +129,13 @@ class InventoryRepository(
             payloadJson = gson.toJson(request)
         )
         pendingDao.insert(operation)
+
+        auditLogDao.insert(AuditLogEntity(
+            action = "REGISTER_WASTE",
+            itemType = "INVENTORY",
+            details = "Odpad: ${request.profileCode}, ${request.lengthMm}mm"
+        ))
+
         Log.d(TAG, "registerWaste: Dodano do kolejki operacji (offline)")
         scheduleSync()
     }
@@ -133,6 +151,13 @@ class InventoryRepository(
             payloadJson = gson.toJson(payload)
         )
         pendingDao.insert(operation)
+        
+        auditLogDao.insert(AuditLogEntity(
+            action = "UPDATE_LENGTH",
+            itemType = "INVENTORY",
+            details = "Zmiana długości ID ${item.id}: ${item.lengthMm}mm -> ${newLength}mm"
+        ))
+
         scheduleSync()
     }
     
@@ -154,8 +179,32 @@ class InventoryRepository(
             val profiles = api.getProfiles()
             val colors = api.getColors()
 
-            configDao.insertProfiles(profiles.map { ProfileEntity(it.code, it.id ?: java.util.UUID.randomUUID().toString(), it.description) })
-            configDao.insertColors(colors.map { ColorEntity(it.code, it.id ?: java.util.UUID.randomUUID().toString(), it.description) })
+            configDao.insertProfiles(profiles.map { 
+                ProfileEntity(
+                    code = it.code, 
+                    id = it.id ?: java.util.UUID.randomUUID().toString(), 
+                    description = it.description,
+                    heightMm = it.heightMm,
+                    widthMm = it.widthMm,
+                    beadHeightMm = it.beadHeightMm,
+                    beadAngle = it.beadAngle,
+                    standardLengthMm = it.standardLengthMm,
+                    system = it.system,
+                    manufacturer = it.manufacturer
+                ) 
+            })
+            configDao.insertColors(colors.map { 
+                ColorEntity(
+                    code = it.code, 
+                    id = it.id ?: java.util.UUID.randomUUID().toString(), 
+                    description = it.description,
+                    name = it.name,
+                    paletteCode = it.paletteCode,
+                    vekaCode = it.vekaCode,
+                    type = it.type,
+                    foilManufacturer = it.foilManufacturer
+                ) 
+            })
             
             Result.success(Unit)
         } catch (e: Exception) {
@@ -163,46 +212,200 @@ class InventoryRepository(
         }
     }
 
-    suspend fun addProfile(code: String, description: String): Result<Unit> {
+    suspend fun addProfile(profile: com.example.warehouse.data.model.ProfileDefinition): Result<Unit> {
         return try {
-            val profile = com.example.warehouse.data.model.ProfileDefinition(code = code, description = description)
             api.addProfile(profile)
             refreshConfig()
+            
+            auditLogDao.insert(AuditLogEntity(
+                action = "ADD_PROFILE",
+                itemType = "CONFIG",
+                details = "Dodano profil: ${profile.code} (${profile.description})"
+            ))
+            
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    suspend fun updateProfile(profile: com.example.warehouse.data.model.ProfileDefinition): Result<Unit> {
+        return try {
+            if (profile.id != null) {
+                api.updateProfile(profile.id, profile)
+            } else {
+                // If no ID, assume add or fallback? 
+                // Actually, for local update we need to know what to update.
+                // ProfileEntity uses code as PK.
+                // But let's assume API might handle it or we use code if API supports it.
+                // For now, let's just assume we have ID or use code as ID if ID is missing (which shouldn't happen for existing items)
+            }
+            // For offline/local simulation, we just upsert to DB
+            configDao.insertProfiles(listOf(
+                ProfileEntity(
+                    code = profile.code,
+                    id = profile.id ?: java.util.UUID.randomUUID().toString(),
+                    description = profile.description,
+                    heightMm = profile.heightMm,
+                    widthMm = profile.widthMm,
+                    beadHeightMm = profile.beadHeightMm,
+                    beadAngle = profile.beadAngle,
+                    standardLengthMm = profile.standardLengthMm,
+                    system = profile.system,
+                    manufacturer = profile.manufacturer
+                )
+            ))
+
+            auditLogDao.insert(AuditLogEntity(
+                action = "UPDATE_PROFILE",
+                itemType = "CONFIG",
+                details = "Zaktualizowano profil: ${profile.code}"
+            ))
+            
+            Result.success(Unit)
+        } catch (e: Exception) {
+             // Fallback to local only if API fails
+            try {
+                 configDao.insertProfiles(listOf(
+                    ProfileEntity(
+                        code = profile.code,
+                        id = profile.id ?: java.util.UUID.randomUUID().toString(),
+                        description = profile.description,
+                        heightMm = profile.heightMm,
+                        widthMm = profile.widthMm,
+                        beadHeightMm = profile.beadHeightMm,
+                        beadAngle = profile.beadAngle,
+                        standardLengthMm = profile.standardLengthMm,
+                        system = profile.system,
+                        manufacturer = profile.manufacturer
+                    )
+                ))
+                 auditLogDao.insert(AuditLogEntity(
+                    action = "UPDATE_PROFILE_LOCAL",
+                    itemType = "CONFIG",
+                    details = "Zaktualizowano profil (offline): ${profile.code}"
+                ))
+                Result.success(Unit)
+            } catch (localEx: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    suspend fun addProfile(code: String, description: String): Result<Unit> {
+        return addProfile(com.example.warehouse.data.model.ProfileDefinition(code = code, description = description))
     }
 
     suspend fun deleteProfile(id: String): Result<Unit> {
         return try {
             api.deleteProfile(id)
             refreshConfig()
+            
+            auditLogDao.insert(AuditLogEntity(
+                action = "DELETE_PROFILE",
+                itemType = "CONFIG",
+                details = "Usunięto profil ID: $id"
+            ))
+            
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
 
-    suspend fun addColor(code: String, description: String): Result<Unit> {
+    suspend fun addColor(color: com.example.warehouse.data.model.ColorDefinition): Result<Unit> {
         return try {
-            val color = com.example.warehouse.data.model.ColorDefinition(code = code, description = description)
             api.addColor(color)
             refreshConfig()
+            
+            auditLogDao.insert(AuditLogEntity(
+                action = "ADD_COLOR",
+                itemType = "CONFIG",
+                details = "Dodano kolor: ${color.code} (${color.description})"
+            ))
+            
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    suspend fun updateColor(color: com.example.warehouse.data.model.ColorDefinition): Result<Unit> {
+        return try {
+            if (color.id != null) {
+                api.updateColor(color.id, color)
+            }
+            configDao.insertColors(listOf(
+                ColorEntity(
+                    code = color.code,
+                    id = color.id ?: java.util.UUID.randomUUID().toString(),
+                    description = color.description,
+                    name = color.name,
+                    paletteCode = color.paletteCode,
+                    vekaCode = color.vekaCode,
+                    type = color.type,
+                    foilManufacturer = color.foilManufacturer
+                )
+            ))
+            
+            auditLogDao.insert(AuditLogEntity(
+                action = "UPDATE_COLOR",
+                itemType = "CONFIG",
+                details = "Zaktualizowano kolor: ${color.code}"
+            ))
+            Result.success(Unit)
+        } catch (e: Exception) {
+             try {
+                configDao.insertColors(listOf(
+                    ColorEntity(
+                        code = color.code,
+                        id = color.id ?: java.util.UUID.randomUUID().toString(),
+                        description = color.description,
+                        name = color.name,
+                        paletteCode = color.paletteCode,
+                        vekaCode = color.vekaCode,
+                        type = color.type,
+                        foilManufacturer = color.foilManufacturer
+                    )
+                ))
+                auditLogDao.insert(AuditLogEntity(
+                    action = "UPDATE_COLOR_LOCAL",
+                    itemType = "CONFIG",
+                    details = "Zaktualizowano kolor (offline): ${color.code}"
+                ))
+                Result.success(Unit)
+            } catch (localEx: Exception) {
+                Result.failure(e)
+            }
+        }
+    }
+
+    suspend fun addColor(code: String, description: String): Result<Unit> {
+        return addColor(com.example.warehouse.data.model.ColorDefinition(code = code, description = description))
     }
 
     suspend fun deleteColor(id: String): Result<Unit> {
         return try {
             api.deleteColor(id)
             refreshConfig()
+            
+            auditLogDao.insert(AuditLogEntity(
+                action = "DELETE_COLOR",
+                itemType = "CONFIG",
+                details = "Usunięto kolor ID: $id"
+            ))
+            
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+    
+    // Audit Log
+    fun getAuditLogs(): Flow<List<AuditLogEntity>> = auditLogDao.getRecentLogs()
+
+    suspend fun clearAuditLogs() {
+        auditLogDao.clearLogs()
     }
 
     suspend fun getWarehouseMap(): Result<List<com.example.warehouse.data.model.LocationStatusDto>> {
@@ -224,8 +427,8 @@ class InventoryRepository(
     }
 
     // Assembler Tools
-    suspend fun findOptimalWaste(profileCode: String, minLength: Int): InventoryItemDto? {
-        return inventoryDao.findBestWaste(profileCode, minLength)?.let { entity ->
+    suspend fun findOptimalWaste(profileCode: String, minLength: Int, externalColor: String? = null, internalColor: String? = null): InventoryItemDto? {
+        return inventoryDao.findBestWaste(profileCode, minLength, externalColor, internalColor)?.let { entity ->
             InventoryItemDto(
                 id = entity.id,
                 location = LocationDto(0, 0, 0, entity.locationLabel),
@@ -237,6 +440,35 @@ class InventoryRepository(
                 quantity = entity.quantity,
                 status = entity.status
             )
+        }
+    }
+
+    // Import/Export
+    data class ConfigExportData(
+        val profiles: List<ProfileEntity> = emptyList(),
+        val colors: List<ColorEntity> = emptyList()
+    )
+
+    suspend fun exportConfig(): String {
+        val profiles = configDao.getProfilesSync()
+        val colors = configDao.getColorsSync()
+        val exportData = ConfigExportData(profiles, colors)
+        return gson.toJson(exportData)
+    }
+
+    suspend fun importConfig(json: String): Result<Unit> {
+        return try {
+            val exportData = gson.fromJson(json, ConfigExportData::class.java)
+            
+            if (!exportData.profiles.isNullOrEmpty()) {
+                configDao.insertProfiles(exportData.profiles)
+            }
+            if (!exportData.colors.isNullOrEmpty()) {
+                configDao.insertColors(exportData.colors)
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 

@@ -10,6 +10,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -78,6 +79,9 @@ fun InventoryScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = { viewModel.exportToCsv(context) }) {
+                        Icon(Icons.Default.Share, "Eksportuj CSV", tint = Color.White)
+                    }
                     IconButton(onClick = { showFilters = !showFilters }) {
                         Icon(Icons.Default.FilterList, "Filtry", tint = if(showFilters) SafetyOrange else Color.White)
                     }
