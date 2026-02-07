@@ -22,12 +22,12 @@ class SyncWorker(
     private val pendingDao = db.pendingOperationDao()
     private val api = NetworkModule.api
     private val gson = Gson()
-    private val configRepository = ConfigRepository(api, db.configDao())
+    private val configRepository = ConfigRepository(db.configDao(), db.auditLogDao())
 
     override suspend fun doWork(): Result {
         // 1. Sync Configuration (Profiles, Colors, Core Rules)
         try {
-            configRepository.syncConfiguration()
+            configRepository.refreshConfig()
         } catch (e: Exception) {
             e.printStackTrace()
             // Config sync fail shouldn't stop operation sync, but good to log

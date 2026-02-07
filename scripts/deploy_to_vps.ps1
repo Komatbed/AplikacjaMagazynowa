@@ -4,7 +4,12 @@
 $VPS_IP = "51.77.59.105"
 $VPS_USER = "deployer"
 $REMOTE_DIR = "/home/deployer/warehouse"
-$LOCAL_DIR = Get-Location
+
+# Set working directory to project root
+$ScriptPath = $PSScriptRoot
+$ProjectRoot = Resolve-Path "$ScriptPath\.."
+Set-Location $ProjectRoot
+Write-Host "Katalog roboczy ustawiony na: $ProjectRoot"
 
 Write-Host "=== Deployment na VPS ($VPS_IP) ===" -ForegroundColor Cyan
 
@@ -30,11 +35,23 @@ $ArchiveName = "deploy_package.zip"
 
 if (Test-Path $ArchiveName) { Remove-Item $ArchiveName }
 
-Compress-Archive -Path "backend", "nginx", "docker-compose.prod.yml", ".env.example" -DestinationPath $ArchiveName -Force
+if (-not (Test-Path "backend") -or -not (Test-Path "docker-compose.prod.yml")) {
+    Write-Error "Nie znaleziono wymaganych plików w $ProjectRoot (backend, docker-compose.prod.yml). Upewnij się, że skrypt jest w katalogu scripts/."
+    exit 1
+}
+
+Compress-Archive -Path "backend", "webApplication", "nginx", "docker-compose.prod.yml", ".env.example" -DestinationPath $ArchiveName -Force -ErrorAction Stop
+
 
 # 3. Wysyłanie plików (SCP)
 Write-Host "3. Wysyłanie paczki na serwer..."
-scp -o StrictHostKeyChecking=no $ArchiveName ${VPS_USER}@${VPS_IP}:${REMOTE_DIR}/${ArchiveName}
+try {
+    scp -o StrictHostKeyChecking=no $ArchiveName ${VPS_USER}@${VPS_IP}:${REMOTE_DIR}/${ArchiveName}
+    if ($LASTEXITCODE -ne 0) { throw "SCP failed with exit code $LASTEXITCODE" }
+} catch {
+    Write-Error "Błąd podczas wysyłania plików na serwer: $_"
+    exit 1
+}
 
 # 4. Rozpakowanie i restart na serwerze
 Write-Host "4. Konfiguracja i restart zdalny..."
@@ -62,8 +79,14 @@ $RemoteCommands = @"
 
     # Restart usługi
     echo "Restartowanie aplikacji..."
-    # Używamy docker compose bezpośrednio lub przez systemd
-    sudo systemctl restart warehouse.service || docker compose -f docker-compose.prod.yml up -d --build
+    # Próba restartu przez systemctl (jeśli usługa istnieje), w przeciwnym razie bezpośrednio docker
+    if systemctl list-units --full -all | grep -Fq "warehouse.service"; then
+        sudo systemctl restart warehouse.service
+    else
+        # Upewnij się, że użytkownik jest w grupie docker, inaczej to może wymagać sudo
+        docker compose -f docker-compose.prod.yml down
+        docker compose -f docker-compose.prod.yml up -d --build
+    fi
     
     echo "Deployment zakończony sukcesem!"
 "@
