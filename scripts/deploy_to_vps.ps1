@@ -77,6 +77,18 @@ $RemoteCommands = @"
         echo "SPRING_PROFILES_ACTIVE=prod" >> .env
     fi
 
+    # SSL Setup (Self-Signed) if missing
+    if [ ! -f nginx/ssl/nginx-selfsigned.crt ]; then
+        echo "Generowanie certyfikatu SSL..."
+        mkdir -p nginx/ssl
+        openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+            -keyout nginx/ssl/nginx-selfsigned.key \
+            -out nginx/ssl/nginx-selfsigned.crt \
+            -subj "/C=PL/ST=Mazowieckie/L=Warsaw/O=Warehouse/OU=IT/CN=51.77.59.105"
+        chmod 644 nginx/ssl/nginx-selfsigned.crt
+        chmod 600 nginx/ssl/nginx-selfsigned.key
+    fi
+
     # Restart usługi
     echo "Restartowanie aplikacji..."
     # Próba restartu przez systemctl (jeśli usługa istnieje), w przeciwnym razie bezpośrednio docker
