@@ -43,10 +43,30 @@ abstract class WarehouseDatabase : RoomDatabase() {
 
         fun getDatabase(context: Context): WarehouseDatabase {
             return INSTANCE ?: synchronized(this) {
+                // Ensure SQLCipher native libraries are loaded
+                net.sqlcipher.database.SQLiteDatabase.loadLibs(context)
+
                 // Initialize SQLCipher key
                 val keyManager = SecurityKeyManager(context.applicationContext)
                 val passphrase = keyManager.getDatabasePassphrase()
                 val factory = net.sqlcipher.database.SupportFactory(passphrase)
+
+                // Check for unencrypted database file (migration from plain SQLite to SQLCipher)
+                // If the file exists and has the SQLite header, it's unencrypted. Delete it to start fresh with encryption.
+                val dbFile = context.getDatabasePath("warehouse_database")
+                if (dbFile.exists()) {
+                    try {
+                        val header = ByteArray(16)
+                        dbFile.inputStream().use { it.read(header) }
+                        val headerString = String(header, Charsets.US_ASCII)
+                        if (headerString.startsWith("SQLite format 3")) {
+                            // Found unencrypted database, delete it
+                            context.deleteDatabase("warehouse_database")
+                        }
+                    } catch (e: Exception) {
+                        // Ignore read errors
+                    }
+                }
 
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
