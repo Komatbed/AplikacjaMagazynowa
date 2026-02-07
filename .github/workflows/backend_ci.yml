@@ -2,28 +2,24 @@ name: Backend CI
 
 on:
   push:
-    branches: [ "main", "develop" ]
-    paths:
-      - 'backend/**'
+    branches: [ "main" ]
+    paths: [ "backend/**" ]
   pull_request:
-    branches: [ "main", "develop" ]
-    paths:
-      - 'backend/**'
+    branches: [ "main" ]
+    paths: [ "backend/**" ]
 
 jobs:
   build:
-    name: Build & Test Backend
     runs-on: ubuntu-latest
-
     defaults:
       run:
-        working-directory: ./backend
+        working-directory: backend
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v3
 
     - name: Set up JDK 17
-      uses: actions/setup-java@v4
+      uses: actions/setup-java@v3
       with:
         java-version: '17'
         distribution: 'temurin'
@@ -32,14 +28,14 @@ jobs:
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
-    - name: Run Tests
+    - name: Build with Gradle
+      run: ./gradlew build -x test 
+      # Note: Skipping tests temporarily as they might require a running DB. 
+      # In a real scenario, use Testcontainers or a service container.
+
+    - name: Run Unit Tests
       run: ./gradlew test
 
-    - name: Build JAR
-      run: ./gradlew bootJar
-
-    - name: Upload JAR
-      uses: actions/upload-artifact@v4
-      with:
-        name: backend-jar
-        path: backend/build/libs/*.jar
+    - name: Build Docker Image
+      if: github.event_name != 'pull_request'
+      run: docker build . --file Dockerfile --tag warehouse-backend:latest

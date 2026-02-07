@@ -6,7 +6,7 @@ import org.springframework.stereotype.Repository
 import java.util.Optional
 
 @Repository
-interface UserRepository : JpaRepository<User, String> {
+interface UserRepository : JpaRepository<User, java.util.UUID> {
     fun findByLogin(login: String): Optional<User>
     fun existsByLogin(login: String): Boolean
 }

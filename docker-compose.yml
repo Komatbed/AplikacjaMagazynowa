@@ -27,10 +27,72 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/warehouse
       SPRING_DATASOURCE_USERNAME: ${DB_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres}
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
     depends_on:
       - db
     restart: always
 
+  # Web UI Service
+  web:
+    build:
+      context: ./webApplication
+      dockerfile: Dockerfile
+    container_name: warehouse-web
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: always
+
+  # Monitoring - Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: warehouse-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    restart: always
+
+  # Monitoring - Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: warehouse-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
+    restart: always
+
+  # Backup Service
+  backup-service:
+    image: postgres:15-alpine
+    container_name: warehouse-backup
+    command: ["sleep", "infinity"]
+    volumes:
+      - backup_data:/backups
+    depends_on:
+      - db
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: warehouse
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    restart: always
+
 volumes:
   postgres_data:
+  prometheus_data:
+  grafana_data:
+  backup_data:

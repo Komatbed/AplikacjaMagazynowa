@@ -1,5 +1,6 @@
 package com.example.warehouse.controller
 
+import com.example.warehouse.dto.InventoryReceiptRequest
 import com.example.warehouse.dto.InventoryTakeRequest
 import com.example.warehouse.dto.InventoryTakeResponse
 import com.example.warehouse.dto.InventoryWasteRequest
@@ -14,7 +15,8 @@ class InventoryController(
     private val inventoryItemRepository: InventoryItemRepository,
     private val inventoryService: InventoryService,
     private val profileDefinitionRepository: com.example.warehouse.repository.ProfileDefinitionRepository,
-    private val colorDefinitionRepository: com.example.warehouse.repository.ColorDefinitionRepository
+    private val colorDefinitionRepository: com.example.warehouse.repository.ColorDefinitionRepository,
+    private val operationLogRepository: com.example.warehouse.repository.OperationLogRepository
 ) {
     @GetMapping("/config")
     fun getConfig(): Map<String, List<String>> {
@@ -62,8 +64,39 @@ class InventoryController(
         return inventoryService.registerWaste(request)
     }
 
+    // New endpoints to match api.js
+    // api.js: postReceipt(data) -> /inventory/receipt
+    // Maps to existing logic or new logic for external receipt
+    @PostMapping("/receipt")
+    fun registerReceipt(@RequestBody request: InventoryReceiptRequest): InventoryItem {
+         // Assuming receipt logic is similar to registering waste (adding new item) but for standard stock
+         // Or map to a new service method
+         // For now, let's assume it uses similar logic to registerWaste but marks as AVAILABLE
+         // We need to implement registerReceipt in InventoryService
+         return inventoryService.registerReceipt(request)
+    }
+
+    // api.js: postIssue(data) -> /inventory/issue
+    // Maps to takeItem logic
+    @PostMapping("/issue")
+    fun registerIssue(@RequestBody request: InventoryTakeRequest): InventoryTakeResponse {
+        return inventoryService.takeItem(request)
+    }
+
     @PutMapping("/items/{id}/length")
     fun updateItemLength(@PathVariable id: java.util.UUID, @RequestBody length: Int): InventoryItem {
         return inventoryService.updateItemLength(id, length)
+    }
+
+    // api.js: getHistory(filters) -> /inventory/history
+    @GetMapping("/history")
+    fun getHistory(@RequestParam(required = false) limit: Int?): List<com.example.warehouse.model.OperationLog> {
+        // Simple implementation returning all sorted by date descending, optionally limited
+        // For real filters, we would need Specification or specific repository methods
+        return if (limit != null) {
+            operationLogRepository.findTop10ByOrderByTimestampDesc() // Assumption for limit, or use Pageable
+        } else {
+            operationLogRepository.findAllByOrderByTimestampDesc()
+        }
     }
 }

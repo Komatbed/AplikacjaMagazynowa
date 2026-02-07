@@ -34,6 +34,20 @@ services:
     networks:
       - warehouse-net
 
+  # Web UI Service
+  web:
+    build:
+      context: ./webApplication
+      dockerfile: Dockerfile
+    container_name: warehouse-web-prod
+    ports:
+      - "81:80" # Internal port for testing or direct access if needed, main access via Nginx
+    depends_on:
+      - backend
+    restart: always
+    networks:
+      - warehouse-net
+
   # Nginx Reverse Proxy
   nginx:
     image: nginx:alpine
@@ -47,6 +61,56 @@ services:
       - ./certbot/www:/var/www/certbot
     depends_on:
       - backend
+      - web
+    restart: always
+    networks:
+      - warehouse-net
+
+  # Monitoring - Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: warehouse-prometheus-prod
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data_prod:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    restart: always
+    networks:
+      - warehouse-net
+
+  # Monitoring - Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: warehouse-grafana-prod
+    ports:
+      - "3000:3000" # Expose only if needed, or proxy via Nginx
+    volumes:
+      - grafana_data_prod:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    depends_on:
+      - prometheus
+    restart: always
+    networks:
+      - warehouse-net
+
+  # Backup Service
+  backup-service:
+    image: postgres:15-alpine
+    container_name: warehouse-backup-prod
+    command: ["sleep", "infinity"]
+    volumes:
+      - backup_data_prod:/backups
+    depends_on:
+      - db
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: warehouse
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     restart: always
     networks:
       - warehouse-net
@@ -64,6 +128,9 @@ services:
 
 volumes:
   postgres_data_prod:
+  prometheus_data_prod:
+  grafana_data_prod:
+  backup_data_prod:
 
 networks:
   warehouse-net:

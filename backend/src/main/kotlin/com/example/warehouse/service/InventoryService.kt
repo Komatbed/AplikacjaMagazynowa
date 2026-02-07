@@ -1,6 +1,7 @@
 package com.example.warehouse.service
 
 import com.example.warehouse.dto.AlertLevel
+import com.example.warehouse.dto.InventoryReceiptRequest
 import com.example.warehouse.dto.InventoryTakeRequest
 import com.example.warehouse.dto.InventoryTakeResponse
 import com.example.warehouse.dto.InventoryWasteRequest
@@ -8,8 +9,10 @@ import com.example.warehouse.dto.MapUpdateDTO
 import com.example.warehouse.controller.NotificationMessage
 import com.example.warehouse.model.InventoryItem
 import com.example.warehouse.model.ItemStatus
+import com.example.warehouse.model.OperationLog
 import com.example.warehouse.repository.InventoryItemRepository
 import com.example.warehouse.repository.LocationRepository
+import com.example.warehouse.repository.OperationLogRepository
 import org.springframework.messaging.simp.SimpMessagingTemplate
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -19,8 +22,55 @@ import java.util.UUID
 class InventoryService(
     private val inventoryItemRepository: InventoryItemRepository,
     private val locationRepository: LocationRepository,
+    private val operationLogRepository: OperationLogRepository,
     private val messagingTemplate: SimpMessagingTemplate
 ) {
+
+    @Transactional
+    fun registerReceipt(request: InventoryReceiptRequest): InventoryItem {
+        val location = locationRepository.findByLabel(request.locationLabel)
+            ?: throw IllegalArgumentException("Nie znaleziono lokalizacji: ${request.locationLabel}")
+
+        // Check for existing similar item
+        val existingItems = inventoryItemRepository.findByLocation_Label(request.locationLabel)
+        val similarItem = existingItems.find { 
+            it.profileCode == request.profileCode && 
+            it.lengthMm == request.lengthMm &&
+            it.internalColor == request.internalColor &&
+            it.externalColor == request.externalColor &&
+            it.coreColor == request.coreColor &&
+            it.status == ItemStatus.AVAILABLE 
+        }
+
+        val result = if (similarItem != null) {
+            similarItem.quantity += request.quantity
+            inventoryItemRepository.save(similarItem)
+        } else {
+            val newItem = InventoryItem(
+                id = UUID.randomUUID(),
+                location = location,
+                profileCode = request.profileCode,
+                lengthMm = request.lengthMm,
+                quantity = request.quantity,
+                internalColor = request.internalColor,
+                externalColor = request.externalColor,
+                coreColor = request.coreColor,
+                status = ItemStatus.AVAILABLE
+            )
+            inventoryItemRepository.save(newItem)
+        }
+        
+        // Log Operation
+        logOperation(
+            type = "RECEIPT",
+            item = result,
+            quantityChange = request.quantity,
+            reason = "PZ"
+        )
+        
+        broadcastLocationUpdate(request.locationLabel)
+        return result
+    }
 
     @Transactional
     fun takeItem(request: InventoryTakeRequest): InventoryTakeResponse {
@@ -56,6 +106,14 @@ class InventoryService(
         // Perform the take
         targetItem.quantity -= request.quantity
         inventoryItemRepository.save(targetItem)
+
+        // Log Operation
+        logOperation(
+            type = "ISSUE",
+            item = targetItem,
+            quantityChange = -request.quantity,
+            reason = "WZ"
+        )
 
         // Broadcast update
         broadcastLocationUpdate(request.locationLabel)
@@ -114,6 +172,18 @@ class InventoryService(
         
         item.lengthMm = newLength
         return inventoryItemRepository.save(item)
+    }
+
+    private fun logOperation(type: String, item: InventoryItem, quantityChange: Int, reason: String?) {
+        val log = OperationLog(
+            operationType = type,
+            inventoryItem = item,
+            location = item.location,
+            quantityChange = quantityChange,
+            reason = reason,
+            timestamp = java.time.LocalDateTime.now()
+        )
+        operationLogRepository.save(log)
     }
 
     private fun broadcastLocationUpdate(locationLabel: String) {

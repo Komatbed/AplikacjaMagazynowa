@@ -24,6 +24,10 @@ dependencies {
     
     // Database
     runtimeOnly("org.postgresql:postgresql")
+    implementation("org.flywaydb:flyway-core")
+
+    // Monitoring
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
 
     // JWT
     implementation("io.jsonwebtoken:jjwt-api:0.11.5")
@@ -32,6 +36,8 @@ dependencies {
     
     // Testing
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testImplementation("org.springframework.security:spring-security-test")
+    testImplementation("com.h2database:h2")
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
