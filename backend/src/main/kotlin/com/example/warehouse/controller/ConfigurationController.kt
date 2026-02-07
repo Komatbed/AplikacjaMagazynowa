@@ -33,6 +33,23 @@ class ConfigurationController(
         return profileRepository.save(profile)
     }
 
+    @PutMapping("/profiles/{id}")
+    fun updateProfile(@PathVariable id: java.util.UUID, @RequestBody profile: ProfileDefinition): ProfileDefinition {
+        // Ensure ID matches or simple save if we assume it overwrites
+        // Ideally fetch and update
+        val existing = profileRepository.findById(id).orElseThrow { RuntimeException("Profile not found") }
+        val updated = existing.copy(
+            code = profile.code,
+            description = profile.description,
+            standardLengthMm = profile.standardLengthMm,
+            heightMm = profile.heightMm,
+            widthMm = profile.widthMm,
+            system = profile.system,
+            manufacturer = profile.manufacturer
+        )
+        return profileRepository.save(updated)
+    }
+
     @DeleteMapping("/profiles/{id}")
     fun deleteProfile(@PathVariable id: java.util.UUID) {
         profileRepository.deleteById(id)
@@ -47,6 +64,21 @@ class ConfigurationController(
     @PostMapping("/colors")
     fun addColor(@RequestBody color: ColorDefinition): ColorDefinition {
         return colorRepository.save(color)
+    }
+
+    @PutMapping("/colors/{id}")
+    fun updateColor(@PathVariable id: java.util.UUID, @RequestBody color: ColorDefinition): ColorDefinition {
+        val existing = colorRepository.findById(id).orElseThrow { RuntimeException("Color not found") }
+        val updated = existing.copy(
+            code = color.code,
+            description = color.description,
+            name = color.name,
+            paletteCode = color.paletteCode,
+            vekaCode = color.vekaCode,
+            type = color.type,
+            foilManufacturer = color.foilManufacturer
+        )
+        return colorRepository.save(updated)
     }
 
     @DeleteMapping("/colors/{id}")

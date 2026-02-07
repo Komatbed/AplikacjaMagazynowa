@@ -11,10 +11,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
-
+    
     steps:
     - uses: actions/checkout@v3
 
@@ -29,13 +26,14 @@ jobs:
       run: chmod +x gradlew
 
     - name: Build with Gradle
-      run: ./gradlew build -x test 
+      run: ./gradlew :backend:build -x test 
       # Note: Skipping tests temporarily as they might require a running DB. 
       # In a real scenario, use Testcontainers or a service container.
 
     - name: Run Unit Tests
-      run: ./gradlew test
+      run: ./gradlew :backend:test
 
     - name: Build Docker Image
       if: github.event_name != 'pull_request'
+      working-directory: backend
       run: docker build . --file Dockerfile --tag warehouse-backend:latest
