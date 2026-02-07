@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- 
+        OWASP Recommendation: Enforce HTTPS.
+        However, for local warehouse LANs without SSL, we explicitly allow cleartext 
+        for specific local ranges or domains. 
+    -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain> <!-- Android Emulator -->
+        <domain includeSubdomains="true">192.168.1.100</domain> <!-- Printer -->
+        <domain includeSubdomains="true">192.168.1.101</domain> <!-- Backend -->
+        <domain includeSubdomains="true">192.168.0.100</domain>
+        <domain includeSubdomains="true">192.168.0.101</domain>
+    </domain-config>
+
+    <!-- Default: Block cleartext (HTTP) for everything else -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

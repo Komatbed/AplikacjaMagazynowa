@@ -62,7 +62,7 @@ fun SettingsScreen(
                 color = Color.White
             )
             
-            Divider(color = SafetyOrange)
+            HorizontalDivider(color = SafetyOrange)
             
             // Backend Status
             Text("Status Połączenia", style = MaterialTheme.typography.titleMedium, color = SafetyOrange)

@@ -7,13 +7,25 @@ import java.util.Locale
 
 /**
  * Advanced Optimization Module for processing .ct500txt files to .dcxtxt.
- * 
- * Features:
- * - Parses custom CSV/TXT format
- * - Implements FFD (First Fit Decreasing) optimization
- * - Supports 3 modes (Min Waste, Defined Waste, Longest First)
- * - Handles waste management (>500mm = Warehouse)
- * - Generates machine-compatible output
+ *
+ * This module is the core engine for converting raw cutting lists into optimized machine-readable instructions.
+ * It implements a First Fit Decreasing (FFD) algorithm variant tailored for window profile cutting.
+ *
+ * Key Features:
+ * - **File Parsing**: Handles custom line-based formats with specific delimiters (*).
+ * - **Optimization Modes**:
+ *   - [Mode.MIN_WASTE]: Prioritizes filling bars as tightly as possible to minimize total waste.
+ *   - [Mode.DEFINED_WASTE]: Prioritizes creating waste pieces that match specific "Reserved" lengths (useful for future reuse).
+ *     - Uses a cost-based selection: Cost 0 for reserved lengths (±10mm tolerance), high penalty for others.
+ *   - [Mode.LONGEST_FIRST]: Simple sorting strategy processing longest pieces first.
+ * - **Waste Management**:
+ *   - Automatically identifies usable waste (offcuts > 500mm).
+ *   - Tags waste pieces in the output for warehouse inventory tracking.
+ * - **Output Generation**: Produces formatted lines compatible with cutting machines.
+ *
+ * Usage:
+ * Call [process] with the raw file content and desired [Mode].
+ * For [Mode.DEFINED_WASTE], provide `reservedWasteLengths` (e.g., [1500, 2000]).
  */
 object FileProcessingOptimizer {
 
@@ -42,6 +54,7 @@ object FileProcessingOptimizer {
     private const val KERF_MM = 10
     private const val STOCK_LEN_MM = 6500
     private const val MIN_USEFUL_WASTE_MM = 500
+    private const val NON_RESERVED_WASTE_PENALTY_OFFSET = 100000
 
     fun process(
         inputContent: String,
@@ -50,6 +63,9 @@ object FileProcessingOptimizer {
     ): OptimizationResult {
         val logs = mutableListOf<String>()
         val outputLines = mutableListOf<String>()
+        
+        var totalBars = 0
+        var totalPieces = 0
         
         logs.add("Start processing. Mode: $mode")
         if (reservedWasteLengths.isNotEmpty()) {
@@ -163,7 +179,6 @@ object FileProcessingOptimizer {
             val requiredSpaceDeciMm = piece.lengthDeciMm + (KERF_MM * 10) // 10mm kerf in 0.1mm units = 100 units
             
             // Try to fit in existing bars
-            var placed = false
             
             // Strategy for finding bar
             val candidateBar = when(mode) {
@@ -189,7 +204,7 @@ object FileProcessingOptimizer {
                              // Normal waste penalty. 
                              // We want to avoid non-reserved waste.
                              // Cost = waste + large_offset
-                             wasteDeciMm + 100000 
+                             wasteDeciMm + NON_RESERVED_WASTE_PENALTY_OFFSET 
                         }
                     }
                 else -> bars.firstOrNull { it.remainingDeciMm >= requiredSpaceDeciMm } // First Fit
@@ -198,7 +213,6 @@ object FileProcessingOptimizer {
             if (candidateBar != null) {
                 candidateBar.cuts.add(CutAssignment(piece, candidateBar.cuts.size + 1))
                 candidateBar.remainingDeciMm -= requiredSpaceDeciMm
-                placed = true
             } else {
                 // New Bar
                 val newBar = Bar(barCounter++, mutableListOf(), (STOCK_LEN_MM * 10)) // 6500mm * 10
@@ -206,7 +220,6 @@ object FileProcessingOptimizer {
                     newBar.cuts.add(CutAssignment(piece, 1))
                     newBar.remainingDeciMm -= requiredSpaceDeciMm
                     bars.add(newBar)
-                    placed = true
                 } else {
                     logs.add("ERROR: Piece too long for stock! ${piece.lengthDeciMm / 10}mm > ${STOCK_LEN_MM}mm")
                 }

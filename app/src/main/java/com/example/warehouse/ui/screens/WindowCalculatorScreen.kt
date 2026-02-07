@@ -9,7 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -42,7 +42,7 @@ fun WindowCalculatorScreen(
                 title = { Text("KALKULATOR OKIEN", color = SafetyOrange) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, "Wstecz", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Wstecz", tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -145,6 +145,8 @@ fun WindowCalculatorScreen(
                 }
             }
 
+            HorizontalDivider(color = SafetyOrange)
+
             // Results Section
             Card(
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -162,7 +164,7 @@ fun WindowCalculatorScreen(
                     if (config.hasMullion) {
                         ResultRow("Długość słupka", "${result.mullionLength} mm")
                     }
-                    Divider(color = Color.Gray, modifier = Modifier.padding(vertical = 8.dp))
+                    HorizontalDivider(color = Color.Gray, modifier = Modifier.padding(vertical = 8.dp))
                     ResultRow("Szacunkowy Koszt", "${result.estimatedCost} PLN", isHighlight = true)
                 }
             }

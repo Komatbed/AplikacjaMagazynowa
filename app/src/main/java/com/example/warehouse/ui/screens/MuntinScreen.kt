@@ -328,7 +328,7 @@ fun MuntinScreen(
                             Text("Segmenty: ${res.horizontalSegments.joinToString { String.format("%.1f", it) }}", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                         }
                         
-                        Divider(Modifier.padding(vertical = 8.dp))
+                        HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
                         Text("WYNIKI ZEWNĘTRZNE (Offset: $externalOffset)", color = SafetyOrange, style = MaterialTheme.typography.titleMedium)
                         Text("Pionowe: ${res.verticalCount} szt. x ${String.format("%.1f", res.externalVerticalMuntinLength)} mm", color = Color.White)

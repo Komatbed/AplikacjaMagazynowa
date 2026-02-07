@@ -22,8 +22,25 @@ Najprostszy sposób na uruchomienie części serwerowej.
     ```
 4.  Poczekaj, aż wszystkie serwisy wystartują.
     *   **Backend API**: Dostępne pod `http://localhost:8080/api/v1/...`
+    *   **Panel Webowy**: Dostępny pod `http://localhost:8080`
     *   **AI Service**: Dostępne pod `http://localhost:8000/docs` (Swagger UI)
     *   **Baza Danych**: Port 5432 (użytkownik: postgres, hasło: postgres)
+
+## 1a. Uruchomienie Backendu (Bez Dockera)
+
+Jeśli chcesz uruchomić backend bezpośrednio (np. do developmentu):
+
+1.  Upewnij się, że masz zainstalowaną bazę PostgreSQL (lub użyj bazy z Dockera).
+2.  Skonfiguruj połączenie do bazy w `backend/src/main/resources/application.properties`.
+3.  Uruchom komendę w głównym katalogu:
+    ```bash
+    ./gradlew :backend:bootRun
+    ```
+    Lub zbuduj plik JAR:
+    ```bash
+    ./gradlew :backend:build
+    java -jar backend/build/libs/backend-0.0.1-SNAPSHOT.jar
+    ```
 
 ## 2. Instalacja Aplikacji Mobilnej (Android)
 

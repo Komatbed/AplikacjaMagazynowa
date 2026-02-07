@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.warehouse.data.model.InventoryItemDto
+import com.example.warehouse.data.repository.ConfigRepository
 import com.example.warehouse.data.repository.InventoryRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,9 +19,11 @@ import kotlinx.coroutines.flow.stateIn
 
 class WasteFinderViewModel @JvmOverloads constructor(
     application: Application,
-    repo: InventoryRepository? = null
+    invRepo: InventoryRepository? = null,
+    confRepo: ConfigRepository? = null
 ) : AndroidViewModel(application) {
-    private val repository = repo ?: InventoryRepository(application)
+    private val repository = invRepo ?: InventoryRepository(application)
+    private val configRepository = confRepo ?: ConfigRepository(application)
     private val presetDao = WarehouseDatabase.getDatabase(application).presetDao()
 
     private val _result = MutableStateFlow<InventoryItemDto?>(null)
@@ -33,8 +36,8 @@ class WasteFinderViewModel @JvmOverloads constructor(
     val searchStatus: StateFlow<String?> = _searchStatus.asStateFlow()
 
     // Config Data
-    val profiles = repository.getProfilesFlow()
-    val colors = repository.getColorsFlow()
+    val profiles = configRepository.getProfilesFlow()
+    val colors = configRepository.getColorsFlow()
     val presets = presetDao.getAllPresets()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 

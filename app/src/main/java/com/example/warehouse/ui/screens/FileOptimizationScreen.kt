@@ -161,7 +161,7 @@ fun FileOptimizationScreen(
                             }
                         }
                         
-                        Divider(color = Color.Gray)
+                        HorizontalDivider(color = Color.Gray)
                         
                         Box(
                             modifier = Modifier

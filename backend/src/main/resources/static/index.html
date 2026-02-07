@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warehouse Management System</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    
+    <style>
+        body { background-color: #f8f9fa; }
+        .sidebar { min-height: 100vh; background-color: #343a40; color: white; }
+        .sidebar a { color: rgba(255,255,255,0.8); text-decoration: none; padding: 10px 15px; display: block; cursor: pointer; }
+        .sidebar a:hover, .sidebar a.active { background-color: #495057; color: white; }
+        .content { padding: 20px; }
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
+        .cursor-pointer { cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Loading Spinner -->
+        <div v-if="loading" class="position-fixed top-0 start-0 w-100 h-100 bg-white opacity-75 d-flex justify-content-center align-items-center" style="z-index: 9999">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+
+        <!-- Login View -->
+        <div v-if="!isAuthenticated" class="container mt-5">
+            <div class="row justify-content-center">
+                <div class="col-md-6 col-lg-4">
+                    <div class="card shadow">
+                        <div class="card-body">
+                            <h3 class="text-center mb-4">Logowanie</h3>
+                            <form @submit.prevent="login">
+                                <div class="mb-3">
+                                    <label class="form-label">Nazwa użytkownika</label>
+                                    <input type="text" class="form-control" v-model="loginForm.username" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Hasło</label>
+                                    <input type="password" class="form-control" v-model="loginForm.password" required>
+                                </div>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary" :disabled="loginLoading">
+                                        <span v-if="loginLoading" class="spinner-border spinner-border-sm me-2"></span>
+                                        Zaloguj
+                                    </button>
+                                </div>
+                                <div v-if="loginError" class="alert alert-danger mt-3">{{ loginError }}</div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main App View -->
+        <div v-else class="container-fluid">
+            <div class="row">
+                <!-- Sidebar -->
+                <div class="col-md-3 col-lg-2 px-0 sidebar">
+                    <div class="p-3 text-center border-bottom border-secondary">
+                        <h5>Warehouse App</h5>
+                        <small v-if="user">{{ user.fullName }} ({{ user.role }})</small>
+                    </div>
+                    <nav class="mt-3">
+                        <a @click="currentView = 'dashboard'" :class="{ active: currentView === 'dashboard' }">
+                            <i class="fas fa-home me-2"></i> Pulpit
+                        </a>
+                        <a @click="currentView = 'inventory'" :class="{ active: currentView === 'inventory' }">
+                            <i class="fas fa-boxes me-2"></i> Magazyn
+                        </a>
+                        <a @click="currentView = 'settings'" :class="{ active: currentView === 'settings' }">
+                            <i class="fas fa-cogs me-2"></i> Konfiguracja
+                        </a>
+                        <a v-if="isAdmin" @click="currentView = 'admin'" :class="{ active: currentView === 'admin' }">
+                            <i class="fas fa-users-cog me-2"></i> Administracja
+                        </a>
+                        <a @click="logout" class="text-danger mt-5">
+                            <i class="fas fa-sign-out-alt me-2"></i> Wyloguj
+                        </a>
+                    </nav>
+                </div>
+
+                <!-- Main Content -->
+                <div class="col-md-9 col-lg-10 content">
+                    <!-- Notifications -->
+                    <div v-for="note in notifications" :key="note.id" class="alert alert-info alert-dismissible fade show">
+                        <strong>{{ note.title }}</strong>: {{ note.message }}
+                        <button type="button" class="btn-close" @click="removeNotification(note.id)"></button>
+                    </div>
+
+                    <transition name="fade" mode="out-in">
+                        <!-- Dashboard -->
+                        <div v-if="currentView === 'dashboard'" key="dashboard">
+                            <h2>Pulpit</h2>
+                            <div class="row mt-4">
+                                <div class="col-md-4">
+                                    <div class="card text-white bg-primary mb-3">
+                                        <div class="card-header">Magazyn</div>
+                                        <div class="card-body">
+                                            <h5 class="card-title">Stan: {{ inventoryCount }} pozycji</h5>
+                                            <p class="card-text">Aktualna liczba elementów w systemie.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card text-white bg-success mb-3">
+                                        <div class="card-header">System</div>
+                                        <div class="card-body">
+                                            <h5 class="card-title">Status: Online</h5>
+                                            <p class="card-text">Wszystkie usługi działają poprawnie.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Inventory -->
+                        <div v-else-if="currentView === 'inventory'" key="inventory">
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h2>Stan Magazynowy</h2>
+                                <button class="btn btn-primary" @click="fetchInventory"><i class="fas fa-sync"></i> Odśwież</button>
+                            </div>
+                            
+                            <!-- Filters -->
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="col-md-3">
+                                            <input type="text" class="form-control" placeholder="Profil" v-model="filters.profile">
+                                        </div>
+                                        <div class="col-md-3">
+                                            <input type="text" class="form-control" placeholder="Kolor" v-model="filters.color">
+                                        </div>
+                                        <div class="col-md-2">
+                                            <button class="btn btn-secondary w-100" @click="fetchInventory">Szukaj</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Profil</th>
+                                            <th>Kolor (Int/Ext)</th>
+                                            <th>Długość</th>
+                                            <th>Lokalizacja</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="item in inventoryItems" :key="item.id">
+                                            <td><small>{{ item.id.substring(0,8) }}...</small></td>
+                                            <td>{{ item.profileCode }}</td>
+                                            <td>{{ item.internalColor }} / {{ item.externalColor }}</td>
+                                            <td>{{ item.lengthMm }} mm</td>
+                                            <td>{{ item.locationCode }}</td>
+                                            <td>
+                                                <span class="badge" :class="item.isWaste ? 'bg-warning' : 'bg-success'">
+                                                    {{ item.isWaste ? 'Odpad' : 'Pełnowartościowy' }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        <tr v-if="inventoryItems.length === 0">
+                                            <td colspan="6" class="text-center">Brak danych</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Settings -->
+                        <div v-else-if="currentView === 'settings'" key="settings">
+                            <h2>Konfiguracja Systemu</h2>
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <div class="card mb-4">
+                                        <div class="card-header">Profile</div>
+                                        <div class="card-body">
+                                            <ul class="list-group list-group-flush">
+                                                <li v-for="p in profiles" :key="p.id" class="list-group-item d-flex justify-content-between align-items-center">
+                                                    {{ p.code }} ({{ p.name }})
+                                                    <button class="btn btn-sm btn-danger" @click="deleteProfile(p.id)"><i class="fas fa-trash"></i></button>
+                                                </li>
+                                            </ul>
+                                            <div class="mt-3 d-flex gap-2">
+                                                <input v-model="newProfile.code" class="form-control" placeholder="Kod">
+                                                <input v-model="newProfile.name" class="form-control" placeholder="Nazwa">
+                                                <button class="btn btn-success" @click="addProfile">Dodaj</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card mb-4">
+                                        <div class="card-header">Kolory</div>
+                                        <div class="card-body">
+                                            <ul class="list-group list-group-flush">
+                                                <li v-for="c in colors" :key="c.id" class="list-group-item d-flex justify-content-between align-items-center">
+                                                    {{ c.code }} ({{ c.name }})
+                                                    <button class="btn btn-sm btn-danger" @click="deleteColor(c.id)"><i class="fas fa-trash"></i></button>
+                                                </li>
+                                            </ul>
+                                            <div class="mt-3 d-flex gap-2">
+                                                <input v-model="newColor.code" class="form-control" placeholder="Kod">
+                                                <input v-model="newColor.name" class="form-control" placeholder="Nazwa">
+                                                <button class="btn btn-success" @click="addColor">Dodaj</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Admin -->
+                        <div v-else-if="currentView === 'admin'" key="admin">
+                            <h2>Panel Administratora</h2>
+                            <div class="card mt-4">
+                                <div class="card-header">Dodaj Użytkownika</div>
+                                <div class="card-body">
+                                    <form @submit.prevent="registerUser">
+                                        <div class="row mb-3">
+                                            <div class="col">
+                                                <input v-model="newUser.username" class="form-control" placeholder="Login" required>
+                                            </div>
+                                            <div class="col">
+                                                <input v-model="newUser.password" type="password" class="form-control" placeholder="Hasło" required>
+                                            </div>
+                                        </div>
+                                        <div class="row mb-3">
+                                            <div class="col">
+                                                <input v-model="newUser.fullName" class="form-control" placeholder="Imię i Nazwisko" required>
+                                            </div>
+                                            <div class="col">
+                                                <select v-model="newUser.role" class="form-select">
+                                                    <option value="PRACOWNIK">Pracownik</option>
+                                                    <option value="BRYGADZISTA">Brygadzista</option>
+                                                    <option value="KIEROWNIK">Kierownik</option>
+                                                    <option value="ADMIN">Admin</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">Utwórz konto</button>
+                                        <div v-if="adminMsg" :class="['mt-2', 'alert', adminError ? 'alert-danger' : 'alert-success']">{{ adminMsg }}</div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </transition>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script src="/js/api.js"></script>
+    <script src="/js/auth.js"></script>
+    <script src="/js/app.js"></script>
+</body>
+</html>

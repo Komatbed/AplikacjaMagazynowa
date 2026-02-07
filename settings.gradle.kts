@@ -20,3 +20,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "WarehouseApp"
 include(":app")
+include(":backend")

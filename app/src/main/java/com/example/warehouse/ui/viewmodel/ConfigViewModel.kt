@@ -7,7 +7,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.warehouse.data.local.entity.ColorEntity
 import com.example.warehouse.data.local.entity.ProfileEntity
-import com.example.warehouse.data.repository.InventoryRepository
+import com.example.warehouse.data.repository.ConfigRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.catch
 
 class ConfigViewModel(application: Application) : AndroidViewModel(application) {
-    private val repository = InventoryRepository(application)
+    private val repository = ConfigRepository(application)
 
     private val _error = mutableStateOf<String?>(null)
     val error: State<String?> = _error

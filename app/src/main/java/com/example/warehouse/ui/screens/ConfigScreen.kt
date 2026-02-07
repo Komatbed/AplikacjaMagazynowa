@@ -150,7 +150,7 @@ fun ConfigScreen(
                             },
                             leadingIcon = { Icon(Icons.Default.DateRange, null) }
                         )
-                        Divider()
+                        HorizontalDivider()
                         DropdownMenuItem(
                             text = { Text("Eksportuj do schowka") },
                             onClick = {

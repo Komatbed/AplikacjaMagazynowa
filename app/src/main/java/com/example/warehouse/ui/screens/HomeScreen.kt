@@ -7,6 +7,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -186,14 +188,14 @@ fun HomeScreen(
                     Triple("MAPA MAGAZYNU", Icons.Default.Map, onMapClick),
                     Triple("OPTYMALIZACJA", Icons.Default.ContentCut, onOptimizationClick),
                     Triple("ZGŁOŚ PROBLEM", Icons.Default.Warning, onIssueClick),
-                    Triple("SŁOWNIKI", Icons.Default.List, onConfigClick),
+                    Triple("SŁOWNIKI", Icons.AutoMirrored.Filled.List, onConfigClick),
                     Triple("SZPROSY", Icons.Default.Calculate, onMuntinClick),
                     Triple("STAN MAGAZYNU", Icons.Default.Inventory, onInventoryClick),
                     Triple("KALKULATOR OKIEN", Icons.Default.Window, onWindowCalcClick),
                     Triple("REZERWACJE", Icons.Default.Bookmark, onReservationsClick),
                     Triple("SZPERACZ ODPADÓW", Icons.Default.Search, onWasteFinderClick),
                     Triple("ASYSTENT OKUĆ", Icons.Default.Build, onHardwareClick),
-                    Triple("KATALOG PRODUKTÓW", Icons.Default.MenuBook, onCatalogClick),
+                    Triple("KATALOG PRODUKTÓW", Icons.AutoMirrored.Filled.MenuBook, onCatalogClick),
                     Triple("BAZA WIEDZY", Icons.Default.Info, onTrainingClick),
                     Triple("DODAJ ELEMENT", Icons.Default.Add, onAddInventoryClick),
                     Triple("HISTORIA ZMIAN", Icons.Default.History, onAuditLogClick)

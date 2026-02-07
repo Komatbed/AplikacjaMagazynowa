@@ -240,7 +240,7 @@ fun ProductDetailScreen(
                 color = Color.DarkGray
             )
             
-            Divider(modifier = Modifier.padding(vertical = 16.dp))
+            HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
             
             SectionHeader("Opis")
             Text(

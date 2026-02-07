@@ -9,6 +9,7 @@ import com.example.warehouse.repository.ColorDefinitionRepository
 import com.example.warehouse.repository.InventoryItemRepository
 import com.example.warehouse.repository.LocationRepository
 import com.example.warehouse.repository.ProfileDefinitionRepository
+import com.example.warehouse.service.AuthService
 import org.springframework.boot.CommandLineRunner
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -22,9 +23,14 @@ class DataInitializer {
         profileRepo: ProfileDefinitionRepository,
         colorRepo: ColorDefinitionRepository,
         locationRepo: LocationRepository,
-        inventoryRepo: InventoryItemRepository
+        inventoryRepo: InventoryItemRepository,
+        authService: AuthService
     ): CommandLineRunner {
         return CommandLineRunner {
+            // Seed Admin User
+            authService.createDefaultAdmin()
+            println("Seeded default admin user")
+
             // Seed Profiles
             if (profileRepo.count() == 0L) {
                 val profiles = listOf(

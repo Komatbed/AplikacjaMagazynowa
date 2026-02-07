@@ -43,11 +43,17 @@ abstract class WarehouseDatabase : RoomDatabase() {
 
         fun getDatabase(context: Context): WarehouseDatabase {
             return INSTANCE ?: synchronized(this) {
+                // Initialize SQLCipher key
+                val keyManager = SecurityKeyManager(context.applicationContext)
+                val passphrase = keyManager.getDatabasePassphrase()
+                val factory = net.sqlcipher.database.SupportFactory(passphrase)
+
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     WarehouseDatabase::class.java,
                     "warehouse_database"
                 )
+                .openHelperFactory(factory)
                 .fallbackToDestructiveMigration()
                 .build()
                 INSTANCE = instance

@@ -12,7 +12,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
@@ -59,7 +59,7 @@ fun OptimizationScreen(
                 title = { Text("OPTYMALIZACJA CIĘCIA", color = SafetyOrange) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Wstecz", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Wstecz", tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -147,6 +147,10 @@ fun OptimizationScreen(
                 }
             }
 
+            HorizontalDivider(color = SafetyOrange, thickness = 1.dp)
+
+            Spacer(modifier = Modifier.height(16.dp))
+
         // Add Pieces Section
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -209,7 +213,7 @@ fun OptimizationScreen(
                                 Icon(Icons.Default.Delete, contentDescription = "Usuń", tint = Color.Red)
                             }
                         }
-                        Divider(color = Color.Gray, thickness = 0.5.dp)
+                        HorizontalDivider(color = Color.Gray, thickness = 0.5.dp)
                     }
                 }
             }
@@ -255,7 +259,7 @@ fun OptimizationScreen(
                             )
                             Text("Odpad całkowity: ${res.totalWasteMm} mm", style = MaterialTheme.typography.bodySmall)
                             
-                            Divider(Modifier.padding(vertical = 4.dp))
+                            HorizontalDivider(Modifier.padding(vertical = 4.dp))
                             
                             LazyVerticalGrid(
                                 columns = GridCells.Fixed(2),

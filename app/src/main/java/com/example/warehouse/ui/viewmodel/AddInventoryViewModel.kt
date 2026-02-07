@@ -7,6 +7,7 @@ import com.example.warehouse.data.local.WarehouseDatabase
 import com.example.warehouse.data.local.dao.ConfigDao
 import com.example.warehouse.data.local.entity.ColorEntity
 import com.example.warehouse.data.local.entity.ProfileEntity
+import com.example.warehouse.data.repository.ConfigRepository
 import com.example.warehouse.util.CoreColorCalculator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -19,7 +20,7 @@ import kotlinx.coroutines.flow.stateIn
 class AddInventoryViewModel(application: Application) : AndroidViewModel(application) {
 
     private val db = WarehouseDatabase.getDatabase(application)
-    private val configDao: ConfigDao = db.configDao()
+    private val configRepository = ConfigRepository(application)
     private val presetDao = db.presetDao()
 
     // Data Sources
@@ -46,13 +47,13 @@ class AddInventoryViewModel(application: Application) : AndroidViewModel(applica
 
     init {
         viewModelScope.launch {
-            configDao.getProfiles().collect { (profiles as MutableStateFlow).value = it }
+            configRepository.getProfilesFlow().collect { (profiles as MutableStateFlow).value = it }
         }
         viewModelScope.launch {
-            configDao.getColors().collect { (colors as MutableStateFlow).value = it }
+            configRepository.getColorsFlow().collect { (colors as MutableStateFlow).value = it }
         }
         viewModelScope.launch {
-            configDao.getCoreColorRules().collect { rules ->
+            configRepository.getCoreColorRulesFlow().collect { rules ->
                 coreColorRules = rules.associate { it.extColorCode to it.coreColorCode }
                 recalculateCoreColor()
             }

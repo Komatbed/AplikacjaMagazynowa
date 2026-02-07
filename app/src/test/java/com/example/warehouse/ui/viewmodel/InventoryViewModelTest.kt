@@ -137,4 +137,52 @@ class InventoryViewModelTest {
         coVerify { repository.registerWaste(request) }
         assertEquals(true, callbackExecuted)
     }
+
+    @Test
+    fun `updateItemLength calls repository and updates local state`() = runTest {
+        // Given
+        val item = InventoryItemDto(
+            id = "1",
+            location = LocationDto(1, 1, 1, "A-01"),
+            profileCode = "P1",
+            internalColor = "W",
+            externalColor = "W",
+            coreColor = "W",
+            lengthMm = 1000,
+            quantity = 1,
+            status = "FULL"
+        )
+        // Setup initial state
+        every { repository.getItemsFlow(any(), any(), any(), any(), any()) } returns flowOf(listOf(item))
+        coEvery { repository.refreshItems(any(), any(), any(), any(), any()) } returns Result.success(Unit)
+        
+        viewModel.loadItems()
+        testDispatcher.scheduler.advanceUntilIdle()
+        
+        coEvery { repository.updateItemLength(any(), any()) } returns Unit
+
+        // When
+        viewModel.updateItemLength(item, 2000)
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        coVerify { repository.updateItemLength(item, 2000) }
+        val updatedItem = viewModel.items.value.find { it.id == "1" }
+        assertEquals(2000, updatedItem?.lengthMm)
+    }
+
+    @Test
+    fun `loadItems sets error message on failure`() = runTest {
+        // Given
+        every { repository.getItemsFlow(any(), any(), any(), any(), any()) } returns flowOf(emptyList())
+        coEvery { repository.refreshItems(any(), any(), any(), any(), any()) } returns Result.failure(Exception("Network Error"))
+        coEvery { repository.refreshConfig() } returns Result.success(Unit)
+
+        // When
+        viewModel.loadItems()
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        // Then
+        assertEquals("Tryb offline: Wyświetlam lokalne dane", viewModel.error.value)
+    }
 }

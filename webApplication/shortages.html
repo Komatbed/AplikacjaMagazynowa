@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warehouse Manager - Braki</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div id="navbar-container"></div>
+
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="md:grid md:grid-cols-3 md:gap-6">
+            <!-- Form -->
+            <div class="md:col-span-1">
+                <div class="bg-white shadow sm:rounded-lg p-6">
+                    <h3 class="text-lg font-medium leading-6 text-gray-900 mb-4">Zgłoś Brak Towarowy</h3>
+                    <form id="shortageForm" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Kod Profilu / Materiału</label>
+                            <input type="text" name="itemCode" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border p-2" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Wymagana Ilość</label>
+                            <input type="number" name="quantity" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border p-2" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Dział Docelowy</label>
+                            <select name="department" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border p-2">
+                                <option value="ZAOPATRZENIE">Zaopatrzenie</option>
+                                <option value="PRODUKCJA">Produkcja</option>
+                                <option value="MAGAZYN">Magazyn</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Priorytet</label>
+                            <select name="priority" class="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md border p-2">
+                                <option value="NORMAL">Normalny</option>
+                                <option value="HIGH">Wysoki</option>
+                                <option value="CRITICAL">Krytyczny (Zatrzymanie produkcji)</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none">
+                            Wyślij Zgłoszenie
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- List -->
+            <div class="mt-5 md:mt-0 md:col-span-2">
+                <div class="bg-white shadow sm:rounded-lg overflow-hidden">
+                    <div class="px-4 py-5 border-b border-gray-200 sm:px-6">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900">Aktywne Zgłoszenia</h3>
+                    </div>
+                    <ul id="shortagesList" class="divide-y divide-gray-200">
+                        <!-- Items -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        loadNavbar('shortages');
+    </script>
+    <script src="js/shortages.js"></script>
+</body>
+</html>

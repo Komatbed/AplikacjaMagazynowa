@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.warehouse.data.model.InventoryItemDto
 import com.example.warehouse.data.model.InventoryTakeRequest
 import com.example.warehouse.data.model.InventoryWasteRequest
+import com.example.warehouse.data.repository.ConfigRepository
 import com.example.warehouse.data.repository.InventoryRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.collectLatest
@@ -24,19 +25,21 @@ import java.io.FileWriter
 
 class InventoryViewModel @JvmOverloads constructor(
     application: Application,
-    repo: InventoryRepository? = null
+    invRepo: InventoryRepository? = null,
+    confRepo: ConfigRepository? = null
 ) : AndroidViewModel(application) {
     private val TAG = "WAREHOUSE_DEBUG"
-    private val repository = repo ?: InventoryRepository(application)
+    private val repository = invRepo ?: InventoryRepository(application)
+    private val configRepository = confRepo ?: ConfigRepository(application)
 
     private val _items = mutableStateOf<List<InventoryItemDto>>(emptyList())
     val items: State<List<InventoryItemDto>> = _items
 
-    val profiles = repository.getProfilesFlow()
+    val profiles = configRepository.getProfilesFlow()
         .map { list -> list.map { it.code } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val colors = repository.getColorsFlow()
+    val colors = configRepository.getColorsFlow()
         .map { list -> list.map { it.code } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
@@ -74,7 +77,7 @@ class InventoryViewModel @JvmOverloads constructor(
             // Refresh Configs as well
             launch {
                 Log.d(TAG, "VM: Odświeżanie konfiguracji")
-                repository.refreshConfig()
+                configRepository.refreshConfig()
             }
 
             Log.d(TAG, "VM: Odświeżanie items z sieci")

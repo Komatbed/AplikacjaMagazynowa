@@ -5,6 +5,7 @@ import com.example.warehouse.dto.InventoryTakeRequest
 import com.example.warehouse.dto.InventoryTakeResponse
 import com.example.warehouse.dto.InventoryWasteRequest
 import com.example.warehouse.dto.MapUpdateDTO
+import com.example.warehouse.controller.NotificationMessage
 import com.example.warehouse.model.InventoryItem
 import com.example.warehouse.model.ItemStatus
 import com.example.warehouse.repository.InventoryItemRepository
@@ -148,6 +149,16 @@ class InventoryService(
         )
         
         messagingTemplate.convertAndSend("/topic/warehouse/map", update)
+
+        // Send Push Notification for alerts
+        if (alert == AlertLevel.CRITICAL || alert == AlertLevel.WARNING) {
+            val msg = NotificationMessage(
+                title = "Alert Magazynowy: $locationLabel",
+                message = "Poziom zajętości: $occupancy%. Wymagana uwaga.",
+                type = if (alert == AlertLevel.CRITICAL) "ERROR" else "WARNING"
+            )
+            messagingTemplate.convertAndSend("/topic/notifications", msg)
+        }
     }
 }
 

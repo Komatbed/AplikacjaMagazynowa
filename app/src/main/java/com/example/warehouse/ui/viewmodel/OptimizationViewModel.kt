@@ -9,6 +9,7 @@ import com.example.warehouse.data.NetworkModule
 import com.example.warehouse.data.local.SettingsDataStore
 import com.example.warehouse.data.model.CutPlanResponse
 import com.example.warehouse.data.model.OptimizationRequest
+import com.example.warehouse.data.repository.ConfigRepository
 import com.example.warehouse.data.repository.InventoryRepository
 import com.example.warehouse.util.CuttingOptimizer
 import com.example.warehouse.util.OptimizationMode
@@ -18,6 +19,7 @@ import kotlinx.coroutines.launch
 
 class OptimizationViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = InventoryRepository(application)
+    private val configRepository = ConfigRepository(application)
     private val settingsDataStore = SettingsDataStore(application)
 
     private val _result = mutableStateOf<CutPlanResponse?>(null)
@@ -41,12 +43,12 @@ class OptimizationViewModel(application: Application) : AndroidViewModel(applica
 
     init {
         viewModelScope.launch {
-            repository.getProfilesFlow().collectLatest { entities ->
+            configRepository.getProfilesFlow().collectLatest { entities ->
                 _profiles.value = entities.map { it.code }
             }
         }
         viewModelScope.launch {
-            repository.getColorsFlow().collectLatest { entities ->
+            configRepository.getColorsFlow().collectLatest { entities ->
                 _colors.value = entities.map { it.code }
             }
         }
