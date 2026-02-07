@@ -6,6 +6,7 @@ import com.example.warehouse.data.model.InventoryItemDto
 import com.example.warehouse.data.model.InventoryTakeRequest
 import com.example.warehouse.data.model.InventoryWasteRequest
 import com.example.warehouse.data.model.LocationDto
+import com.example.warehouse.data.repository.ConfigRepository
 import com.example.warehouse.data.repository.InventoryRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -36,6 +37,7 @@ class InventoryViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var repository: InventoryRepository
+    private lateinit var configRepository: ConfigRepository
     private lateinit var application: Application
     private lateinit var viewModel: InventoryViewModel
 
@@ -49,13 +51,15 @@ class InventoryViewModelTest {
         every { Log.w(any(), any<Throwable>()) } returns 0
 
         repository = mockk(relaxed = true)
+        configRepository = mockk(relaxed = true)
         application = mockk(relaxed = true)
 
         // Mock StateFlow sources
-        every { repository.getProfilesFlow() } returns flowOf(emptyList())
-        every { repository.getColorsFlow() } returns flowOf(emptyList())
+        every { configRepository.getProfilesFlow() } returns flowOf(emptyList())
+        every { configRepository.getColorsFlow() } returns flowOf(emptyList())
+        coEvery { configRepository.refreshConfig() } returns Result.success(Unit)
 
-        viewModel = InventoryViewModel(application, repository)
+        viewModel = InventoryViewModel(application, repository, configRepository)
     }
 
     @After
@@ -176,7 +180,7 @@ class InventoryViewModelTest {
         // Given
         every { repository.getItemsFlow(any(), any(), any(), any(), any()) } returns flowOf(emptyList())
         coEvery { repository.refreshItems(any(), any(), any(), any(), any()) } returns Result.failure(Exception("Network Error"))
-        coEvery { repository.refreshConfig() } returns Result.success(Unit)
+        coEvery { configRepository.refreshConfig() } returns Result.success(Unit)
 
         // When
         viewModel.loadItems()

@@ -54,7 +54,7 @@ class SettingsViewModel @JvmOverloads constructor(
     val apiUrl = settingsDataStore.apiUrl.stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(5000),
-        "http://192.168.1.101:8080/api/v1/"
+        "https://51.77.59.105/api/v1/"
     )
 
     val printerIp = settingsDataStore.printerIp.stateIn(

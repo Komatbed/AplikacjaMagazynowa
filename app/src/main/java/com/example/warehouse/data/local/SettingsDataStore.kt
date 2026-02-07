@@ -24,7 +24,7 @@ class SettingsDataStore(private val context: Context) {
     }
 
     val apiUrl: Flow<String> = context.dataStore.data.map { preferences ->
-        preferences[API_URL] ?: "http://192.168.1.101:8080/api/v1/"
+        preferences[API_URL] ?: "https://51.77.59.105/api/v1/"
     }
 
     val preferWasteReservation: Flow<Boolean> = context.dataStore.data.map { preferences ->

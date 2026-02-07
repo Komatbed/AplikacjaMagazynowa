@@ -65,7 +65,6 @@ class UserFlowRegressionTest {
         repository = InventoryRepository(
             inventoryDao,
             pendingDao,
-            configDao,
             auditLogDao,
             workManager
         ) { api }
