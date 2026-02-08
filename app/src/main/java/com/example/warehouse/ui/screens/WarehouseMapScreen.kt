@@ -1,6 +1,7 @@
 package com.example.warehouse.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.horizontalScroll
@@ -34,6 +35,9 @@ fun WarehouseMapScreen(
     val locations by viewModel.locations
     val isLoading by viewModel.isLoading
     val error by viewModel.error
+    
+    // Stan dla wybranej palety (do podglądu)
+    var selectedLocation by remember { mutableStateOf<LocationStatusDto?>(null) }
 
     // Group by Rack Column (1, 2, 3... 25)
     // We want to display these groups horizontally (01, 02, 03...)
@@ -96,7 +100,8 @@ fun WarehouseMapScreen(
                 // Horizontal Scrollable Container for Rack Columns (01..25)
                 Row(
                     modifier = Modifier
-                        .fillMaxSize()
+                        .fillMaxWidth()
+                        .weight(1f) // Mapa zajmuje dostępną przestrzeń
                         .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
@@ -104,7 +109,7 @@ fun WarehouseMapScreen(
                         // Vertical Strip for each Rack Column
                         Column(
                             modifier = Modifier
-                                .width(120.dp) // Fixed width for each vertical strip
+                                .width(160.dp) // Zwiększona szerokość dla etykiet
                                 .wrapContentHeight()
                                 .background(DarkGrey.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
                                 .padding(8.dp),
@@ -121,11 +126,82 @@ fun WarehouseMapScreen(
                                     .padding(bottom = 8.dp)
                             )
                             
-                            // Cells (A, B, C) - Just Column is fine for 3 items
+                            // Cells (A, B, C)
                             locs.forEach { loc ->
-                                LocationCell(location = loc, onClick = { onLocationClick(loc.label ?: "") })
+                                LocationCell(
+                                    location = loc, 
+                                    isSelected = selectedLocation?.id == loc.id,
+                                    onClick = { selectedLocation = loc }
+                                )
                             }
                         }
+                    }
+                }
+                
+                // Panel podglądu wybranej palety
+                if (selectedLocation != null) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(180.dp), // Stała wysokość panelu podglądu
+                        colors = CardDefaults.cardColors(containerColor = DarkGrey),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Paleta: ${selectedLocation?.label}",
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    color = SafetyOrange,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Button(
+                                    onClick = { onLocationClick(selectedLocation?.label ?: "") },
+                                    colors = ButtonDefaults.buttonColors(containerColor = SafetyOrange)
+                                ) {
+                                    Text("ZOBACZ SZCZEGÓŁY")
+                                }
+                            }
+                            
+                            HorizontalDivider(color = Color.Gray)
+                            
+                            Text(
+                                text = "Ilość: ${selectedLocation?.itemCount} szt.",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = Color.White
+                            )
+                            
+                            val codes = selectedLocation?.profileCodes ?: emptyList()
+                            Text(
+                                text = if (codes.isNotEmpty()) "Zawartość: ${codes.joinToString(", ")}" else "Zawartość: Pusta",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White.copy(alpha = 0.8f),
+                                maxLines = 3
+                            )
+                        }
+                    }
+                } else {
+                    // Placeholder gdy nic nie wybrano (opcjonalnie)
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(180.dp)
+                            .background(DarkGrey.copy(alpha = 0.1f), RoundedCornerShape(12.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "Wybierz paletę, aby zobaczyć podgląd",
+                            color = Color.Gray
+                        )
                     }
                 }
             }
@@ -147,20 +223,29 @@ fun LegendItem(color: Color, text: String) {
 }
 
 @Composable
-fun LocationCell(location: LocationStatusDto, onClick: () -> Unit) {
-    val isFull = location.itemCount >= 50 // Threshold for "Full"
-    val backgroundColor = when {
+fun LocationCell(
+    location: LocationStatusDto, 
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    val isFull = location.itemCount >= 50
+    val baseColor = when {
         location.itemCount == 0 -> Color.Gray.copy(alpha = 0.3f)
-        location.isWaste -> SafetyOrange.copy(alpha = 0.8f) // Waste palette
-        isFull -> Color.Red.copy(alpha = 0.8f) // Full palette
-        else -> Color(0xFF4CAF50).copy(alpha = 0.8f) // Standard occupied palette
+        location.isWaste -> SafetyOrange.copy(alpha = 0.8f)
+        isFull -> Color.Red.copy(alpha = 0.8f)
+        else -> Color(0xFF4CAF50).copy(alpha = 0.8f)
     }
+    
+    val backgroundColor = if (isSelected) baseColor.copy(alpha = 1f) else baseColor
+    val borderWidth = if (isSelected) 3.dp else 0.dp
+    val borderColor = if (isSelected) Color.White else Color.Transparent
 
     Card(
         modifier = Modifier
-            .height(80.dp) // Fixed height for vertical stacking
+            .height(110.dp) // Zwiększona wysokość
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .clickable(onClick = onClick)
+            .border(borderWidth, borderColor, RoundedCornerShape(8.dp)),
         colors = CardDefaults.cardColors(containerColor = backgroundColor),
         shape = RoundedCornerShape(8.dp)
     ) {
@@ -182,13 +267,17 @@ fun LocationCell(location: LocationStatusDto, onClick: () -> Unit) {
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.White
             )
+            
+            // Etykieta zawartości (15 znaków)
             val codes = location.profileCodes ?: emptyList()
             if (codes.isNotEmpty()) {
+                val contentLabel = codes.joinToString(", ")
                 Text(
-                    text = codes.firstOrNull() ?: "",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = Color.White.copy(alpha = 0.7f),
-                    maxLines = 1
+                    text = if (contentLabel.length > 15) contentLabel.take(15) + "..." else contentLabel,
+                    style = MaterialTheme.typography.labelSmall, // Mała czcionka
+                    color = Color.White.copy(alpha = 0.9f),
+                    maxLines = 1,
+                    fontWeight = FontWeight.SemiBold
                 )
             }
         }

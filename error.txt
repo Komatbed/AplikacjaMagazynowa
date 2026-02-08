@@ -1,0 +1,61 @@
+deployer@vps-aee9702a:~$ journalctl -xeu warehouse.service --no-pager
+Hint: You are currently not seeing messages from other users and the system.
+      Users in groups 'adm', 'systemd-journal' can see all messages.
+      Pass -q to turn off this notice.
+Feb 08 16:09:20 vps-aee9702a bash[66856]: time="2026-02-08T16:09:20Z" level=warning msg="/home/deployer/warehouse/docker-compose.prod.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+Feb 08 16:09:20 vps-aee9702a bash[66856]:  Network warehouse_warehouse-net Creating
+Feb 08 16:09:20 vps-aee9702a bash[66856]:  Network warehouse_warehouse-net Created
+Feb 08 16:09:20 vps-aee9702a bash[66856]:  Volume warehouse_prometheus_data_prod Creating
+Feb 08 16:09:20 vps-aee9702a bash[66856]:  Volume warehouse_prometheus_data_prod Created
+Feb 08 16:09:20 vps-aee9702a bash[66856]:  Volume warehouse_grafana_data_prod Creating
+Feb 08 16:09:20 vps-aee9702a bash[66856]:  Volume warehouse_grafana_data_prod Created
+Feb 08 16:09:20 vps-aee9702a bash[66856]:  Volume warehouse_backup_data_prod Creating
+Feb 08 16:09:20 vps-aee9702a bash[66856]:  Volume warehouse_backup_data_prod Created
+Feb 08 16:09:20 vps-aee9702a bash[66856]:  Container warehouse-db-prod Creating
+Feb 08 16:09:20 vps-aee9702a bash[66856]:  Container warehouse-prometheus-prod Creating
+Feb 08 16:09:20 vps-aee9702a bash[66856]:  Container warehouse-certbot Creating
+Feb 08 16:09:20 vps-aee9702a bash[66856]:  Container warehouse-prometheus-prod Created
+Feb 08 16:09:20 vps-aee9702a bash[66856]:  Container warehouse-certbot Created
+Feb 08 16:09:20 vps-aee9702a bash[66856]:  Container warehouse-grafana-prod Creating
+Feb 08 16:09:20 vps-aee9702a bash[66856]:  Container warehouse-db-prod Created
+Feb 08 16:09:20 vps-aee9702a bash[66856]:  Container warehouse-backup-prod Creating
+Feb 08 16:09:20 vps-aee9702a bash[66856]:  Container warehouse-backend-prod Creating
+Feb 08 16:09:20 vps-aee9702a bash[66856]:  Container warehouse-grafana-prod Created
+Feb 08 16:09:20 vps-aee9702a bash[66856]:  Container warehouse-backend-prod Created
+Feb 08 16:09:20 vps-aee9702a bash[66856]:  Container warehouse-web-prod Creating
+Feb 08 16:09:20 vps-aee9702a bash[66856]:  Container warehouse-backup-prod Created
+Feb 08 16:09:20 vps-aee9702a bash[66856]:  Container warehouse-web-prod Created
+Feb 08 16:09:20 vps-aee9702a bash[66856]:  Container warehouse-nginx-prod Creating
+Feb 08 16:09:20 vps-aee9702a bash[66856]:  Container warehouse-nginx-prod Created
+Feb 08 16:09:20 vps-aee9702a bash[66856]:  Container warehouse-db-prod Starting
+Feb 08 16:09:20 vps-aee9702a bash[66856]:  Container warehouse-certbot Starting
+Feb 08 16:09:20 vps-aee9702a bash[66856]:  Container warehouse-prometheus-prod Starting
+Feb 08 16:09:21 vps-aee9702a bash[66856]:  Container warehouse-db-prod Started
+Feb 08 16:09:21 vps-aee9702a bash[66856]:  Container warehouse-certbot Started
+Feb 08 16:09:21 vps-aee9702a bash[66856]: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: error mounting "/home/deployer/warehouse/monitoring/prometheus.yml" to rootfs at "/etc/prometheus/prometheus.yml": mount src=/home/deployer/warehouse/monitoring/prometheus.yml, dst=/etc/prometheus/prometheus.yml, dstFd=/proc/thread-self/fd/11, flags=MS_BIND|MS_REC: not a directory: Are you trying to mount a directory onto a file (or vice-versa)? Check if the specified host path exists and is the expected type
+Feb 08 16:13:24 vps-aee9702a bash[67314]: time="2026-02-08T16:13:24Z" level=warning msg="/home/deployer/warehouse/docker-compose.prod.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion"
+Feb 08 16:13:24 vps-aee9702a bash[67314]:  Container warehouse-db-prod Running
+Feb 08 16:13:24 vps-aee9702a bash[67314]:  Container warehouse-certbot Running
+Feb 08 16:13:24 vps-aee9702a bash[67314]:  Container warehouse-backend-prod Starting
+Feb 08 16:13:24 vps-aee9702a bash[67314]:  Container warehouse-prometheus-prod Starting
+Feb 08 16:13:24 vps-aee9702a bash[67314]:  Container warehouse-backup-prod Starting
+Feb 08 16:13:24 vps-aee9702a bash[67314]:  Container warehouse-backup-prod Started
+Feb 08 16:13:24 vps-aee9702a bash[67314]:  Container warehouse-backend-prod Started
+Feb 08 16:13:24 vps-aee9702a bash[67314]: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: error mounting "/home/deployer/warehouse/monitoring/prometheus.yml" to rootfs at "/etc/prometheus/prometheus.yml": mount src=/home/deployer/warehouse/monitoring/prometheus.yml, dst=/etc/prometheus/prometheus.yml, dstFd=/proc/thread-self/fd/11, flags=MS_BIND|MS_REC: not a directory: Are you trying to mount a directory onto a file (or vice-versa)? Check if the specified host path exists and is the expected type
+Feb 08 16:27:20 vps-aee9702a bash[67866]:  Container warehouse-certbot Running
+Feb 08 16:27:20 vps-aee9702a bash[67866]:  Container warehouse-db-prod Running
+Feb 08 16:27:20 vps-aee9702a bash[67866]:  Container warehouse-backend-prod Running
+Feb 08 16:27:20 vps-aee9702a bash[67866]:  Container warehouse-backup-prod Running
+Feb 08 16:27:20 vps-aee9702a bash[67866]:  Container warehouse-prometheus-prod Starting
+Feb 08 16:27:20 vps-aee9702a bash[67866]:  Container warehouse-web-prod Starting
+Feb 08 16:27:20 vps-aee9702a bash[67866]:  Container warehouse-web-prod Started
+Feb 08 16:27:20 vps-aee9702a bash[67866]: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: error mounting "/home/deployer/warehouse/monitoring/prometheus.yml" to rootfs at "/etc/prometheus/prometheus.yml": mount src=/home/deployer/warehouse/monitoring/prometheus.yml, dst=/etc/prometheus/prometheus.yml, dstFd=/proc/thread-self/fd/11, flags=MS_BIND|MS_REC: not a directory: Are you trying to mount a directory onto a file (or vice-versa)? Check if the specified host path exists and is the expected type
+Feb 08 16:34:23 vps-aee9702a bash[68394]:  Container warehouse-db-prod Running
+Feb 08 16:34:23 vps-aee9702a bash[68394]:  Container warehouse-backup-prod Running
+Feb 08 16:34:23 vps-aee9702a bash[68394]:  Container warehouse-certbot Running
+Feb 08 16:34:23 vps-aee9702a bash[68394]:  Container warehouse-backend-prod Running
+Feb 08 16:34:23 vps-aee9702a bash[68394]:  Container warehouse-web-prod Running
+Feb 08 16:34:23 vps-aee9702a bash[68394]:  Container warehouse-prometheus-prod Starting
+Feb 08 16:34:23 vps-aee9702a bash[68394]:  Container warehouse-nginx-prod Starting
+Feb 08 16:34:23 vps-aee9702a bash[68394]:  Container warehouse-nginx-prod Started
+Feb 08 16:34:23 vps-aee9702a bash[68394]: Error response from daemon: failed to create task for container: failed to create shim task: OCI runtime create failed: runc create failed: unable to start container process: error during container init: error mounting "/home/deployer/warehouse/monitoring/prometheus.yml" to rootfs at "/etc/prometheus/prometheus.yml": mount src=/home/deployer/warehouse/monitoring/prometheus.yml, dst=/etc/prometheus/prometheus.yml, dstFd=/proc/thread-self/fd/11, flags=MS_BIND|MS_REC: not a directory: Are you trying to mount a directory onto a file (or vice-versa)? Check if the specified host path exists and is the expected type

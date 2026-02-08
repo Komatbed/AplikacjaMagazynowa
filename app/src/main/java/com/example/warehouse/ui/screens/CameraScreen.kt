@@ -117,12 +117,20 @@ fun CameraPreview(
             modifier = Modifier.fillMaxSize()
         )
         
-        // Overlay Celownika
+        // Overlay Celownika - Pełny ekran / Pionowy
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
-                .size(300.dp, 150.dp)
-                .border(4.dp, SafetyOrange.copy(alpha = 0.8f))
+                .fillMaxSize(0.85f) // Wykorzystaj 85% ekranu
+                .border(2.dp, SafetyOrange.copy(alpha = 0.5f), RoundedCornerShape(16.dp))
+        )
+
+        // Rogi celownika dla lepszej widoczności (opcjonalne, ale pomocne)
+        Box(
+            modifier = Modifier
+                .align(Alignment.Center)
+                .fillMaxSize(0.85f)
+                .border(4.dp, SafetyOrange, RoundedCornerShape(16.dp))
         )
 
         // Shutter Button

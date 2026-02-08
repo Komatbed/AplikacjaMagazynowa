@@ -18,12 +18,38 @@ object NetworkModule {
 
     fun updateUrl(newUrl: String) {
         if (newUrl.isBlank()) return
-        val formattedUrl = if (newUrl.endsWith("/")) newUrl else "$newUrl/"
+        
+        var sanitizedUrl = newUrl.trim()
+        
+        // 1. Ensure protocol
+        if (!sanitizedUrl.startsWith("http://") && !sanitizedUrl.startsWith("https://")) {
+            sanitizedUrl = "https://$sanitizedUrl"
+        }
+        
+        // 2. Handle IPv6 without brackets (e.g. http://2001:db8::1/api)
+        val afterProtocol = sanitizedUrl.substringAfter("://")
+        val host = afterProtocol.substringBefore("/").substringBefore("?")
+        
+        // Heuristic: If host has >= 2 colons and no brackets, wrap it
+        if (host.count { it == ':' } >= 2 && !host.startsWith("[")) {
+            val newHost = "[$host]"
+            sanitizedUrl = sanitizedUrl.replaceFirst(host, newHost)
+        }
+
+        val formattedUrl = if (sanitizedUrl.endsWith("/")) sanitizedUrl else "$sanitizedUrl/"
+        
         if (formattedUrl == currentUrl) return
         
-        currentUrl = formattedUrl
-        retrofit = createRetrofit(formattedUrl)
-        api = retrofit.create(WarehouseApi::class.java)
+        try {
+            // Verify by creating instance before assignment
+            val newRetrofit = createRetrofit(formattedUrl)
+            currentUrl = formattedUrl
+            retrofit = newRetrofit
+            api = retrofit.create(WarehouseApi::class.java)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // Prevent crash on invalid URL
+        }
     }
 
     // TODO: W produkcji użyć Certificate Pinning z prawdziwym SHA-256

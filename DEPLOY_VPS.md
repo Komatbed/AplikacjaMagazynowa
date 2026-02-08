@@ -2,7 +2,38 @@
 
 Ten dokument opisuje krok po kroku proces przygotowania serwera VPS (Ubuntu 22.04 LTS), konfiguracji bezpieczeństwa oraz wdrożenia aplikacji.
 
-## 1. Wstępna Konfiguracja VPS (Hardening)
+## 🚀 Szybkie Wdrożenie (Zalecane)
+
+Jeśli masz już dostęp do serwera VPS, najszybszą metodą jest użycie gotowych skryptów automatyzacji.
+
+### Krok 1: Przygotowanie Serwera (Jednorazowe)
+Uruchom skrypt `scripts/setup_vps.sh` na serwerze jako **root**. Skrypt ten zainstaluje Docker, skonfiguruje Firewall, utworzy użytkownika `deployer` i usługę systemową.
+
+**Z lokalnego komputera (PowerShell/Terminal):**
+```powershell
+# Skopiuj skrypt na serwer (zamień YOUR_IP na adres IP serwera)
+scp scripts/setup_vps.sh root@YOUR_IP:/root/
+
+# Połącz się i uruchom
+ssh root@YOUR_IP
+chmod +x setup_vps.sh
+./setup_vps.sh
+```
+*Zanotuj wygenerowane hasło dla użytkownika `deployer`!*
+
+### Krok 2: Wdrożenie Aplikacji
+Użyj skryptu PowerShell, aby automatycznie zbudować, spakować i wysłać aplikację na serwer.
+
+**Z VS Code (Terminal PowerShell):**
+```powershell
+.\scripts\deploy_to_vps.ps1
+```
+*Upewnij się, że w pliku `scripts/deploy_to_vps.ps1` ustawiony jest poprawny adres IP w zmiennej `$VPS_IP`.*
+
+---
+
+## 1. Wstępna Konfiguracja VPS (Hardening) - Metoda Ręczna
+*Poniższe kroki są wykonywane automatycznie przez skrypt `setup_vps.sh`. Wykonaj je tylko jeśli chcesz skonfigurować serwer ręcznie.*
 
 ### 1.1. Logowanie i aktualizacja
 Zaloguj się jako root:

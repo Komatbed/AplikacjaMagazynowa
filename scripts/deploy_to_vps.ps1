@@ -40,7 +40,7 @@ if (-not (Test-Path "backend") -or -not (Test-Path "docker-compose.prod.yml")) {
     exit 1
 }
 
-Compress-Archive -Path "backend", "webApplication", "nginx", "docker-compose.prod.yml", ".env.example" -DestinationPath $ArchiveName -Force -ErrorAction Stop
+Compress-Archive -Path "backend", "webApplication", "nginx", "monitoring", "docker-compose.prod.yml", ".env.example" -DestinationPath $ArchiveName -Force -ErrorAction Stop
 
 
 # 3. Wysyłanie plików (SCP)
@@ -62,6 +62,12 @@ $RemoteCommands = @"
     if ! command -v unzip &> /dev/null; then
         echo 'Instalacja unzip...'
         sudo apt-get update && sudo apt-get install -y unzip
+    fi
+
+    # Czyszczenie potencjalnie błędnych katalogów (np. monitoring/prometheus.yml jako katalog)
+    if [ -d "monitoring" ]; then
+        echo "Czyszczenie starego katalogu monitoring..."
+        sudo rm -rf monitoring
     fi
 
     # Rozpakowanie
@@ -112,7 +118,8 @@ $Bytes = [System.Text.Encoding]::UTF8.GetBytes($RemoteCommandsClean)
 $EncodedCommand = [Convert]::ToBase64String($Bytes)
 
 Write-Host "Wykonywanie skryptu zdalnego..."
-ssh -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_IP} "echo '$EncodedCommand' | base64 -d | bash"
+# Dodano flagę -t (pseudo-tty), aby sudo mogło zapytać o hasło jeśli jest wymagane
+ssh -t -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_IP} "echo '$EncodedCommand' | base64 -d | bash"
 
 Write-Host "=== Gotowe! ===" -ForegroundColor Cyan
 Write-Host "Aplikacja powinna wstać w ciągu 30-60 sekund."

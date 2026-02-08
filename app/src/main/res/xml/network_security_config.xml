@@ -13,6 +13,7 @@
         <domain includeSubdomains="true">192.168.0.100</domain>
         <domain includeSubdomains="true">192.168.0.101</domain>
         <domain includeSubdomains="true">51.77.59.105</domain> <!-- VPS -->
+        <domain includeSubdomains="true">2001:41d0:601:1100::7263</domain> <!-- VPS IPv6 -->
     </domain-config>
 
     <!-- Default: Block cleartext (HTTP) for everything else -->

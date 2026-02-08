@@ -91,6 +91,15 @@ else
     echo -e "${YELLOW}Zapisz je, aby móc się zalogować!${NC}"
 fi
 
+# 5a. Dodanie obecnego użytkownika (jeśli nie root) do grupy docker
+if [ "$SUDO_USER" ]; then
+    REAL_USER=$SUDO_USER
+    if [ "$REAL_USER" != "deployer" ]; then
+        log "Dodawanie użytkownika '$REAL_USER' do grupy docker..."
+        usermod -aG docker "$REAL_USER"
+    fi
+fi
+
 # 6. Przygotowanie katalogów aplikacji
 APP_DIR="/home/deployer/warehouse"
 log "Tworzenie struktury katalogów w $APP_DIR..."

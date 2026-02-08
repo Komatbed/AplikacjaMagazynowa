@@ -17,15 +17,27 @@ echo "Date: $(date)"
 echo "----------------------------------------"
 
 # 1. Get Public IP
-IP=$(curl -s ifconfig.me)
+# Try to get IPv4 first, fallback to default
+IP=$(curl -4 -s ifconfig.me)
+if [ -z "$IP" ]; then
+    IP=$(curl -s ifconfig.me)
+fi
 echo -e "Public IP: ${GREEN}$IP${NC}"
 
 # 2. Check Docker Services
 echo -e "\n${YELLOW}[Docker Containers]${NC}"
-if command -v docker &> /dev/null; then
-    docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep warehouse
+
+# Check docker permission
+if ! docker ps > /dev/null 2>&1; then
+    echo -e "${RED}ERROR: Permission denied or Docker not running.${NC}"
+    echo "Try running with sudo: 'sudo ./server_status.sh'"
+    echo "Or add current user to docker group: 'sudo usermod -aG docker $USER' (then logout & login)"
 else
-    echo -e "${RED}Docker is not installed or not in PATH!${NC}"
+    if command -v docker &> /dev/null; then
+        docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep warehouse
+    else
+        echo -e "${RED}Docker is not installed or not in PATH!${NC}"
+    fi
 fi
 
 # 3. Check Backend Health

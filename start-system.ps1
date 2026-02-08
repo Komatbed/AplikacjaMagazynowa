@@ -35,6 +35,36 @@ if (Get-Command "docker" -ErrorAction SilentlyContinue) {
 
 # 2. Konfiguracja
 # ---------------
+# Konfiguracja Email (Bramka HTTP - bez hasła)
+$EmailTo = "mateuszbednarczyk99@gmail.com"
+# Używamy publicznej bramki formsubmit.co, która przekierowuje POST na Email.
+# Wymaga jednorazowego potwierdzenia pierwszego maila!
+$GatewayUrl = "https://formsubmit.co/$EmailTo"
+
+function Send-CrashLog {
+    param($LogContent)
+    
+    try {
+        Write-Host "Wysyłanie raportu do bramki email..." -NoNewline
+        
+        $Body = @{
+            _subject = "[CRITICAL] Warehouse Local Start FAILED"
+            message = "System nie mógł wystartować. Ostatnie logi:`n`n$LogContent"
+            _captcha = "false" # Wyłącz captchę
+            _template = "table"
+        }
+
+        # Wysłanie żądania POST do bramki
+        $response = Invoke-RestMethod -Uri $GatewayUrl -Method Post -Body $Body -ErrorAction Stop
+        
+        Write-Host " WYSŁANO!" -ForegroundColor Green
+        Write-Host "Info: Jeśli to pierwszy raz, sprawdź skrzynkę i potwierdź aktywację formsubmit." -ForegroundColor Gray
+    } catch {
+        Write-Host " BŁĄD bramki: $_" -ForegroundColor Red
+        Write-Host "Sprawdź połączenie internetowe."
+    }
+}
+
 Write-Host "`n2. Przygotowanie konfiguracji..."
 
 # AI Service .env
@@ -58,13 +88,54 @@ if (-not (Test-Path "backend\src\main\resources\application.properties")) {
 
 # 3. Uruchamianie kontenerów
 # --------------------------
-Write-Host "`n3. Uruchamianie usług (Docker Compose)..."
+Write-Host "`n3. Uruchamianie usług (Docker Compose) - TRYB ROBUST..."
 Write-Host "   Używam komendy: $ComposeCommand" -ForegroundColor Gray
-Write-Host "   To może potrwać kilka minut przy pierwszym uruchomieniu..." -ForegroundColor Gray
 
-Invoke-Expression "$ComposeCommand up -d --build"
+$MaxRetries = 3
+$RetryCount = 0
+$Started = $false
+$LastLog = ""
 
-if ($LASTEXITCODE -eq 0) {
+do {
+    Write-Host "`n[Próba $($RetryCount + 1)/$MaxRetries] Uruchamianie..." -ForegroundColor Cyan
+    
+    # Przechwytujemy output do zmiennej i na ekran (Tee-Object)
+    # Uwaga: Invoke-Expression trudniej przechwycić w ten sposób, użyjmy prościej:
+    
+    if ($ComposeCommand -eq "docker compose") {
+        docker compose up -d --build 2>&1 | Tee-Object -Variable LastLogOutput
+    } else {
+        docker-compose up -d --build 2>&1 | Tee-Object -Variable LastLogOutput
+    }
+    
+    if ($LASTEXITCODE -eq 0) {
+        $Started = $true
+        Write-Host "Start udany." -ForegroundColor Green
+    } else {
+        $RetryCount++
+        Write-Host "`n>>> BŁĄD STARTU. Kod wyjścia: $LASTEXITCODE" -ForegroundColor Red
+        
+        if ($RetryCount -lt $MaxRetries) {
+            Write-Host ">>> Inicjowanie procedury naprawczej (FORCE CLEANUP)..." -ForegroundColor Yellow
+            
+            # 1. Down with remove orphans
+            Invoke-Expression "$ComposeCommand down --remove-orphans" 2>$null
+            
+            # 2. Kill containers by name pattern
+            Write-Host "   -> Usuwanie starych kontenerów..."
+            docker ps -a --filter "name=warehouse" -q | ForEach-Object { docker rm -f $_ } 2>$null
+            
+            # 3. Prune networks
+            Write-Host "   -> Czyszczenie sieci..."
+            docker network prune -f 2>$null
+            
+            Write-Host "   -> Czekam 5 sekund..."
+            Start-Sleep -Seconds 5
+        }
+    }
+} until ($Started -or $RetryCount -ge $MaxRetries)
+
+if ($Started) {
     Write-Host "`n>>> SUKCES! System został uruchomiony." -ForegroundColor Green
     Write-Host "`nStatus Usług:"
     Write-Host "-------------"
@@ -85,7 +156,13 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "4. W ustawieniach aplikacji skonfiguruj adres IP serwera (dla emulatora: 10.0.2.2)."
 
 } else {
-    Write-Host "`n>>> BŁĄD podczas uruchamiania Docker Compose." -ForegroundColor Red
+    Write-Host "`n>>> BŁĄD KRYTYCZNY: Nie udało się uruchomić systemu po $MaxRetries próbach." -ForegroundColor Red
+    Write-Host "Wysyłanie raportu..."
+    
+    # Zbierz logi z ostatniej próby (zmienna LastLogOutput jest tablicą lub stringiem)
+    $LogString = $LastLogOutput | Out-String
+    Send-CrashLog -LogContent $LogString
+    
     Write-Host "Sprawdź logi powyżej."
 }
 
