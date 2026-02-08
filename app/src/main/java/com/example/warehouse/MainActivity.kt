@@ -54,7 +54,7 @@ class MainActivity : ComponentActivity() {
             // Safety check for critical initializations
             try {
                 // Pre-check OcrProcessor initialization (often crashes on Samsung if libraries missing)
-                val dummy = com.google.mlkit.vision.text.TextRecognition.getClient(com.google.mlkit.vision.text.latin.TextRecognizerOptions.DEFAULT_OPTIONS)
+                com.google.mlkit.vision.text.TextRecognition.getClient(com.google.mlkit.vision.text.latin.TextRecognizerOptions.DEFAULT_OPTIONS)
             } catch (e: Throwable) {
                 Toast.makeText(this, "OCR INIT FAILED: ${e.message}", Toast.LENGTH_LONG).show()
             }
@@ -102,10 +102,6 @@ class MainActivity : ComponentActivity() {
                                     navController.navigate("camera") 
                                 },
                                 onManualTakeClick = { navController.navigate("manual_take") },
-                                onWasteClick = { 
-                                    // Show dialog with empty result
-                                    ocrResult = OcrResult("", null) 
-                                },
                                 onOptimizationClick = { navController.navigate("optimization") },
                                 onSettingsClick = { navController.navigate("settings") },
                                 onConfigClick = { navController.navigate("config") },
@@ -161,7 +157,7 @@ class MainActivity : ComponentActivity() {
                         composable("map") {
                             WarehouseMapScreen(
                                 onBackClick = { navController.popBackStack() },
-                                onLocationClick = { label -> 
+                                onLocationClick = { _ -> 
                                     // Navigate to ManualTake with location pre-filled
                                     navController.navigate("manual_take")
                                 }

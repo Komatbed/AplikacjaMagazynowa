@@ -61,8 +61,6 @@ fi
 
 # 5. Aktualizacja (Rolling Update / Recreate)
 log "Restartowanie usług..."
-# Pobranie ID starego kontenera backendu do weryfikacji
-OLD_CONTAINER_ID=$(docker compose -f "$DOCKER_COMPOSE_FILE" ps -q backend)
 
 if docker compose -f "$DOCKER_COMPOSE_FILE" up -d; then
     log "Kontenery uruchomione."

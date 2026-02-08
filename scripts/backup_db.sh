@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Configuration
-CONTAINER_NAME="warehouse-backup"
+CONTAINER_NAME="warehouse-backup-prod"
 BACKUP_DIR="/backups"
 DATE=$(date +%Y%m%d_%H%M%S)
 FILENAME="backup_$DATE.sql"

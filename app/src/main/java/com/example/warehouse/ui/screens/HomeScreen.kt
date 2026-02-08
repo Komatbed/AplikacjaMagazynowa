@@ -28,7 +28,6 @@ import com.example.warehouse.ui.viewmodel.NewsItem
 fun HomeScreen(
     onScanClick: () -> Unit,
     onManualTakeClick: () -> Unit,
-    onWasteClick: () -> Unit,
     onOptimizationClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onConfigClick: () -> Unit,

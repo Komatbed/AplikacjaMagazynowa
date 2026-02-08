@@ -75,6 +75,8 @@ $RemoteCommands = @"
         echo "DB_PASSWORD=`$(date +%s | sha256sum | base64 | head -c 16)" >> .env
         echo "SERVER_PORT=8080" >> .env
         echo "SPRING_PROFILES_ACTIVE=prod" >> .env
+        echo "GRAFANA_USER=admin" >> .env
+        echo "GRAFANA_PASSWORD=admin" >> .env
     fi
 
     # SSL Setup (Self-Signed) if missing
@@ -98,6 +100,7 @@ $RemoteCommands = @"
         # Upewnij się, że użytkownik jest w grupie docker, inaczej to może wymagać sudo
         docker compose -f docker-compose.prod.yml down
         docker compose -f docker-compose.prod.yml up -d --build
+        docker image prune -f
     fi
     
     echo "Deployment zakończony sukcesem!"

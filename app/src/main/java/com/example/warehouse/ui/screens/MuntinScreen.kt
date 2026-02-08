@@ -8,7 +8,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -76,7 +76,7 @@ fun MuntinScreen(
                 title = { Text("KALKULATOR SZPROSÓW", color = SafetyOrange) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Wstecz", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Wstecz", tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -181,7 +181,6 @@ fun MuntinScreen(
                                         // Add logic
                                         // Calculate distance to center of current cell
                                         // We want to see if we are splitting the width or height
-                                        val hStep = drawH / hf
                                         
                                         val distToVCenter = kotlin.math.abs((relX % vStep) - (vStep / 2))
                                         val distToHCenter = kotlin.math.abs((relY % hStep) - (hStep / 2))

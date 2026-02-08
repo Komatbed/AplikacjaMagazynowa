@@ -116,8 +116,9 @@ After=docker.service
 Type=oneshot
 RemainAfterExit=yes
 WorkingDirectory=$APP_DIR
-ExecStart=/usr/bin/docker compose -f docker-compose.prod.yml up -d
-ExecStop=/usr/bin/docker compose -f docker-compose.prod.yml down
+# Use 'docker compose' (v2) or 'docker-compose' (v1) depending on availability
+ExecStart=/bin/bash -c 'if docker compose version >/dev/null 2>&1; then docker compose -f docker-compose.prod.yml up -d; else docker-compose -f docker-compose.prod.yml up -d; fi'
+ExecStop=/bin/bash -c 'if docker compose version >/dev/null 2>&1; then docker compose -f docker-compose.prod.yml down; else docker-compose -f docker-compose.prod.yml down; fi'
 User=deployer
 Group=docker
 TimeoutStartSec=0

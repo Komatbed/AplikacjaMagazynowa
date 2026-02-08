@@ -143,7 +143,7 @@ object MuntinCalculator {
             // Yes, 1mm gap on each connection.
             
             val totalMuntinWidth = numVerticalLines * request.muntinWidthMm
-            val totalGapWidth = (numVerticalLines * 2 + 2) * request.muntinGapMm // gaps at each muntin side + frame sides?
+            // gaps at each muntin side + frame sides?
             // Actually, gap is usually per cut.
             
             // Let's do it per segment type.

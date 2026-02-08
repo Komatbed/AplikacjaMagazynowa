@@ -24,6 +24,15 @@ if (Get-Command "docker" -ErrorAction SilentlyContinue) {
     exit 1
 }
 
+# Sprawdzenie wersji Docker Compose (V2 vs V1)
+$ComposeCommand = "docker-compose"
+if (Get-Command "docker" -ErrorAction SilentlyContinue) {
+    $dockerComposeVersion = docker compose version 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        $ComposeCommand = "docker compose"
+    }
+}
+
 # 2. Konfiguracja
 # ---------------
 Write-Host "`n2. Przygotowanie konfiguracji..."
@@ -50,9 +59,10 @@ if (-not (Test-Path "backend\src\main\resources\application.properties")) {
 # 3. Uruchamianie kontenerów
 # --------------------------
 Write-Host "`n3. Uruchamianie usług (Docker Compose)..."
+Write-Host "   Używam komendy: $ComposeCommand" -ForegroundColor Gray
 Write-Host "   To może potrwać kilka minut przy pierwszym uruchomieniu..." -ForegroundColor Gray
 
-docker-compose up -d --build
+Invoke-Expression "$ComposeCommand up -d --build"
 
 if ($LASTEXITCODE -eq 0) {
     Write-Host "`n>>> SUKCES! System został uruchomiony." -ForegroundColor Green
@@ -60,14 +70,18 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "-------------"
     Write-Host "Backend API:    http://localhost:8080"
     Write-Host "AI Service:     http://localhost:8000/docs"
-    Write-Host "Baza Danych:    localhost:5433"
+    Write-Host "Baza Danych:    localhost:5432"
     
     Write-Host "`n4. Aplikacja Mobilna"
     Write-Host "--------------------"
+    if (Test-Path "build_apk.bat") {
+        Write-Host "Znaleziono skrypt budowania APK: build_apk.bat"
+        Write-Host "Możesz go uruchomić, aby zbudować aplikację: .\build_apk.bat"
+    }
     Write-Host "Aby uruchomić aplikację Android:"
-    Write-Host "1. Otwórz projekt w Android Studio."
+    Write-Host "1. Otwórz projekt w Android Studio lub VS Code."
     Write-Host "2. Upewnij się, że urządzenie/emulator jest podłączone."
-    Write-Host "3. Kliknij 'Run' (zielony trójkąt)."
+    Write-Host "3. Uruchom build lub debugowanie."
     Write-Host "4. W ustawieniach aplikacji skonfiguruj adres IP serwera (dla emulatora: 10.0.2.2)."
 
 } else {
@@ -75,5 +89,5 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "Sprawdź logi powyżej."
 }
 
-Write-Host "`nAby zatrzymać system, wpisz: docker-compose down"
+Write-Host "`nAby zatrzymać system, wpisz: $ComposeCommand down"
 Read-Host -Prompt "Naciśnij Enter, aby zakończyć"

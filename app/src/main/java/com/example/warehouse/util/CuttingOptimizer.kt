@@ -37,14 +37,12 @@ object CuttingOptimizer {
             else -> availableWaste.sortedBy { it.lengthMm }
         }.map { StockItem(it.id, it.lengthMm, it.location.label, false) }.toMutableList()
 
-        val steps = mutableListOf<CutStepDto>()
         var totalStockUsed = 0
 
         // 3. Packing Algorithm
         // We will modify sortedPieces as we satisfy them.
         
         // Phase 1: Try to cut from Waste
-        val usedWasteIndices = mutableSetOf<Int>()
 
         // For each piece, find best stock
         // Changing logic: We should fill stock items one by one? 
@@ -63,8 +61,6 @@ object CuttingOptimizer {
         
         // Add potential new bars (dynamic)
         
-        val assignments = mutableMapOf<Bin, MutableList<Int>>() // Bin -> List of Cuts
-        
         // Helper to get a new bar bin
         fun createNewBarBin(): Bin {
             val bin = Bin(StockItem(null, STANDARD_BAR_LENGTH, "Nowa Sztanga", true))
@@ -73,7 +69,7 @@ object CuttingOptimizer {
         }
 
         for (piece in sortedPieces) {
-            var bestBin: Bin? = null
+            var bestBin: Bin?
             
             // Find candidate bins
             val candidates = bins.filter { bin -> 

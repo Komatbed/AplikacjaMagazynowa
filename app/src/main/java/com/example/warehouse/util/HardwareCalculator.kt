@@ -23,7 +23,7 @@ object HardwareCalculator {
         val components = mutableListOf<FittingComponent>()
 
         // 1. Zasuwnica (Drive Gear) - Zależna od FFH
-        val driveGear = getDriveGear(system, ffh)
+        val driveGear = getDriveGear(ffh)
         if (driveGear != null) components.add(driveGear)
         else return listOf(FittingComponent("BŁĄD: FFH poza zakresem (${ffh}mm)", null, 0))
 
@@ -36,7 +36,7 @@ object HardwareCalculator {
         }
 
         // 3. Rozwórka / Szyna (Shear) - Zależna od FFB
-        val shear = getShear(system, ffb)
+        val shear = getShear(ffb)
         if (shear != null) components.add(shear)
         else return listOf(FittingComponent("BŁĄD: FFB poza zakresem (${ffb}mm)", null, 0))
 
@@ -65,7 +65,7 @@ object HardwareCalculator {
         return components
     }
 
-    private fun getDriveGear(system: FittingSystem, ffh: Int): FittingComponent? {
+    private fun getDriveGear(ffh: Int): FittingComponent? {
         // Uproszczone zakresy GR (Gear Size) dla activPilot
         // Nazewnictwo: GAM (Zasuwnica Stała) lub GAK (Zmienna) - przyjmujemy GAK/GAM standard
         return when (ffh) {
@@ -81,7 +81,7 @@ object HardwareCalculator {
         }
     }
 
-    private fun getShear(system: FittingSystem, ffb: Int): FittingComponent? {
+    private fun getShear(ffb: Int): FittingComponent? {
         // Uproszczone zakresy rozwórek (Shears)
         return when (ffb) {
             in 260..400 -> FittingComponent("Narożnik z rozwórką krótką", "E1.SK")

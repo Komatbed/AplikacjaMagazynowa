@@ -5,6 +5,10 @@
 # ==============================================================================
 # Skrypt monitorujący repozytorium. Jeśli wykryje zmiany, uruchamia deploy_manager.sh.
 # Dodaj do crontab: */5 * * * * /home/deployer/warehouse/scripts/monitor_repo.sh
+#
+# UWAGA: Ten skrypt jest przeznaczony dla modelu "Pull-based Deployment" (GitOps).
+# Jeśli używasz skryptu 'deploy_to_vps.ps1' (Push-based), ten monitor może nadpisywać zmiany
+# lub powodować konflikty. Używaj tylko jednej metody deploymentu!
 # ==============================================================================
 
 APP_DIR="/home/deployer/warehouse"

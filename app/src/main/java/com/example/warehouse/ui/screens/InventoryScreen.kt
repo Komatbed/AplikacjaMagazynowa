@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FilterList
@@ -37,7 +37,6 @@ fun InventoryScreen(
     val profiles by viewModel.profiles.collectAsState()
     val colors by viewModel.colors.collectAsState()
     val isLoading by viewModel.isLoading
-    val error by viewModel.error
 
     // Filters
     var selectedProfile by remember { mutableStateOf<String?>(null) }
@@ -75,7 +74,7 @@ fun InventoryScreen(
                 title = { Text("STAN MAGAZYNOWY", color = SafetyOrange) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, "Wstecz", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Wstecz", tint = Color.White)
                     }
                 },
                 actions = {

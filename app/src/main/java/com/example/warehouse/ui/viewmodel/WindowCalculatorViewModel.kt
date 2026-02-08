@@ -91,16 +91,13 @@ class WindowCalculatorViewModel : ViewModel() {
         val sashOuterH = frameClearH + 2 * sys.overlap
         val glassH = sashOuterH - sys.glassDeduction
         
-        var sashOuterW = 0
-        var glassW = 0
+        val sashOuterW: Int
         var mullionLen = 0
 
         if (c.sashCount == 1) {
             // Single Sash
             val frameClearW = c.widthMm - 2 * sys.frameWidth
             sashOuterW = frameClearW + 2 * sys.overlap
-            glassW = sashOuterW - sys.glassDeduction
-            mullionLen = 0
         } else {
             // 2 Sash
             if (c.hasMullion) {
@@ -120,8 +117,9 @@ class WindowCalculatorViewModel : ViewModel() {
                 val frameClearW = c.widthMm - 2 * sys.frameWidth
                 sashOuterW = (frameClearW / 2) + sys.overlap // Approximate
             }
-            glassW = sashOuterW - sys.glassDeduction
         }
+
+        val glassW = sashOuterW - sys.glassDeduction
 
         // Weight
         val glassArea = (glassW / 1000.0) * (glassH / 1000.0) * c.sashCount
