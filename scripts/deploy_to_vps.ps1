@@ -74,6 +74,13 @@ $RemoteCommands = @"
     unzip -o $ArchiveName
     rm $ArchiveName
     
+    # Tworzenie pliku issues.log jeśli nie istnieje
+    if [ ! -f issues.log ]; then
+        echo "Tworzenie pliku issues.log..."
+        touch issues.log
+        chmod 666 issues.log
+    fi
+
     # Tworzenie pliku .env jeśli nie istnieje
     if [ ! -f .env ]; then
         echo "Tworzenie domyślnego pliku .env..."

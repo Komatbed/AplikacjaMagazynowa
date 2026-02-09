@@ -5,9 +5,7 @@ import com.example.warehouse.model.Location
 import com.example.warehouse.repository.InventoryItemRepository
 import com.example.warehouse.repository.LocationRepository
 import jakarta.annotation.PostConstruct
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/v1/locations")
@@ -58,6 +56,7 @@ class LocationController(
         return locations.map { loc ->
             val locItems = itemsByLocation[loc.id] ?: emptyList()
             val profiles = locItems.map { it.profileCode }.distinct().take(3)
+            val colors = locItems.mapNotNull { it.coreColor }.filter { it.isNotEmpty() }.distinct().take(3)
             
             LocationStatusDto(
                 id = loc.id,
@@ -66,8 +65,17 @@ class LocationController(
                 paletteNumber = loc.paletteNumber,
                 isWaste = loc.isWastePalette,
                 itemCount = locItems.sumOf { it.quantity },
-                profileCodes = profiles
+                capacity = loc.capacity,
+                profileCodes = profiles,
+                coreColors = colors
             )
         }.sortedBy { it.label }
+    }
+
+    @PutMapping("/{id}/capacity")
+    fun updateCapacity(@PathVariable id: Int, @RequestBody capacity: Int): Location {
+        val location = locationRepository.findById(id).orElseThrow { RuntimeException("Location not found") }
+        val updated = location.copy(capacity = capacity)
+        return locationRepository.save(updated)
     }
 }

@@ -40,4 +40,27 @@ class SecurityKeyManager(context: Context) {
         
         return keyBytes
     }
+
+    fun saveCredentials(username: String, password: String) {
+        sharedPreferences.edit()
+            .putString("auth_username", username)
+            .putString("auth_password", password)
+            .apply()
+    }
+
+    fun getCredentials(): Pair<String, String>? {
+        val username = sharedPreferences.getString("auth_username", null)
+        val password = sharedPreferences.getString("auth_password", null)
+        if (username != null && password != null) {
+            return Pair(username, password)
+        }
+        return null
+    }
+
+    fun clearCredentials() {
+        sharedPreferences.edit()
+            .remove("auth_username")
+            .remove("auth_password")
+            .apply()
+    }
 }

@@ -17,6 +17,12 @@ import androidx.compose.runtime.State
 import kotlinx.coroutines.delay
 import java.util.Date
 import com.example.warehouse.data.repository.InventoryRepository
+import com.example.warehouse.device.BluetoothPrinterManager
+import android.bluetooth.BluetoothDevice
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.Dispatchers
+import java.net.HttpURLConnection
+import java.net.URL
 
 sealed class BackendStatus {
     object Unknown : BackendStatus()
@@ -31,6 +37,7 @@ class SettingsViewModel @JvmOverloads constructor(
 ) : AndroidViewModel(application) {
     private val settingsDataStore = SettingsDataStore(application)
     private val printerService = PrinterService()
+    val bluetoothPrinterManager = BluetoothPrinterManager(application)
 
     private val _printerStatus = mutableStateOf<String?>(null)
     val printerStatus: State<String?> = _printerStatus
@@ -38,16 +45,31 @@ class SettingsViewModel @JvmOverloads constructor(
     private val _backendStatus = mutableStateOf<BackendStatus>(BackendStatus.Unknown)
     val backendStatus: State<BackendStatus> = _backendStatus
 
-    init {
-        startPeriodicCheck()
-    }
+    private val _dbStatus = mutableStateOf<BackendStatus>(BackendStatus.Unknown)
+    val dbStatus: State<BackendStatus> = _dbStatus
 
+    private val _webStatus = mutableStateOf<BackendStatus>(BackendStatus.Unknown)
+    val webStatus: State<BackendStatus> = _webStatus
+
+    // Changed to 5 seconds per requirements
     private fun startPeriodicCheck() {
         viewModelScope.launch {
             while (true) {
-                checkBackendConnection()
-                delay(30000) // Check every 30 seconds
+                checkAllConnections()
+                delay(5000) 
             }
+        }
+    }
+
+    private fun checkAllConnections() {
+        checkBackendConnection()
+        checkDbConnection()
+        checkWebConnection()
+    }
+
+    fun connectBluetoothPrinter(device: BluetoothDevice) {
+        viewModelScope.launch {
+            bluetoothPrinterManager.connect(device)
         }
     }
 
@@ -81,6 +103,18 @@ class SettingsViewModel @JvmOverloads constructor(
         ""
     )
 
+    val skipLogin = settingsDataStore.skipLogin.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        false
+    )
+
+    fun saveSkipLogin(skip: Boolean) {
+        viewModelScope.launch {
+            settingsDataStore.saveSkipLogin(skip)
+        }
+    }
+
     fun saveSettings(url: String, ip: String, port: String, threshold: String, reservedLengths: String) {
         viewModelScope.launch {
             settingsDataStore.saveApiUrl(url)
@@ -106,16 +140,77 @@ class SettingsViewModel @JvmOverloads constructor(
             _backendStatus.value = BackendStatus.Checking
             val start = System.currentTimeMillis()
             try {
-                // Use repository to check connection
-                val result = repository.checkConnection()
-                if (result.isSuccess) {
-                    val latency = System.currentTimeMillis() - start
-                    _backendStatus.value = BackendStatus.Online(latency, Date())
-                } else {
-                    _backendStatus.value = BackendStatus.Offline(result.exceptionOrNull()?.message ?: "Błąd połączenia", Date())
+                withTimeout(10000) {
+                    // Use repository to check connection
+                    val result = repository.checkConnection()
+                    if (result.isSuccess) {
+                        val latency = System.currentTimeMillis() - start
+                        _backendStatus.value = BackendStatus.Online(latency, Date())
+                    } else {
+                        _backendStatus.value = BackendStatus.Offline(result.exceptionOrNull()?.message ?: "Błąd połączenia", Date())
+                    }
                 }
             } catch (e: Exception) {
-                _backendStatus.value = BackendStatus.Offline(e.message ?: "Błąd krytyczny", Date())
+                _backendStatus.value = BackendStatus.Offline(e.message ?: "Timeout/Błąd", Date())
+            }
+        }
+    }
+
+    private fun checkDbConnection() {
+        // Assuming DB is OK if Backend is OK (for now, as we don't have separate DB health endpoint)
+        // In a real scenario, we would call a specific endpoint like /actuator/health/db
+        viewModelScope.launch {
+             _dbStatus.value = _backendStatus.value
+        }
+    }
+
+    private fun checkWebConnection() {
+        val currentApiUrl = apiUrl.value
+        val webUrl = try {
+            val urlObj = URL(currentApiUrl)
+            "${urlObj.protocol}://${urlObj.host}"
+        } catch (e: Exception) {
+            "http://51.77.59.105"
+        }
+
+        viewModelScope.launch {
+            _webStatus.value = BackendStatus.Checking
+            val start = System.currentTimeMillis()
+            
+            try {
+                // Perform network request on IO dispatcher
+                val result = kotlinx.coroutines.withContext(Dispatchers.IO) {
+                    try {
+                        withTimeout(10000) {
+                            val url = URL(webUrl)
+                            val connection = url.openConnection() as HttpURLConnection
+                            connection.connectTimeout = 5000
+                            connection.readTimeout = 5000
+                            connection.requestMethod = "HEAD"
+                            
+                            val code = connection.responseCode
+                            connection.disconnect()
+                            
+                            if (code in 200..399) {
+                                Result.success(code)
+                            } else {
+                                Result.failure(Exception("HTTP $code"))
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Result.failure(e)
+                    }
+                }
+                
+                // Update state on Main dispatcher (default for viewModelScope)
+                result.onSuccess {
+                    val latency = System.currentTimeMillis() - start
+                    _webStatus.value = BackendStatus.Online(latency, Date())
+                }.onFailure { e ->
+                    _webStatus.value = BackendStatus.Offline(e.message ?: "Web Unreachable", Date())
+                }
+            } catch (e: Exception) {
+                _webStatus.value = BackendStatus.Offline(e.message ?: "Unexpected Error", Date())
             }
         }
     }
@@ -136,5 +231,9 @@ class SettingsViewModel @JvmOverloads constructor(
             val result = printerService.printTestLabel(ip, portInt)
             _printerStatus.value = result.getOrElse { it.message }
         }
+    }
+
+    init {
+        startPeriodicCheck()
     }
 }

@@ -44,7 +44,9 @@ import kotlinx.coroutines.launch
 import com.example.warehouse.ui.screens.AddInventoryScreen
 import com.example.warehouse.ui.screens.AuditLogScreen
 import com.example.warehouse.ui.screens.FileOptimizationScreen
+import com.example.warehouse.ui.screens.LoginScreen
 import com.example.warehouse.ui.screens.TrainingScreen
+import com.example.warehouse.ui.viewmodel.AuthViewModel
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,6 +71,7 @@ class MainActivity : ComponentActivity() {
                     // Safety wrap viewmodel creation
                     val inventoryViewModel: InventoryViewModel = viewModel()
                     val settingsViewModel: SettingsViewModel = viewModel()
+                    val authViewModel: AuthViewModel = viewModel()
                     
                     // Initialize Network with saved URL
                     val apiUrl by settingsViewModel.apiUrl.collectAsState()
@@ -91,9 +94,23 @@ class MainActivity : ComponentActivity() {
                     // Offline Status
                     val error by inventoryViewModel.error
                     val isOffline = error?.contains("offline", ignoreCase = true) == true
+                    
+                    val authState by authViewModel.uiState.collectAsState()
 
-                    NavHost(navController = navController, startDestination = "home") {
+                    NavHost(navController = navController, startDestination = "login") {
                         
+                        // LOGIN SCREEN
+                        composable("login") {
+                            LoginScreen(
+                                viewModel = authViewModel,
+                                onLoginSuccess = {
+                                    navController.navigate("home") {
+                                        popUpTo("login") { inclusive = true }
+                                    }
+                                }
+                            )
+                        }
+
                         // HOME SCREEN
                         composable("home") {
                             HomeScreen(
@@ -117,7 +134,8 @@ class MainActivity : ComponentActivity() {
                                 onTrainingClick = { navController.navigate("training") },
                                 onAddInventoryClick = { navController.navigate("add_inventory") },
                                 onAuditLogClick = { navController.navigate("audit_log") },
-                                isOffline = isOffline
+                                isOffline = isOffline,
+                                isGuest = authState.isGuest
                             )
                         }
 
@@ -232,7 +250,13 @@ class MainActivity : ComponentActivity() {
                                 onBackClick = { navController.popBackStack() },
                                 onConfigClick = { navController.navigate("config") },
                                 onAuditLogClick = { navController.navigate("audit_log") },
-                                viewModel = settingsViewModel
+                                onLogoutClick = {
+                                    navController.navigate("login") {
+                                        popUpTo("home") { inclusive = true }
+                                    }
+                                },
+                                viewModel = settingsViewModel,
+                                authViewModel = authViewModel
                             )
                         }
 

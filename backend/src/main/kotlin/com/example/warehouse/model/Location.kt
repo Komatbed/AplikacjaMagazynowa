@@ -19,5 +19,8 @@ data class Location(
     val label: String, // e.g. "01A"
 
     @Column(name = "is_waste_palette")
-    val isWastePalette: Boolean = false
+    val isWastePalette: Boolean = false,
+
+    @Column(name = "capacity")
+    val capacity: Int = 50
 )

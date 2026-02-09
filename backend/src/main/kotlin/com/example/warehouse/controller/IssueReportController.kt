@@ -13,6 +13,8 @@ class IssueReportController(
     private val repository: IssueReportRepository
 ) {
 
+    private val logFile = java.io.File("issues.log")
+
     @PostMapping
     fun createIssue(@RequestBody request: IssueReportRequest): IssueReport {
         val issue = IssueReport(
@@ -24,11 +26,28 @@ class IssueReportController(
             createdAt = LocalDateTime.now(),
             updatedAt = LocalDateTime.now()
         )
+        
+        // Write to file
+        try {
+            logFile.appendText("DATE: ${issue.createdAt} | DESC: ${issue.description} | PART: ${issue.partNumber} | LOC: ${request.locationLabel}\n")
+        } catch (e: Exception) {
+            println("Failed to write to issue log: ${e.message}")
+        }
+
         return repository.save(issue)
     }
 
     @GetMapping
     fun getAllIssues(): List<IssueReport> {
         return repository.findAll()
+    }
+
+    @GetMapping("/logs")
+    fun getIssueLogs(): String {
+        return if (logFile.exists()) {
+            logFile.readText()
+        } else {
+            "No logs found."
+        }
     }
 }

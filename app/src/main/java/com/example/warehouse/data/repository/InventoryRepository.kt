@@ -177,6 +177,15 @@ class InventoryRepository(
         }
     }
 
+    suspend fun updateLocationCapacity(id: Int, capacity: Int): Result<Unit> {
+        return try {
+            api.updateLocationCapacity(id, capacity)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun reportIssue(description: String, profileCode: String? = null, locationLabel: String? = null): Result<Unit> {
         return try {
             api.reportIssue(com.example.warehouse.data.model.IssueReportRequest(description, profileCode, locationLabel))

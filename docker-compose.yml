@@ -26,6 +26,9 @@ services:
       SPRING_DATASOURCE_USERNAME: ${DB_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres}
       SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+    volumes:
+      - ./logs:/app/logs
+      - ./issues.log:/app/issues.log
     depends_on:
       - db
     restart: always

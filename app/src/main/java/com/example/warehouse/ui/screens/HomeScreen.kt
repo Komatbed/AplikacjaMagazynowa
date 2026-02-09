@@ -44,6 +44,7 @@ fun HomeScreen(
     onAddInventoryClick: () -> Unit,
     onAuditLogClick: () -> Unit,
     isOffline: Boolean = false,
+    isGuest: Boolean = false,
     viewModel: DashboardViewModel = viewModel()
 ) {
     val stats by viewModel.stats.collectAsState()
@@ -87,6 +88,24 @@ fun HomeScreen(
                     }
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (isGuest) {
+                            Card(
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color.Blue.copy(alpha = 0.2f)
+                                ),
+                                shape = RoundedCornerShape(50),
+                                modifier = Modifier.padding(end = 8.dp)
+                            ) {
+                                Text(
+                                    text = "GOŚĆ",
+                                    color = Color.Blue,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            }
+                        }
+
                         Card(
                             colors = CardDefaults.cardColors(
                                 containerColor = if (isOffline) Color.Red.copy(alpha = 0.2f) else Color.Green.copy(alpha = 0.2f)
@@ -168,50 +187,64 @@ fun HomeScreen(
                     }
                 }
 
-                // Quick Actions Grid
-                Text(
-                    text = "SZYBKIE AKCJE",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = Color.Gray,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-
-                // Layout for buttons
-                // Desktop/Tablet: 4 buttons per row? Or keep existing 2 per row structure but optimize sizing
-                // User asked for "maksymalnie 4 kafelki w rzędzie na desktopie" (refers to stats? or all tiles?)
-                // Assuming stats primarily. But buttons can also be 4 per row on desktop.
+                // Quick Actions Grid - Categorized
                 
-                val buttons = listOf(
-                    Triple("SKANUJ (OCR)", Icons.Default.CameraAlt, onScanClick),
+                val warehouseButtons = listOf(
+                    Triple("STAN MAGAZYNU", Icons.Default.Inventory, onInventoryClick),
+                    Triple("DODAJ ELEMENT", Icons.Default.Add, onAddInventoryClick),
                     Triple("WYDANIE RĘCZNE", Icons.Default.Edit, onManualTakeClick),
                     Triple("MAPA MAGAZYNU", Icons.Default.Map, onMapClick),
-                    Triple("OPTYMALIZACJA", Icons.Default.ContentCut, onOptimizationClick),
-                    Triple("ZGŁOŚ PROBLEM", Icons.Default.Warning, onIssueClick),
-                    Triple("SŁOWNIKI", Icons.AutoMirrored.Filled.List, onConfigClick),
-                    Triple("SZPROSY", Icons.Default.Calculate, onMuntinClick),
-                    Triple("STAN MAGAZYNU", Icons.Default.Inventory, onInventoryClick),
-                    Triple("KALKULATOR OKIEN", Icons.Default.Window, onWindowCalcClick),
-                    Triple("REZERWACJE", Icons.Default.Bookmark, onReservationsClick),
+                    Triple("SKANUJ (OCR)", Icons.Default.CameraAlt, onScanClick),
                     Triple("SZPERACZ ODPADÓW", Icons.Default.Search, onWasteFinderClick),
-                    Triple("ASYSTENT OKUĆ", Icons.Default.Build, onHardwareClick),
+                    Triple("HISTORIA ZMIAN", Icons.Default.History, onAuditLogClick),
+                    Triple("REZERWACJE", Icons.Default.Bookmark, onReservationsClick)
+                )
+
+                val knowledgeButtons = listOf(
                     Triple("KATALOG PRODUKTÓW", Icons.AutoMirrored.Filled.MenuBook, onCatalogClick),
-                    Triple("BAZA WIEDZY", Icons.Default.Info, onTrainingClick),
-                    Triple("DODAJ ELEMENT", Icons.Default.Add, onAddInventoryClick),
-                    Triple("HISTORIA ZMIAN", Icons.Default.History, onAuditLogClick)
+                    Triple("BAZA WIEDZY", Icons.Default.Info, onTrainingClick)
+                )
+
+                val toolsButtons = listOf(
+                    Triple("KALKULATOR OKIEN", Icons.Default.Window, onWindowCalcClick),
+                    Triple("SZPROSY", Icons.Default.Calculate, onMuntinClick),
+                    Triple("OPTYMALIZACJA", Icons.Default.ContentCut, onOptimizationClick),
+                    Triple("ASYSTENT OKUĆ", Icons.Default.Build, onHardwareClick)
+                )
+
+                val adminButtons = listOf(
+                    Triple("SŁOWNIKI", Icons.AutoMirrored.Filled.List, onConfigClick),
+                    Triple("ZGŁOŚ PROBLEM", Icons.Default.Warning, onIssueClick)
                 )
 
                 val cols = if (isDesktop) 4 else if (isTablet) 3 else 2
-                
-                buttons.chunked(cols).forEach { rowButtons ->
-                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        rowButtons.forEach { (text, icon, onClick) ->
-                            DashboardButton(text, icon, onClick, Modifier.weight(1f))
+
+                // Helper function to render a section
+                @Composable
+                fun renderSection(title: String, buttons: List<Triple<String, ImageVector, () -> Unit>>) {
+                     Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.Gray,
+                        modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                    )
+                    buttons.chunked(cols).forEach { rowButtons ->
+                        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                            rowButtons.forEach { (text, icon, onClick) ->
+                                DashboardButton(text, icon, onClick, Modifier.weight(1f))
+                            }
+                            repeat(cols - rowButtons.size) {
+                                Spacer(Modifier.weight(1f))
+                            }
                         }
-                        repeat(cols - rowButtons.size) {
-                            Spacer(Modifier.weight(1f))
-                        }
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
+
+                renderSection("MAGAZYN", warehouseButtons)
+                renderSection("BAZA WIEDZY", knowledgeButtons)
+                renderSection("NARZĘDZIA", toolsButtons)
+                renderSection("ADMINISTRACJA", adminButtons)
             }
         }
     }

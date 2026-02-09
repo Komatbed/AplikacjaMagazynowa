@@ -7,5 +7,7 @@ data class LocationStatusDto(
     val paletteNumber: Int,
     val isWaste: Boolean,
     val itemCount: Int,
-    val profileCodes: List<String>
+    val capacity: Int,
+    val profileCodes: List<String>,
+    val coreColors: List<String>
 )

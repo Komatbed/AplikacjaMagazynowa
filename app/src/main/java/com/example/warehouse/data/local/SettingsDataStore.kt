@@ -21,10 +21,20 @@ class SettingsDataStore(private val context: Context) {
         val SCRAP_THRESHOLD = intPreferencesKey("scrap_threshold") // in mm
         val PREFER_WASTE_RESERVATION = androidx.datastore.preferences.core.booleanPreferencesKey("prefer_waste_reservation")
         val RESERVED_WASTE_LENGTHS = stringPreferencesKey("reserved_waste_lengths") // Comma separated
+        val REMEMBERED_USERNAME = stringPreferencesKey("remembered_username")
+        val SKIP_LOGIN = androidx.datastore.preferences.core.booleanPreferencesKey("skip_login")
     }
 
     val apiUrl: Flow<String> = context.dataStore.data.map { preferences ->
         preferences[API_URL] ?: "https://51.77.59.105/api/v1/"
+    }
+
+    val rememberedUsername: Flow<String?> = context.dataStore.data.map { preferences ->
+        preferences[REMEMBERED_USERNAME]
+    }
+
+    val skipLogin: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[SKIP_LOGIN] ?: false
     }
 
     val preferWasteReservation: Flow<Boolean> = context.dataStore.data.map { preferences ->
@@ -80,6 +90,22 @@ class SettingsDataStore(private val context: Context) {
     suspend fun saveReservedWasteLengths(lengths: String) {
         context.dataStore.edit { preferences ->
             preferences[RESERVED_WASTE_LENGTHS] = lengths
+        }
+    }
+
+    suspend fun saveRememberedUsername(username: String?) {
+        context.dataStore.edit { preferences ->
+            if (username != null) {
+                preferences[REMEMBERED_USERNAME] = username
+            } else {
+                preferences.remove(REMEMBERED_USERNAME)
+            }
+        }
+    }
+
+    suspend fun saveSkipLogin(skip: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[SKIP_LOGIN] = skip
         }
     }
 }

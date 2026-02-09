@@ -40,4 +40,14 @@ class WarehouseMapViewModel(application: Application) : AndroidViewModel(applica
             _isLoading.value = false
         }
     }
+
+    fun updateCapacity(id: Int, capacity: Int) {
+        viewModelScope.launch {
+            repository.updateLocationCapacity(id, capacity).onSuccess {
+                loadMap() // Refresh to reflect changes
+            }.onFailure {
+                _error.value = "Błąd aktualizacji pojemności: ${it.message}"
+            }
+        }
+    }
 }

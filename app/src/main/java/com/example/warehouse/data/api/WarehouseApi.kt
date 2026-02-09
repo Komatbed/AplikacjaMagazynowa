@@ -72,6 +72,9 @@ interface WarehouseApi {
     @GET("locations/map")
     suspend fun getWarehouseMap(): List<LocationStatusDto>
 
+    @PUT("locations/{id}/capacity")
+    suspend fun updateLocationCapacity(@Path("id") id: Int, @Body capacity: Int): Any
+
     @POST("issues")
     suspend fun reportIssue(@Body request: IssueReportRequest): Any
 

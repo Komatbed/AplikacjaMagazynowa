@@ -2,6 +2,8 @@ package com.example.warehouse.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -103,9 +105,25 @@ fun AddInventoryScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Delivery Days Info
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("DNI DOSTAW", style = MaterialTheme.typography.titleSmall, color = SafetyOrange, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Veka: Poniedziałek, Czwartek", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    Text("Salamander: Wtorek, Piątek", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    Text("Aluron: Środa", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                    Text("Panele: Środa", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                }
+            }
+
             // Presets Row
             if (presets.isNotEmpty()) {
                 Text("SZYBKI WYBÓR (PRESETY)", style = MaterialTheme.typography.labelMedium, color = Color.Gray)

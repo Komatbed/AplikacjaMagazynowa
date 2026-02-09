@@ -26,6 +26,9 @@ services:
       SPRING_DATASOURCE_USERNAME: ${DB_USER}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       # JWT_SECRET: ${JWT_SECRET} # To be implemented
+    volumes:
+      - ./logs:/app/logs
+      - ./issues.log:/app/issues.log
     depends_on:
       - db
     restart: always

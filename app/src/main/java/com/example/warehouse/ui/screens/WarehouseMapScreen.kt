@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -38,6 +39,39 @@ fun WarehouseMapScreen(
     
     // Stan dla wybranej palety (do podglądu)
     var selectedLocation by remember { mutableStateOf<LocationStatusDto?>(null) }
+    
+    // Stan dla edycji pojemności
+    var showCapacityDialog by remember { mutableStateOf(false) }
+    var newCapacityStr by remember { mutableStateOf("") }
+
+    if (showCapacityDialog && selectedLocation != null) {
+        AlertDialog(
+            onDismissRequest = { showCapacityDialog = false },
+            title = { Text("Ustaw pojemność palety") },
+            text = {
+                OutlinedTextField(
+                    value = newCapacityStr,
+                    onValueChange = { newCapacityStr = it.filter { char -> char.isDigit() } },
+                    label = { Text("Pojemność (szt.)") },
+                    singleLine = true
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val cap = newCapacityStr.toIntOrNull()
+                        if (cap != null && cap > 0) {
+                            viewModel.updateCapacity(selectedLocation!!.id, cap)
+                            showCapacityDialog = false
+                        }
+                    }
+                ) { Text("Zapisz") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCapacityDialog = false }) { Text("Anuluj") }
+            }
+        )
+    }
 
     // Group by Rack Column (1, 2, 3... 25)
     // We want to display these groups horizontally (01, 02, 03...)
@@ -173,12 +207,70 @@ fun WarehouseMapScreen(
                             
                             HorizontalDivider(color = Color.Gray)
                             
-                            Text(
-                                text = "Ilość: ${selectedLocation?.itemCount} szt.",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = Color.White
-                            )
+                            // Capacity Row
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Pojemność: ${selectedLocation?.itemCount} / ${selectedLocation?.capacity ?: 50}",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = Color.White
+                                )
+                                IconButton(onClick = { 
+                                    newCapacityStr = (selectedLocation?.capacity ?: 50).toString()
+                                    showCapacityDialog = true 
+                                }) {
+                                    Icon(androidx.compose.material.icons.Icons.Filled.Edit, "Edytuj", tint = SafetyOrange)
+                                }
+                            }
                             
+                            // Visualisation
+                            val capacity = selectedLocation?.capacity ?: 50
+                            val count = selectedLocation?.itemCount ?: 0
+                            val percent = (count.toFloat() / capacity).coerceIn(0f, 1f)
+                            val coreColors = selectedLocation?.coreColors ?: emptyList()
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(32.dp)
+                                    .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
+                                    .border(1.dp, Color.Gray, RoundedCornerShape(4.dp))
+                            ) {
+                                if (percent > 0) {
+                                    Row(modifier = Modifier.fillMaxWidth(percent).fillMaxHeight()) {
+                                        if (coreColors.isNotEmpty()) {
+                                            coreColors.forEach { colorName ->
+                                                Box(
+                                                    modifier = Modifier
+                                                        .weight(1f)
+                                                        .fillMaxHeight()
+                                                        .background(parseCoreColor(colorName))
+                                                )
+                                            }
+                                        } else {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .background(SafetyOrange)
+                                            )
+                                        }
+                                    }
+                                }
+                                
+                                Text(
+                                    text = "${(percent * 100).toInt()}%",
+                                    modifier = Modifier.align(Alignment.Center),
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        shadow = androidx.compose.ui.graphics.Shadow(Color.Black, blurRadius = 2f)
+                                    ),
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
                             val codes = selectedLocation?.profileCodes ?: emptyList()
                             Text(
                                 text = if (codes.isNotEmpty()) "Zawartość: ${codes.joinToString(", ")}" else "Zawartość: Pusta",
@@ -262,24 +354,46 @@ fun LocationCell(
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "${location.itemCount} szt.",
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.White
+                text = "${location.itemCount} / ${location.capacity} szt.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White.copy(alpha = 0.9f)
             )
             
-            // Etykieta zawartości (15 znaków)
-            val codes = location.profileCodes ?: emptyList()
-            if (codes.isNotEmpty()) {
-                val contentLabel = codes.joinToString(", ")
-                Text(
-                    text = if (contentLabel.length > 15) contentLabel.take(15) + "..." else contentLabel,
-                    style = MaterialTheme.typography.labelSmall, // Mała czcionka
-                    color = Color.White.copy(alpha = 0.9f),
-                    maxLines = 1,
-                    fontWeight = FontWeight.SemiBold
-                )
+            // Mini visualization in cell
+            val colors = location.coreColors ?: emptyList()
+            if (colors.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(8.dp)
+                        .background(Color.Black.copy(alpha = 0.3f), RoundedCornerShape(2.dp))
+                        .padding(1.dp)
+                ) {
+                    colors.forEach { colorName ->
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .background(parseCoreColor(colorName))
+                        )
+                    }
+                }
             }
         }
+    }
+}
+
+fun parseCoreColor(colorName: String): Color {
+    return when (colorName.lowercase()) {
+        "biały", "white", "bialy" -> Color.White
+        "brąz", "brown", "braz" -> Color(0xFF5D4037)
+        "karmel", "caramel" -> Color(0xFFD7CCC8)
+        "szary", "grey", "gray" -> Color.Gray
+        "antracyt", "anthracite" -> Color.DarkGray
+        "czarny", "black" -> Color.Black
+        else -> Color.LightGray
     }
 }
