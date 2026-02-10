@@ -305,6 +305,7 @@ fun EditProfileDialog(
     onConfirm: (ProfileDefinition) -> Unit
 ) {
     var code by remember { mutableStateOf(initial?.code ?: "") }
+    var codeError by remember { mutableStateOf(false) }
     var description by remember { mutableStateOf(initial?.description ?: "") }
     var system by remember { mutableStateOf(initial?.system ?: "") }
     var manufacturer by remember { mutableStateOf(initial?.manufacturer ?: "") }
@@ -327,9 +328,14 @@ fun EditProfileDialog(
             ) {
                 OutlinedTextField(
                     value = code,
-                    onValueChange = { code = it },
+                    onValueChange = { 
+                        code = it
+                        codeError = false
+                    },
                     label = { Text("Kod") },
                     singleLine = true,
+                    isError = codeError,
+                    supportingText = { if (codeError) Text("Kod jest wymagany", color = MaterialTheme.colorScheme.error) },
                     colors = configInputColors()
                 )
                 OutlinedTextField(
@@ -386,7 +392,9 @@ fun EditProfileDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    if (code.isNotBlank()) {
+                    if (code.isBlank()) {
+                        codeError = true
+                    } else {
                         onConfirm(
                             ProfileDefinition(
                                 id = initial?.id,
@@ -421,6 +429,7 @@ fun EditColorDialog(
     onConfirm: (ColorDefinition) -> Unit
 ) {
     var code by remember { mutableStateOf(initial?.code ?: "") }
+    var codeError by remember { mutableStateOf(false) }
     var description by remember { mutableStateOf(initial?.description ?: "") }
     var name by remember { mutableStateOf(initial?.name ?: "") }
     var paletteCode by remember { mutableStateOf(initial?.paletteCode ?: "") }
@@ -439,9 +448,14 @@ fun EditColorDialog(
             ) {
                 OutlinedTextField(
                     value = code,
-                    onValueChange = { code = it },
+                    onValueChange = { 
+                        code = it 
+                        codeError = false
+                    },
                     label = { Text("Kod") },
                     singleLine = true,
+                    isError = codeError,
+                    supportingText = { if (codeError) Text("Kod jest wymagany", color = MaterialTheme.colorScheme.error) },
                     colors = configInputColors()
                 )
                 OutlinedTextField(
@@ -477,7 +491,9 @@ fun EditColorDialog(
         confirmButton = {
             Button(
                 onClick = {
-                    if (code.isNotBlank()) {
+                    if (code.isBlank()) {
+                        codeError = true
+                    } else {
                         onConfirm(
                             ColorDefinition(
                                 id = initial?.id,

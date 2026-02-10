@@ -4,6 +4,7 @@ import com.example.warehouse.model.ColorDefinition
 import com.example.warehouse.model.ProfileDefinition
 import com.example.warehouse.repository.ColorDefinitionRepository
 import com.example.warehouse.repository.ProfileDefinitionRepository
+import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 
 import com.example.warehouse.service.CoreColorService
@@ -29,12 +30,12 @@ class ConfigurationController(
     }
 
     @PostMapping("/profiles")
-    fun addProfile(@RequestBody profile: ProfileDefinition): ProfileDefinition {
+    fun addProfile(@Valid @RequestBody profile: ProfileDefinition): ProfileDefinition {
         return profileRepository.save(profile)
     }
 
     @PutMapping("/profiles/{id}")
-    fun updateProfile(@PathVariable id: java.util.UUID, @RequestBody profile: ProfileDefinition): ProfileDefinition {
+    fun updateProfile(@PathVariable id: java.util.UUID, @Valid @RequestBody profile: ProfileDefinition): ProfileDefinition {
         // Ensure ID matches or simple save if we assume it overwrites
         // Ideally fetch and update
         val existing = profileRepository.findById(id).orElseThrow { RuntimeException("Profile not found") }
@@ -62,12 +63,12 @@ class ConfigurationController(
     }
 
     @PostMapping("/colors")
-    fun addColor(@RequestBody color: ColorDefinition): ColorDefinition {
+    fun addColor(@Valid @RequestBody color: ColorDefinition): ColorDefinition {
         return colorRepository.save(color)
     }
 
     @PutMapping("/colors/{id}")
-    fun updateColor(@PathVariable id: java.util.UUID, @RequestBody color: ColorDefinition): ColorDefinition {
+    fun updateColor(@PathVariable id: java.util.UUID, @Valid @RequestBody color: ColorDefinition): ColorDefinition {
         val existing = colorRepository.findById(id).orElseThrow { RuntimeException("Color not found") }
         val updated = existing.copy(
             code = color.code,

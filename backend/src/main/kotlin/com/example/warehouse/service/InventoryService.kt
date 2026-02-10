@@ -174,6 +174,103 @@ class InventoryService(
         return inventoryItemRepository.save(item)
     }
 
+    @Transactional
+    fun reserveItem(request: com.example.warehouse.dto.ReservationRequest): InventoryItem {
+        val item = inventoryItemRepository.findById(request.itemId).orElseThrow {
+            IllegalArgumentException("Nie znaleziono przedmiotu o ID: ${request.itemId}")
+        }
+
+        if (item.status != ItemStatus.AVAILABLE) {
+             throw IllegalStateException("Przedmiot nie jest dostępny (Status: ${item.status})")
+        }
+
+        if (request.quantity > item.quantity) {
+             throw IllegalArgumentException("Niewystarczająca ilość do rezerwacji. Dostępne: ${item.quantity}")
+        }
+
+        // If reserving partial quantity
+        if (request.quantity < item.quantity) {
+             // Reduce original item quantity
+             item.quantity -= request.quantity
+             inventoryItemRepository.save(item)
+
+             // Create new item for reservation
+             val reservedItem = item.copy(
+                 id = UUID.randomUUID(),
+                 quantity = request.quantity,
+                 status = ItemStatus.RESERVED,
+                 reservedBy = request.reservedBy,
+                 reservationDate = java.time.LocalDateTime.now(),
+                 createdAt = java.time.LocalDateTime.now(),
+                 updatedAt = java.time.LocalDateTime.now()
+             )
+             val savedReserved = inventoryItemRepository.save(reservedItem)
+             
+             logOperation("RESERVATION", savedReserved, request.quantity, "Rezerwacja dla ${request.reservedBy} ${request.notes ?: ""}")
+             broadcastLocationUpdate(item.location.label)
+             return savedReserved
+        } else {
+             // Reserving full quantity
+             item.status = ItemStatus.RESERVED
+             item.reservedBy = request.reservedBy
+             item.reservationDate = java.time.LocalDateTime.now()
+             item.updatedAt = java.time.LocalDateTime.now()
+             val savedItem = inventoryItemRepository.save(item)
+             
+             logOperation("RESERVATION", savedItem, 0, "Rezerwacja całości dla ${request.reservedBy} ${request.notes ?: ""}")
+             broadcastLocationUpdate(item.location.label)
+             return savedItem
+        }
+    }
+
+    @Transactional
+    fun cancelReservation(request: com.example.warehouse.dto.ReservationCancelRequest): InventoryItem {
+         val item = inventoryItemRepository.findById(request.itemId).orElseThrow {
+            IllegalArgumentException("Nie znaleziono przedmiotu o ID: ${request.itemId}")
+        }
+
+        if (item.status != ItemStatus.RESERVED) {
+             throw IllegalStateException("Przedmiot nie jest zarezerwowany.")
+        }
+
+        // Revert status
+        item.status = ItemStatus.AVAILABLE
+        item.reservedBy = null
+        item.reservationDate = null
+        item.updatedAt = java.time.LocalDateTime.now()
+        
+        val savedItem = inventoryItemRepository.save(item)
+        
+        logOperation("RESERVATION_CANCEL", savedItem, 0, "Anulowanie rezerwacji")
+        broadcastLocationUpdate(item.location.label)
+        return savedItem
+    }
+
+    @Transactional
+    fun completeReservation(request: com.example.warehouse.dto.ReservationCancelRequest): InventoryTakeResponse {
+         val item = inventoryItemRepository.findById(request.itemId).orElseThrow {
+            IllegalArgumentException("Nie znaleziono przedmiotu o ID: ${request.itemId}")
+        }
+
+        if (item.status != ItemStatus.RESERVED) {
+             throw IllegalStateException("Przedmiot nie jest zarezerwowany.")
+        }
+        
+        val qty = item.quantity
+        val reservedBy = item.reservedBy
+        
+        // Delete the item as it is taken
+        inventoryItemRepository.delete(item)
+        
+        // We need to create a dummy item for logging or just log properties
+        // But logOperation takes InventoryItem. 
+        // We can pass the deleted item object (it still exists in memory)
+        logOperation("ISSUE", item, -qty, "Realizacja rezerwacji dla $reservedBy")
+        broadcastLocationUpdate(item.location.label)
+        
+        return InventoryTakeResponse(status="SUCCESS", newQuantity=0)
+    }
+
     private fun logOperation(type: String, item: InventoryItem, quantityChange: Int, reason: String?) {
         val log = OperationLog(
             operationType = type,

@@ -49,9 +49,12 @@ class InventoryController(
         @RequestParam(required = false) profileCode: String?,
         @RequestParam(required = false) internalColor: String?,
         @RequestParam(required = false) externalColor: String?,
-        @RequestParam(required = false) coreColor: String?
-    ): List<InventoryItem> {
-        return inventoryItemRepository.findFiltered(location, profileCode, internalColor, externalColor, coreColor)
+        @RequestParam(required = false) coreColor: String?,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") size: Int
+    ): org.springframework.data.domain.Page<InventoryItem> {
+        val pageable = org.springframework.data.domain.PageRequest.of(page, size)
+        return inventoryItemRepository.findFiltered(location, profileCode, internalColor, externalColor, coreColor, pageable)
     }
 
     @PostMapping("/take")
@@ -81,6 +84,21 @@ class InventoryController(
     @PostMapping("/issue")
     fun registerIssue(@RequestBody request: InventoryTakeRequest): InventoryTakeResponse {
         return inventoryService.takeItem(request)
+    }
+
+    @PostMapping("/reserve")
+    fun reserveItem(@RequestBody request: com.example.warehouse.dto.ReservationRequest): InventoryItem {
+        return inventoryService.reserveItem(request)
+    }
+
+    @PostMapping("/reserve/cancel")
+    fun cancelReservation(@RequestBody request: com.example.warehouse.dto.ReservationCancelRequest): InventoryItem {
+        return inventoryService.cancelReservation(request)
+    }
+
+    @PostMapping("/reserve/complete")
+    fun completeReservation(@RequestBody request: com.example.warehouse.dto.ReservationCancelRequest): InventoryTakeResponse {
+        return inventoryService.completeReservation(request)
     }
 
     @PutMapping("/items/{id}/length")

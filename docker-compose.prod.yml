@@ -35,38 +35,22 @@ services:
     networks:
       - warehouse-net
 
-  # Web UI Service
+  # Web UI Service (Frontend + Nginx Proxy)
   web:
     build:
-      context: ./webApplication
+      context: ./web
       dockerfile: Dockerfile
     container_name: warehouse-web-prod
     ports:
-      - "81:80" # Internal port for testing or direct access if needed, main access via Nginx
+      - "80:80"
     depends_on:
       - backend
     restart: always
     networks:
       - warehouse-net
 
-  # Nginx Reverse Proxy
-  nginx:
-    image: nginx:alpine
-    container_name: warehouse-nginx-prod
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx_ssl.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    depends_on:
-      - backend
-      - web
-    restart: always
-    networks:
-      - warehouse-net
+  # Nginx Service Removed (Integrated into Web)
+  # nginx: ...
 
   # Monitoring - Prometheus
   prometheus:

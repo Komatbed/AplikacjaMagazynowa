@@ -1,6 +1,7 @@
 package com.example.warehouse.model
 
 import jakarta.persistence.*
+import jakarta.validation.constraints.NotBlank
 import java.util.UUID
 
 @Entity
@@ -10,6 +11,7 @@ data class ProfileDefinition(
     @GeneratedValue(strategy = GenerationType.UUID)
     val id: UUID = UUID.randomUUID(),
 
+    @field:NotBlank(message = "Kod profilu jest wymagany")
     @Column(name = "code", nullable = false, unique = true)
     val code: String,
 
@@ -46,6 +48,7 @@ data class ColorDefinition(
     @GeneratedValue(strategy = GenerationType.UUID)
     val id: UUID = UUID.randomUUID(),
 
+    @field:NotBlank(message = "Kod koloru jest wymagany")
     @Column(name = "code", nullable = false, unique = true)
     val code: String, // e.g. RAL9016
 

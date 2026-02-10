@@ -63,7 +63,7 @@ object NetworkModule {
             override fun getAcceptedIssuers(): Array<java.security.cert.X509Certificate> = arrayOf()
         })
 
-        val sslContext = javax.net.ssl.SSLContext.getInstance("SSL")
+        val sslContext = javax.net.ssl.SSLContext.getInstance("TLS")
         sslContext.init(null, trustAllCerts, java.security.SecureRandom())
         val sslSocketFactory = sslContext.socketFactory
 

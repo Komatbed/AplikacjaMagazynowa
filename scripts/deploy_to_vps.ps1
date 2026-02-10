@@ -35,12 +35,12 @@ $ArchiveName = "deploy_package.zip"
 
 if (Test-Path $ArchiveName) { Remove-Item $ArchiveName }
 
-if (-not (Test-Path "backend") -or -not (Test-Path "docker-compose.prod.yml")) {
+if (-not (Test-Path "backend") -or -not (Test-Path "web") -or -not (Test-Path "docker-compose.prod.yml")) {
     Write-Error "Nie znaleziono wymaganych plików w $ProjectRoot (backend, docker-compose.prod.yml). Upewnij się, że skrypt jest w katalogu scripts/."
     exit 1
 }
 
-Compress-Archive -Path "backend", "webApplication", "nginx", "monitoring", "docker-compose.prod.yml", ".env.example" -DestinationPath $ArchiveName -Force -ErrorAction Stop
+Compress-Archive -Path "backend", "web", "monitoring", "docker-compose.prod.yml", ".env.example" -DestinationPath $ArchiveName -Force -ErrorAction Stop
 
 
 # 3. Wysyłanie plików (SCP)
@@ -92,31 +92,18 @@ $RemoteCommands = @"
         echo "GRAFANA_PASSWORD=admin" >> .env
     fi
 
-    # SSL Setup (Self-Signed) if missing
-    if [ ! -f nginx/ssl/nginx-selfsigned.crt ]; then
-        echo "Generowanie certyfikatu SSL..."
-        mkdir -p nginx/ssl
-        openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-            -keyout nginx/ssl/nginx-selfsigned.key \
-            -out nginx/ssl/nginx-selfsigned.crt \
-            -subj "/C=PL/ST=Mazowieckie/L=Warsaw/O=Warehouse/OU=IT/CN=51.77.59.105"
-        chmod 644 nginx/ssl/nginx-selfsigned.crt
-        chmod 600 nginx/ssl/nginx-selfsigned.key
-    fi
-
-    # Restart usługi
-    echo "Restartowanie aplikacji..."
-    # Próba restartu przez systemctl (jeśli usługa istnieje), w przeciwnym razie bezpośrednio docker
-    if systemctl list-units --full -all | grep -Fq "warehouse.service"; then
-        sudo systemctl restart warehouse.service
-    else
-        # Upewnij się, że użytkownik jest w grupie docker, inaczej to może wymagać sudo
-        docker compose -f docker-compose.prod.yml down
-        docker compose -f docker-compose.prod.yml up -d --build
-        docker image prune -f
-    fi
+    # SSL Setup (Self-Signed) is no longer needed for Nginx on host, 
+    # but might be needed if we enable SSL in container.
+    # For now, we use simple HTTP on port 80.
     
-    echo "Deployment zakończony sukcesem!"
+    # Restart Docker
+    echo "Restarting Docker containers..."
+    sudo docker-compose -f docker-compose.prod.yml down --remove-orphans
+    sudo docker-compose -f docker-compose.prod.yml up -d --build
+    
+    echo "Deployment zakończony! Sprawdź:"
+    echo "Web: http://$VPS_IP"
+    echo "API: http://$VPS_IP/api/v1/health"
 "@
 
 # Encode remote commands to Base64 to avoid CRLF/escaping issues

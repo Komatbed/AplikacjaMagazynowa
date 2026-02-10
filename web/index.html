@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Cyfrowy Model Hali - Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body>
+
+    <header>
+        <h1>Warehouse Management System</h1>
+        <nav>
+            <ul>
+                <li><a href="#dashboard" class="active">Mapa Hali</a></li>
+                <li><a href="#warehouse-list">Magazyn (Lista)</a></li>
+                <li><a href="#reservations">Zamówienia / Rezerwacje</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Loader -->
+        <div id="loader" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:1000;">
+            <div style="border: 8px solid #f3f3f3; border-top: 8px solid #3498db; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite;"></div>
+        </div>
+        
+        <!-- Dashboard Section -->
+        <div id="dashboard" class="section active">
+            <h2>Mapa Magazynu (Live)</h2>
+            <div class="legend" style="text-align: center; margin-bottom: 20px;">
+                <span style="display:inline-block;width:15px;height:15px;background:#27ae60;margin-right:5px;vertical-align:middle;"></span> Wolne (<20%)
+                <span style="display:inline-block;width:15px;height:15px;background:#f39c12;margin-right:5px;vertical-align:middle;"></span> Średnie
+                <span style="display:inline-block;width:15px;height:15px;background:#e74c3c;margin-right:5px;vertical-align:middle;"></span> Pełne (>80%)
+                <span style="display:inline-block;width:15px;height:15px;background:black;border:1px solid red;margin-right:5px;vertical-align:middle;"></span> Przeciążenie
+            </div>
+            <div id="warehouse-grid"></div>
+        </div>
+
+        <!-- Inventory List Section -->
+        <div id="warehouse-list" class="section">
+            <h2>Stan Magazynowy</h2>
+            
+            <!-- Filters -->
+            <div style="background: white; padding: 15px; border-radius: 5px; margin-bottom: 15px; display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;">
+                <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
+                    <label>Kod Profilu</label>
+                    <input type="text" id="filter-profile" placeholder="np. 3000205">
+                </div>
+                <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
+                    <label>Lokalizacja</label>
+                    <input type="text" id="filter-location" placeholder="np. 01A">
+                </div>
+                <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 150px;">
+                    <label>Kolor wew.</label>
+                    <input type="text" id="filter-color-int" placeholder="np. ANTRACYT">
+                </div>
+                <button class="btn btn-primary" onclick="loadInventory(0)">Szukaj</button>
+                <button class="btn btn-warning" onclick="clearFilters()">Wyczyść</button>
+            </div>
+
+            <table id="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Lokalizacja</th>
+                        <th>Profil</th>
+                        <th>Długość</th>
+                        <th>Ilość</th>
+                        <th>Status</th>
+                        <th>Akcje</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Rows will be injected here -->
+                </tbody>
+            </table>
+            <div id="pagination-controls" style="margin-top: 15px; text-align: center;">
+                <!-- Buttons injected by JS -->
+            </div>
+        </div>
+
+        <!-- Reservations Section -->
+        <div id="reservations" class="section">
+            <h2>Aktywne Zamówienia i Rezerwacje</h2>
+            <div style="margin-bottom: 10px;">
+                <button class="btn btn-primary" onclick="loadReservations()">Odśwież</button>
+            </div>
+            <table id="reservation-table">
+                <thead>
+                    <tr>
+                        <th>Profil</th>
+                        <th>Długość</th>
+                        <th>Ilość</th>
+                        <th>Zamawiający</th>
+                        <th>Data Rezerwacji</th>
+                        <th>Akcje</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Rows will be injected here -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Reserve Modal -->
+    <div id="reserve-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeReserveModal()">&times;</span>
+            <h3 id="reserve-title">Rezerwacja</h3>
+            <div class="form-group">
+                <label>Ilość:</label>
+                <input type="number" id="reserve-qty" min="1">
+            </div>
+            <div class="form-group">
+                <label>Zamawiający (Imię/Dział):</label>
+                <input type="text" id="reserve-user" placeholder="np. Produkcja">
+            </div>
+            <div class="form-group">
+                <label>Uwagi:</label>
+                <input type="text" id="reserve-notes" placeholder="np. Zamówienie #123">
+            </div>
+            <button class="btn btn-primary" onclick="submitReservation()">Zatwierdź</button>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

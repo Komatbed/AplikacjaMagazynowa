@@ -36,7 +36,7 @@ services:
   # Web UI Service
   web:
     build:
-      context: ./webApplication
+      context: ./web
       dockerfile: Dockerfile
     container_name: warehouse-web
     ports:

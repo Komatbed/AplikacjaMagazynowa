@@ -15,5 +15,7 @@ data class PendingOperationEntity(
 enum class OperationType {
     REGISTER_WASTE,
     TAKE_ITEM,
-    UPDATE_ITEM_LENGTH
+    UPDATE_ITEM_LENGTH,
+    ADD_PROFILE,
+    ADD_COLOR
 }

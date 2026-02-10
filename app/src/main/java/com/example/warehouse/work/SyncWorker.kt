@@ -9,6 +9,8 @@ import com.example.warehouse.data.local.entity.OperationType
 import com.example.warehouse.data.model.InventoryTakeRequest
 import com.example.warehouse.data.model.InventoryWasteRequest
 import com.example.warehouse.data.model.InventoryItemUpdatePayload
+import com.example.warehouse.data.model.ProfileDefinition
+import com.example.warehouse.data.model.ColorDefinition
 import com.google.gson.Gson
 
 import com.example.warehouse.data.repository.ConfigRepository
@@ -55,6 +57,14 @@ class SyncWorker(
                     OperationType.UPDATE_ITEM_LENGTH -> {
                         val payload = gson.fromJson(op.payloadJson, InventoryItemUpdatePayload::class.java)
                         api.updateItemLength(payload.id, payload.length)
+                    }
+                    OperationType.ADD_PROFILE -> {
+                        val payload = gson.fromJson(op.payloadJson, ProfileDefinition::class.java)
+                        api.addProfile(payload)
+                    }
+                    OperationType.ADD_COLOR -> {
+                        val payload = gson.fromJson(op.payloadJson, ColorDefinition::class.java)
+                        api.addColor(payload)
                     }
                 }
                 // If successful, remove from queue
