@@ -24,7 +24,7 @@ class SyncWorker(
     private val pendingDao = db.pendingOperationDao()
     private val api = NetworkModule.api
     private val gson = Gson()
-    private val configRepository = ConfigRepository(db.configDao(), db.auditLogDao())
+    private val configRepository = ConfigRepository(db.configDao(), db.auditLogDao(), pendingDao)
 
     override suspend fun doWork(): Result {
         // 1. Sync Configuration (Profiles, Colors, Core Rules)

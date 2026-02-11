@@ -50,11 +50,12 @@ class InventoryController(
         @RequestParam(required = false) internalColor: String?,
         @RequestParam(required = false) externalColor: String?,
         @RequestParam(required = false) coreColor: String?,
+        @RequestParam(required = false) status: com.example.warehouse.model.ItemStatus?,
         @RequestParam(defaultValue = "0") page: Int,
         @RequestParam(defaultValue = "20") size: Int
     ): org.springframework.data.domain.Page<InventoryItem> {
         val pageable = org.springframework.data.domain.PageRequest.of(page, size)
-        return inventoryItemRepository.findFiltered(location, profileCode, internalColor, externalColor, coreColor, pageable)
+        return inventoryItemRepository.findFiltered(location, profileCode, internalColor, externalColor, coreColor, status, pageable)
     }
 
     @PostMapping("/take")

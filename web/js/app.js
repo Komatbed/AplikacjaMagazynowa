@@ -106,13 +106,11 @@ function renderInventoryTable(items) {
 async function loadReservations() {
     showLoading(true);
     try {
-        // Fetching with larger size to catch reservations, or we need dedicated endpoint
-        // Ideally: api.get('/inventory/items?status=RESERVED')
-        // Current workaround: Fetch page 0, size 100
-        const response = await api.getInventory(0, 100); 
+        // Fetch reservations using status filter
+        // We fetch page 0 with size 100 for now. Pagination for reservations can be added later.
+        const response = await api.getInventory(0, 100, { status: 'RESERVED' }); 
         const items = response.content;
-        const reservedItems = items.filter(i => i.status === 'RESERVED');
-        renderReservationTable(reservedItems);
+        renderReservationTable(items);
     } catch (e) {
         console.error(e);
     } finally {

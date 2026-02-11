@@ -26,7 +26,7 @@ class SecurityConfig(
             .cors { it.configurationSource(corsConfigurationSource()) }
             .authorizeHttpRequests { auth ->
                 auth
-                    .requestMatchers("/api/auth/**", "/ws/**", "/error").permitAll()
+                    .requestMatchers("/api/auth/**", "/ws/**", "/error", "/actuator/**", "/api/v1/config/**", "/api/v1/inventory/config").permitAll()
                     .requestMatchers("/api/admin/**").hasRole("ADMIN") // Example restriction
                     .anyRequest().authenticated()
             }

@@ -7,7 +7,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object NetworkModule {
-    // Default to VPS IP (Port 443 via Nginx/HTTPS)
+    // Default to VPS IP
     private var currentUrl = "https://51.77.59.105/api/v1/"
     
     private var retrofit: Retrofit = createRetrofit(currentUrl)
