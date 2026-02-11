@@ -23,10 +23,15 @@ class SettingsDataStore(private val context: Context) {
         val RESERVED_WASTE_LENGTHS = stringPreferencesKey("reserved_waste_lengths") // Comma separated
         val REMEMBERED_USERNAME = stringPreferencesKey("remembered_username")
         val SKIP_LOGIN = androidx.datastore.preferences.core.booleanPreferencesKey("skip_login")
+        val AUTH_TOKEN = stringPreferencesKey("auth_token")
     }
 
     val apiUrl: Flow<String> = context.dataStore.data.map { preferences ->
         preferences[API_URL] ?: "https://51.77.59.105/api/v1/"
+    }
+
+    val authToken: Flow<String?> = context.dataStore.data.map { preferences ->
+        preferences[AUTH_TOKEN]
     }
 
     val rememberedUsername: Flow<String?> = context.dataStore.data.map { preferences ->
@@ -99,6 +104,16 @@ class SettingsDataStore(private val context: Context) {
                 preferences[REMEMBERED_USERNAME] = username
             } else {
                 preferences.remove(REMEMBERED_USERNAME)
+            }
+        }
+    }
+
+    suspend fun saveAuthToken(token: String?) {
+        context.dataStore.edit { preferences ->
+            if (token != null) {
+                preferences[AUTH_TOKEN] = token
+            } else {
+                preferences.remove(AUTH_TOKEN)
             }
         }
     }

@@ -77,6 +77,20 @@ class InventoryRepository(
         return try {
             val response = api.getItems(location, profileCode, internalColor, externalColor, coreColor)
             Log.d(TAG, "refreshItems: Pobranno ${response.size} elementów z API")
+            
+            // Smart Clear: If we have specific filters that cover a full set (e.g. all items in location),
+            // we should clear that set locally to avoid ghost items (deleted on server but kept locally).
+            if (location != null && profileCode == null && internalColor == null && externalColor == null && coreColor == null) {
+                inventoryDao.deleteByLocation(location)
+            } else if (profileCode != null && location == null && internalColor == null && externalColor == null && coreColor == null) {
+                inventoryDao.deleteByProfile(profileCode)
+            } else if (location == null && profileCode == null && internalColor == null && externalColor == null && coreColor == null) {
+                // No filters = Full Sync
+                inventoryDao.clearAll()
+            }
+            // If complex filters are used, we default to Merge (Insert/Replace) without deletion, 
+            // as we can't easily delete "partial" matches without a complex DELETE query matching the API filter logic.
+
             // Save to DB
             val entities = response.map { dto ->
                 InventoryItemEntity(

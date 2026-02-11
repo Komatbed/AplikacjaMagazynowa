@@ -15,11 +15,16 @@ import com.example.warehouse.data.model.OptimizationRequest
 import com.example.warehouse.data.model.WasteRecommendationResponse
 import com.example.warehouse.data.model.ProfileDefinition
 import com.example.warehouse.data.model.ColorDefinition
+import com.example.warehouse.data.model.LoginRequest
+import com.example.warehouse.data.model.AuthResponse
 import retrofit2.http.DELETE
 import retrofit2.http.Path
 import retrofit2.http.PUT
 
 interface WarehouseApi {
+    @POST("auth/login")
+    suspend fun login(@Body request: LoginRequest): AuthResponse
+
     @GET("inventory/config")
     suspend fun getConfig(): Map<String, List<String>>
 

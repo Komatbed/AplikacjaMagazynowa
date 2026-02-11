@@ -4,6 +4,8 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.warehouse.data.local.SettingsDataStore
+import com.example.warehouse.data.NetworkModule
+import com.example.warehouse.data.model.LoginRequest
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -113,6 +115,42 @@ import kotlinx.coroutines.launch
     private fun login(event: AuthEvent.Login) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            
+            // Try API Login
+            try {
+                val response = NetworkModule.api.login(LoginRequest(event.username, event.password))
+                
+                // Success
+                NetworkModule.authToken = response.token
+                settingsDataStore.saveAuthToken(response.token)
+                
+                if (event.rememberMe) {
+                     settingsDataStore.saveRememberedUsername(event.username)
+                     securityKeyManager.saveCredentials(event.username, event.password)
+                } else {
+                     settingsDataStore.saveRememberedUsername(null)
+                     securityKeyManager.clearCredentials()
+                     settingsDataStore.saveSkipLogin(false)
+                }
+                
+                val user = User(
+                    id = response.username,
+                    username = response.username,
+                    password = event.password,
+                    role = response.role
+                )
+                handleSuccessfulLogin(user)
+                return@launch
+            } catch (e: Exception) {
+                // Continue to local fallback only if network error, not if 401
+                if (e is retrofit2.HttpException && e.code() == 403 || e is retrofit2.HttpException && e.code() == 401) {
+                    _uiState.value = _uiState.value.copy(isLoading = false, error = "Nieprawidłowe dane logowania (API)")
+                    return@launch
+                }
+                // Log error but try local
+                e.printStackTrace()
+            }
+
             delay(1500) // Simulate network delay
 
             val user = _uiState.value.users.find { it.username == event.username }

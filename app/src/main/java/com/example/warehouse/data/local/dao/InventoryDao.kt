@@ -27,6 +27,12 @@ interface InventoryDao {
     @Query("DELETE FROM inventory_items")
     suspend fun clearAll()
 
+    @Query("DELETE FROM inventory_items WHERE locationLabel = :location")
+    suspend fun deleteByLocation(location: String)
+
+    @Query("DELETE FROM inventory_items WHERE profileCode = :profileCode")
+    suspend fun deleteByProfile(profileCode: String)
+
     @Query("UPDATE inventory_items SET lengthMm = :newLength WHERE id = :id")
     suspend fun updateLength(id: String, newLength: Int)
 

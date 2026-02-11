@@ -10,10 +10,12 @@ import com.example.warehouse.controller.NotificationMessage
 import com.example.warehouse.model.InventoryItem
 import com.example.warehouse.model.ItemStatus
 import com.example.warehouse.model.OperationLog
+import com.example.warehouse.model.User
 import com.example.warehouse.repository.InventoryItemRepository
 import com.example.warehouse.repository.LocationRepository
 import com.example.warehouse.repository.OperationLogRepository
 import org.springframework.messaging.simp.SimpMessagingTemplate
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
@@ -272,12 +274,20 @@ class InventoryService(
     }
 
     private fun logOperation(type: String, item: InventoryItem, quantityChange: Int, reason: String?) {
+        val authentication = SecurityContextHolder.getContext().authentication
+        val userId = if (authentication != null && authentication.principal is User) {
+            (authentication.principal as User).id
+        } else {
+            null
+        }
+
         val log = OperationLog(
             operationType = type,
             inventoryItem = item,
             location = item.location,
             quantityChange = quantityChange,
             reason = reason,
+            userId = userId,
             timestamp = java.time.LocalDateTime.now()
         )
         operationLogRepository.save(log)

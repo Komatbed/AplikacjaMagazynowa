@@ -109,6 +109,23 @@ class SettingsViewModel @JvmOverloads constructor(
         false
     )
 
+    init {
+        startPeriodicCheck()
+        
+        // Monitor Settings changes to update NetworkModule
+        viewModelScope.launch {
+            settingsDataStore.apiUrl.collect { url ->
+                NetworkModule.updateUrl(url)
+            }
+        }
+        
+        viewModelScope.launch {
+            settingsDataStore.authToken.collect { token ->
+                NetworkModule.authToken = token
+            }
+        }
+    }
+
     fun saveSkipLogin(skip: Boolean) {
         viewModelScope.launch {
             settingsDataStore.saveSkipLogin(skip)
@@ -231,9 +248,5 @@ class SettingsViewModel @JvmOverloads constructor(
             val result = printerService.printTestLabel(ip, portInt)
             _printerStatus.value = result.getOrElse { it.message }
         }
-    }
-
-    init {
-        startPeriodicCheck()
     }
 }

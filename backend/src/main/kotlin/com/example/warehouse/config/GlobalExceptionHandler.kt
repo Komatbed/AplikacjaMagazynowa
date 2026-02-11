@@ -30,6 +30,13 @@ class GlobalExceptionHandler {
             .body(mapOf("error" to "Duplicate entry or constraint violation", "details" to (ex.message ?: "")))
     }
 
+    @ExceptionHandler(IllegalArgumentException::class)
+    fun handleIllegalArgumentException(ex: IllegalArgumentException): ResponseEntity<Map<String, String>> {
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(mapOf("error" to "Bad Request", "details" to (ex.message ?: "")))
+    }
+
     @ExceptionHandler(Exception::class)
     fun handleGenericException(ex: Exception): ResponseEntity<Map<String, String>> {
         println("Generic Exception: ${ex.message}")

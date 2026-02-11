@@ -10,6 +10,9 @@ object NetworkModule {
     // Default to VPS IP
     private var currentUrl = "https://51.77.59.105/api/v1/"
     
+    // Auth Token
+    var authToken: String? = null
+
     private var retrofit: Retrofit = createRetrofit(currentUrl)
 
     @Volatile
@@ -70,6 +73,16 @@ object NetworkModule {
         val client = OkHttpClient.Builder()
             .sslSocketFactory(sslSocketFactory, trustAllCerts[0] as javax.net.ssl.X509TrustManager)
             .hostnameVerifier { _, _ -> true }
+            .addInterceptor { chain ->
+                val original = chain.request()
+                val builder = original.newBuilder()
+                
+                authToken?.let {
+                    builder.header("Authorization", "Bearer $it")
+                }
+                
+                chain.proceed(builder.build())
+            }
             .build()
 
         return Retrofit.Builder()

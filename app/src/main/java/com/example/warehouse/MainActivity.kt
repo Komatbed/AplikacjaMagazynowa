@@ -31,6 +31,7 @@ import com.example.warehouse.ui.screens.WarehouseMapScreen
 import com.example.warehouse.ui.theme.WarehouseTheme
 import com.example.warehouse.ui.viewmodel.InventoryViewModel
 import com.example.warehouse.ui.viewmodel.SettingsViewModel
+import com.example.warehouse.ui.viewmodel.BackendStatus
 import com.example.warehouse.util.OcrProcessor
 import com.example.warehouse.util.ZplPrinter
 import com.example.warehouse.ui.screens.InventoryScreen
@@ -91,9 +92,12 @@ class MainActivity : ComponentActivity() {
                     }
                     var ocrResult by remember { mutableStateOf<OcrResult?>(null) }
                     
-                    // Offline Status
+                    // Offline Status - Combine Inventory Error with Periodic Check
                     val error by inventoryViewModel.error
-                    val isOffline = error?.contains("offline", ignoreCase = true) == true
+                    val backendStatus by settingsViewModel.backendStatus
+                    
+                    val isOffline = error?.contains("offline", ignoreCase = true) == true || 
+                                   backendStatus is BackendStatus.Offline
                     
                     val authState by authViewModel.uiState.collectAsState()
 

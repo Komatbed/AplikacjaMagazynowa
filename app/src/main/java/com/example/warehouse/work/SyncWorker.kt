@@ -14,6 +14,7 @@ import com.example.warehouse.data.model.ColorDefinition
 import com.google.gson.Gson
 
 import com.example.warehouse.data.repository.ConfigRepository
+import kotlinx.coroutines.flow.firstOrNull
 
 class SyncWorker(
     context: Context,
@@ -22,11 +23,19 @@ class SyncWorker(
 
     private val db = WarehouseDatabase.getDatabase(context)
     private val pendingDao = db.pendingOperationDao()
+    private val settingsDataStore = com.example.warehouse.data.local.SettingsDataStore(context)
     private val api = NetworkModule.api
     private val gson = Gson()
     private val configRepository = ConfigRepository(db.configDao(), db.auditLogDao(), pendingDao)
 
     override suspend fun doWork(): Result {
+        // Ensure NetworkModule has correct URL and Token
+        val url = settingsDataStore.apiUrl.firstOrNull()
+        if (url != null) NetworkModule.updateUrl(url)
+        
+        val token = settingsDataStore.authToken.firstOrNull()
+        if (token != null) NetworkModule.authToken = token
+
         // 1. Sync Configuration (Profiles, Colors, Core Rules)
         try {
             configRepository.refreshConfig()
