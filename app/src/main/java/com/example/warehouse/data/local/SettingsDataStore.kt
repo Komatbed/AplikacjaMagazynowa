@@ -21,6 +21,7 @@ class SettingsDataStore(private val context: Context) {
         val SCRAP_THRESHOLD = intPreferencesKey("scrap_threshold") // in mm
         val PREFER_WASTE_RESERVATION = androidx.datastore.preferences.core.booleanPreferencesKey("prefer_waste_reservation")
         val RESERVED_WASTE_LENGTHS = stringPreferencesKey("reserved_waste_lengths") // Comma separated
+        val CUSTOM_MULTI_CORE_COLORS = stringPreferencesKey("custom_multi_core_colors") // Comma separated
         val REMEMBERED_USERNAME = stringPreferencesKey("remembered_username")
         val SKIP_LOGIN = androidx.datastore.preferences.core.booleanPreferencesKey("skip_login")
         val AUTH_TOKEN = stringPreferencesKey("auth_token")
@@ -48,6 +49,10 @@ class SettingsDataStore(private val context: Context) {
     
     val reservedWasteLengths: Flow<String> = context.dataStore.data.map { preferences ->
         preferences[RESERVED_WASTE_LENGTHS] ?: ""
+    }
+
+    val customMultiCoreColors: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[CUSTOM_MULTI_CORE_COLORS] ?: "Złoty Dąb, Orzech, Winchester XA, Dąb Bagienny, Machoń, Daglezja, Sosna Górska, Oregon III, Dąb Rustykalny, Bazaltowo-szary, Ciemnoszary, Antracytowy Ultramatowy, Dąb Sheffield Jasny, Dąb Sheffield Szary, Kwarcowo-szary, Dąb Klejony Miodowy Super Mat, Dąb Klejony Coriander Super Mat, Dąb Klejony Pieprzowy Super Mat"
     }
 
     val printerIp: Flow<String> = context.dataStore.data.map { preferences ->
@@ -95,6 +100,12 @@ class SettingsDataStore(private val context: Context) {
     suspend fun saveReservedWasteLengths(lengths: String) {
         context.dataStore.edit { preferences ->
             preferences[RESERVED_WASTE_LENGTHS] = lengths
+        }
+    }
+
+    suspend fun saveCustomMultiCoreColors(colors: String) {
+        context.dataStore.edit { preferences ->
+            preferences[CUSTOM_MULTI_CORE_COLORS] = colors
         }
     }
 

@@ -25,7 +25,8 @@ class ConfigurationController(
         return mapOf(
             "lowStockThreshold" to warehouseConfig.lowStockThreshold,
             "defaultPalletCapacity" to warehouseConfig.defaultPalletCapacity,
-            "reserveWasteLengths" to warehouseConfig.reserveWasteLengths
+            "reserveWasteLengths" to warehouseConfig.reserveWasteLengths,
+            "customMultiCoreColors" to warehouseConfig.customMultiCoreColors
         )
     }
 

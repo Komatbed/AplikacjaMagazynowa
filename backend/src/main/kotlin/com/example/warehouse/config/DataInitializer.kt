@@ -41,49 +41,28 @@ class DataInitializer(
 
             // Seed Profiles
             if (profileRepo.count() == 0L) {
-                val profiles = loadProfilesFromJson() ?: listOf(
+                val loadedProfiles = loadProfilesFromJson()
+                val profiles = loadedProfiles ?: listOf(
                     ProfileDefinition(code = "ALU-100", description = "Aluminium 100mm"),
                     ProfileDefinition(code = "ALU-200", description = "Aluminium 200mm"),
                     ProfileDefinition(code = "PVC-WINDOW", description = "PVC Window Profile"),
                     ProfileDefinition(code = "STEEL-BOX", description = "Steel Box Section")
                 )
                 profileRepo.saveAll(profiles)
-                println("Seeded initial profiles (${if (loadProfilesFromJson() != null) "from JSON" else "defaults"    private fun loadProfilesFromJson(): List<ProfileDefinition>? {
-        return try {
-            val resource = ClassPathResource("initial_data/profiles.json")
-            if (resource.exists()) {
-                objectMapper.readValue(resource.inputStream, object : TypeReference<List<ProfileDefinition>>() {})
-            } else null
-        } catch (e: Exception) {
-            println("Failed to load profiles.json: ${e.message}")
-            null
-        }
-    }
-
-    private fun loadColorsFromJson(): List<ColorDefinition>? {
-        return try {
-            val resource = ClassPathResource("initial_data/colors.json")
-            if (resource.exists()) {
-                objectMapper.readValue(resource.inputStream, object : TypeReference<List<ColorDefinition>>() {})
-            } else null
-        } catch (e: Exception) {
-            println("Failed to load colors.json: ${e.message}")
-            null
-        }
-    }
-})")
+                println("Seeded initial profiles (${if (loadedProfiles != null) "from JSON" else "defaults"})")
             }
 
             // Seed Colors
             if (colorRepo.count() == 0L) {
-                val colors = loadColorsFromJson() ?: listOf(
+                val loadedColors = loadColorsFromJson()
+                val colors = loadedColors ?: listOf(
                     ColorDefinition(code = "RAL9016", description = "Traffic White"),
                     ColorDefinition(code = "RAL7016", description = "Anthracite Grey"),
                     ColorDefinition(code = "RAL9005", description = "Jet Black"),
                     ColorDefinition(code = "RAW", description = "Unpainted/Raw")
                 )
                 colorRepo.saveAll(colors)
-                println("Seeded initial colors (${if (loadColorsFromJson() != null) "from JSON" else "defaults"})")
+                println("Seeded initial colors (${if (loadedColors != null) "from JSON" else "defaults"})")
             }
 
             // Seed Locations
@@ -136,6 +115,30 @@ class DataInitializer(
                     println("Seeded initial inventory items")
                 }
             }
+        }
+    }
+
+    private fun loadProfilesFromJson(): List<ProfileDefinition>? {
+        return try {
+            val resource = ClassPathResource("initial_data/profiles.json")
+            if (resource.exists()) {
+                objectMapper.readValue(resource.inputStream, object : TypeReference<List<ProfileDefinition>>() {})
+            } else null
+        } catch (e: Exception) {
+            println("Failed to load profiles.json: ${e.message}")
+            null
+        }
+    }
+
+    private fun loadColorsFromJson(): List<ColorDefinition>? {
+        return try {
+            val resource = ClassPathResource("initial_data/colors.json")
+            if (resource.exists()) {
+                objectMapper.readValue(resource.inputStream, object : TypeReference<List<ColorDefinition>>() {})
+            } else null
+        } catch (e: Exception) {
+            println("Failed to load colors.json: ${e.message}")
+            null
         }
     }
 }

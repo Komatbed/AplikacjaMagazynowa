@@ -463,6 +463,7 @@ fun SystemSettingsContent(
     val currentPrinterPort by viewModel.printerPort.collectAsState()
     val currentScrapThreshold by viewModel.scrapThreshold.collectAsState()
     val currentReservedLengths by viewModel.reservedWasteLengths.collectAsState()
+    val currentCustomMultiCoreColors by viewModel.customMultiCoreColors.collectAsState()
     val printerStatus by viewModel.printerStatus
     val backendStatus by viewModel.backendStatus
     val dbStatus by viewModel.dbStatus
@@ -476,6 +477,7 @@ fun SystemSettingsContent(
     var printerPort by remember(currentPrinterPort) { mutableStateOf(currentPrinterPort.toString()) }
     var scrapThreshold by remember(currentScrapThreshold) { mutableStateOf(currentScrapThreshold.toString()) }
     var reservedLengths by remember(currentReservedLengths) { mutableStateOf(currentReservedLengths) }
+    var customMultiCoreColorsInput by remember(currentCustomMultiCoreColors) { mutableStateOf(currentCustomMultiCoreColors) }
     
     var showStatusDialog by remember { mutableStateOf<BackendStatus?>(null) }
     var statusDialogTitle by remember { mutableStateOf("") }
@@ -688,6 +690,36 @@ fun SystemSettingsContent(
             style = MaterialTheme.typography.bodySmall,
             color = Color.Gray
         )
+        
+        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+        Text("Kolory Specjalne (Wybór Rdzenia / RAL 9001)", style = MaterialTheme.typography.titleMedium, color = SafetyOrange)
+        OutlinedTextField(
+            value = customMultiCoreColorsInput,
+            onValueChange = { customMultiCoreColorsInput = it },
+            label = { Text("Kolory (oddzielone przecinkiem)") },
+            modifier = Modifier.fillMaxWidth(),
+            minLines = 3
+        )
+        Text(
+            "Lista kolorów, dla których dostępny jest wybór rdzenia oraz opcja RAL 9001 wewnątrz.",
+            style = MaterialTheme.typography.bodySmall,
+            color = Color.Gray
+        )
+        Button(
+            onClick = {
+                viewModel.saveCustomMultiCoreColors(customMultiCoreColorsInput)
+                // Also save other settings
+                viewModel.saveApiUrl(apiUrl)
+                viewModel.savePrinterIp(printerIp)
+                viewModel.savePrinterPort(printerPort.toIntOrNull() ?: 9100)
+                viewModel.saveScrapThreshold(scrapThreshold.toIntOrNull() ?: 500)
+                viewModel.saveReservedWasteLengths(reservedLengths)
+            },
+            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = SafetyOrange)
+        ) {
+            Text("ZAPISZ WSZYSTKIE USTAWIENIA")
+        }
 
         Button(
             onClick = onConfigClick,

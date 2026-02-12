@@ -14,13 +14,12 @@ class WarehouseConfig(
     private val logger = LoggerFactory.getLogger(WarehouseConfig::class.java)
 
     var lowStockThreshold: Int = 5
-        private set
         
     var defaultPalletCapacity: Int = 50
-        private set
         
     var reserveWasteLengths: List<Int> = emptyList()
-        private set
+
+    var customMultiCoreColors: List<String> = emptyList()
 
     @PostConstruct
     fun init() {
@@ -31,6 +30,7 @@ class WarehouseConfig(
                 this.lowStockThreshold = config.lowStockThreshold
                 this.defaultPalletCapacity = config.defaultPalletCapacity
                 this.reserveWasteLengths = config.reserveWasteLengths
+                this.customMultiCoreColors = config.customMultiCoreColors
                 logger.info("Loaded warehouse_config.json: $config")
             } else {
                 logger.warn("warehouse_config.json not found, using defaults.")
@@ -43,6 +43,7 @@ class WarehouseConfig(
     private data class WarehouseConfigDto(
         @JsonProperty("lowStockThreshold") val lowStockThreshold: Int = 5,
         @JsonProperty("defaultPalletCapacity") val defaultPalletCapacity: Int = 50,
-        @JsonProperty("reserveWasteLengths") val reserveWasteLengths: List<Int> = emptyList()
+        @JsonProperty("reserveWasteLengths") val reserveWasteLengths: List<Int> = emptyList(),
+        @JsonProperty("customMultiCoreColors") val customMultiCoreColors: List<String> = emptyList()
     )
 }

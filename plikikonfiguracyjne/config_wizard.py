@@ -59,6 +59,9 @@ def create_warehouse_config():
         "defaultPalletCapacity": get_input("Domyślna pojemność palety (szt.)", default=50, val_type=int),
         "reserveWasteLengths": [
             int(x.strip()) for x in get_input("Zastrzeżone długości odpadów (po przecinku, np. 1000, 1500)", default="").split(',') if x.strip()
+        ],
+        "customMultiCoreColors": [
+            x.strip() for x in get_input("Kolory specjalne (wybór rdzenia/RAL9001) (po przecinku, np. Złoty Dąb, Orzech)", default="").split(',') if x.strip()
         ]
     }
 

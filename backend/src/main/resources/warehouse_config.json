@@ -1,0 +1,26 @@
+{
+  "lowStockThreshold": 1,
+  "defaultPalletCapacity": 70,
+  "reserveWasteLengths": [
+    1500,
+    2700,
+    3700,
+    4200,
+    4700
+  ],
+  "customMultiCoreColors": [
+    "Kremowo-biały",
+    "Ciemnoszary",
+    "Ciemnoszary Jedwab",
+    "Granatowy",
+    "Monumentalny Niebieski",
+    "Monumentalny Zielony",
+    "Ciemno-zielony",
+    "Bordowy",
+    "Czarno-brązowy",
+    "Jet Black",
+    "Ciemnoszary FS",
+    "Biały2",
+    "Czarno-szary"
+  ]
+}

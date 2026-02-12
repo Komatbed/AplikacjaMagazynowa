@@ -17,6 +17,7 @@ import androidx.compose.runtime.State
 import kotlinx.coroutines.delay
 import java.util.Date
 import com.example.warehouse.data.repository.InventoryRepository
+import com.example.warehouse.data.repository.ConfigRepository
 import com.example.warehouse.device.BluetoothPrinterManager
 import android.bluetooth.BluetoothDevice
 import kotlinx.coroutines.withTimeout
@@ -37,6 +38,7 @@ class SettingsViewModel @JvmOverloads constructor(
 ) : AndroidViewModel(application) {
     private val settingsDataStore = SettingsDataStore(application)
     private val printerService = PrinterService()
+    private val configRepository = ConfigRepository(application)
     val bluetoothPrinterManager = BluetoothPrinterManager(application)
 
     private val _printerStatus = mutableStateOf<String?>(null)
@@ -65,6 +67,42 @@ class SettingsViewModel @JvmOverloads constructor(
         checkBackendConnection()
         checkDbConnection()
         checkWebConnection()
+    }
+
+    private fun syncWarehouseConfig() {
+        viewModelScope.launch {
+            configRepository.getWarehouseConfig().onSuccess { config ->
+                // Update local settings if they differ or just overwrite
+                // Note: This overrides local changes every 5 seconds if backend is reachable.
+                // In a real app, we might want a version check or "last updated" timestamp.
+                // For now, backend is truth.
+                
+                (config["customMultiCoreColors"] as? List<*>)?.let { list ->
+                    val colorsStr = list.filterIsInstance<String>().joinToString(",")
+                    if (colorsStr != customMultiCoreColors.value) {
+                        settingsDataStore.saveCustomMultiCoreColors(colorsStr)
+                    }
+                }
+                
+                (config["lowStockThreshold"] as? Number)?.toInt()?.let {
+                    if (it != scrapThreshold.value) { // Assuming scrapThreshold matches lowStock? No, wait.
+                        // lowStockThreshold in backend seems to be generic. 
+                        // scrapThreshold in Android is for "waste" length? No, scrapThreshold is "Próg odpadu".
+                        // lowStockThreshold is "Próg ostrzegania o niskim stanie".
+                        // Android app doesn't seem to have "lowStockThreshold" in SettingsDataStore visible here.
+                        // Ah, scrapThreshold is likely for determining if a piece is scrap or usable.
+                        // Let's stick to customMultiCoreColors for now.
+                    }
+                }
+                
+                (config["reserveWasteLengths"] as? List<*>)?.let { list ->
+                     val lengthsStr = list.filterIsInstance<Int>().joinToString(",")
+                     if (lengthsStr != reservedWasteLengths.value) {
+                         settingsDataStore.saveReservedWasteLengths(lengthsStr)
+                     }
+                }
+            }
+        }
     }
 
     fun connectBluetoothPrinter(device: BluetoothDevice) {
@@ -102,6 +140,12 @@ class SettingsViewModel @JvmOverloads constructor(
         SharingStarted.WhileSubscribed(5000),
         ""
     )
+    
+    val customMultiCoreColors = settingsDataStore.customMultiCoreColors.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        ""
+    )
 
     val skipLogin = settingsDataStore.skipLogin.stateIn(
         viewModelScope,
@@ -130,6 +174,34 @@ class SettingsViewModel @JvmOverloads constructor(
         viewModelScope.launch {
             settingsDataStore.saveSkipLogin(skip)
         }
+    }
+    
+    fun saveApiUrl(url: String) {
+        viewModelScope.launch {
+            settingsDataStore.saveApiUrl(url)
+            NetworkModule.updateUrl(url)
+            checkBackendConnection()
+        }
+    }
+    
+    fun savePrinterIp(ip: String) {
+        viewModelScope.launch { settingsDataStore.savePrinterIp(ip) }
+    }
+    
+    fun savePrinterPort(port: Int) {
+        viewModelScope.launch { settingsDataStore.savePrinterPort(port) }
+    }
+    
+    fun saveScrapThreshold(threshold: Int) {
+        viewModelScope.launch { settingsDataStore.saveScrapThreshold(threshold) }
+    }
+    
+    fun saveReservedWasteLengths(lengths: String) {
+        viewModelScope.launch { settingsDataStore.saveReservedWasteLengths(lengths) }
+    }
+
+    fun saveCustomMultiCoreColors(colors: String) {
+        viewModelScope.launch { settingsDataStore.saveCustomMultiCoreColors(colors) }
     }
 
     fun saveSettings(url: String, ip: String, port: String, threshold: String, reservedLengths: String) {
@@ -163,6 +235,7 @@ class SettingsViewModel @JvmOverloads constructor(
                     if (result.isSuccess) {
                         val latency = System.currentTimeMillis() - start
                         _backendStatus.value = BackendStatus.Online(latency, Date())
+                        syncWarehouseConfig()
                     } else {
                         _backendStatus.value = BackendStatus.Offline(result.exceptionOrNull()?.message ?: "Błąd połączenia", Date())
                     }

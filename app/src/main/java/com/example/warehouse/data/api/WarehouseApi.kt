@@ -28,6 +28,9 @@ interface WarehouseApi {
     @GET("inventory/config")
     suspend fun getConfig(): Map<String, List<String>>
 
+    @GET("config/warehouse")
+    suspend fun getWarehouseConfig(): Map<String, Any>
+
     // Config Management
     @GET("config/profiles")
     suspend fun getProfiles(): List<ProfileDefinition>

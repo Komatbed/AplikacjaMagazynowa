@@ -40,9 +40,12 @@ fun AddInventoryScreen(
     val selectedExtColor by viewModel.selectedExternalColor.collectAsState()
     val internalMode by viewModel.internalColorMode.collectAsState()
     val coreColor by viewModel.calculatedCoreColor.collectAsState()
+    val availableCoreColors by viewModel.availableCoreColors.collectAsState()
+    val isCoreEnabled by viewModel.isCoreSelectionEnabled.collectAsState()
 
     var profileExpanded by remember { mutableStateOf(false) }
     var colorExpanded by remember { mutableStateOf(false) }
+    var coreExpanded by remember { mutableStateOf(false) }
     
     // Dialog for saving preset
     var showSavePresetDialog by remember { mutableStateOf(false) }
@@ -220,38 +223,79 @@ fun AddInventoryScreen(
             }
 
             // Internal Color Selection (Buttons)
-            Text("Kolor Wewnętrzny", color = Color.Gray, style = MaterialTheme.typography.labelMedium)
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                SelectableButton(
-                    text = "BIAŁY",
-                    selected = internalMode == InternalColorMode.WHITE,
-                    onClick = { viewModel.setInternalColorMode(InternalColorMode.WHITE) },
-                    modifier = Modifier.weight(1f)
-                )
-                SelectableButton(
-                    text = "TAKI SAM",
-                    selected = internalMode == InternalColorMode.SAME_AS_EXTERNAL,
-                    onClick = { viewModel.setInternalColorMode(InternalColorMode.SAME_AS_EXTERNAL) },
-                    modifier = Modifier.weight(1f)
-                )
-            }
-
-            // Core Color (Read-only)
-            OutlinedTextField(
-                value = coreColor,
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Kolor Rdzenia (Automatyczny)") },
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedTextColor = SafetyOrange,
-                    unfocusedTextColor = SafetyOrange,
-                    disabledTextColor = SafetyOrange,
-                    focusedBorderColor = Color.Gray,
-                    unfocusedBorderColor = Color.Gray
-                ),
-                enabled = false
+    Text("Kolor Wewnętrzny", color = Color.Gray, style = MaterialTheme.typography.labelMedium)
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        SelectableButton(
+            text = "BIAŁY",
+            selected = internalMode == InternalColorMode.WHITE,
+            onClick = { viewModel.setInternalColorMode(InternalColorMode.WHITE) },
+            modifier = Modifier.weight(1f)
+        )
+        SelectableButton(
+            text = "TAKI SAM",
+            selected = internalMode == InternalColorMode.SAME_AS_EXTERNAL,
+            onClick = { viewModel.setInternalColorMode(InternalColorMode.SAME_AS_EXTERNAL) },
+            modifier = Modifier.weight(1f)
+        )
+        // Show RAL 9001 only if core selection is potentially enabled (meaning it's a "premium" color)
+        // or if it's explicitly in the multi-core list. 
+        // User logic: "add RAL9001 - of course this will appear/activate only for selected group of colors"
+        // We use the same 'isCoreEnabled' logic or similar check to decide visibility.
+        // For simplicity, let's show it if core selection WOULD be enabled if we were in bi-color mode,
+        // or simply if the external color is one of the "Custom Multi-Core" colors.
+        val customMultiCoreColors by viewModel.customMultiCoreColors.collectAsState()
+        val extName = selectedExtColor?.name ?: ""
+        val isPremiumColor = customMultiCoreColors.any { extName.contains(it, ignoreCase = true) }
+        
+        if (isPremiumColor) {
+            SelectableButton(
+                text = "RAL 9001",
+                selected = internalMode == InternalColorMode.RAL_9001,
+                onClick = { viewModel.setInternalColorMode(InternalColorMode.RAL_9001) },
+                modifier = Modifier.weight(1f)
             )
+        }
+    }
+
+            // Core Color Selection (Dropdown)
+            ExposedDropdownMenuBox(
+                expanded = coreExpanded,
+                onExpandedChange = { if (isCoreEnabled) coreExpanded = !coreExpanded }
+            ) {
+                OutlinedTextField(
+                    value = coreColor,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text(if (isCoreEnabled) "Kolor Rdzenia (Wybierz)" else "Kolor Rdzenia (Auto)") },
+                    trailingIcon = { if (isCoreEnabled) ExposedDropdownMenuDefaults.TrailingIcon(expanded = coreExpanded) },
+                    modifier = Modifier.menuAnchor().fillMaxWidth(),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = if (isCoreEnabled) Color.White else SafetyOrange,
+                        unfocusedTextColor = if (isCoreEnabled) Color.White else SafetyOrange,
+                        disabledTextColor = SafetyOrange,
+                        focusedBorderColor = if (isCoreEnabled) SafetyOrange else Color.Gray,
+                        unfocusedBorderColor = Color.Gray,
+                        disabledBorderColor = Color.Gray
+                    ),
+                    enabled = isCoreEnabled
+                )
+                if (isCoreEnabled) {
+                    ExposedDropdownMenu(
+                        expanded = coreExpanded,
+                        onDismissRequest = { coreExpanded = false }
+                    ) {
+                        availableCoreColors.forEach { color ->
+                            DropdownMenuItem(
+                                text = { Text(color) },
+                                onClick = {
+                                    viewModel.setCoreColor(color)
+                                    coreExpanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
             
             Spacer(Modifier.height(16.dp))
             

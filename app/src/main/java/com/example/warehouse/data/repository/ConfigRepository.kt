@@ -39,6 +39,15 @@ class ConfigRepository(
     fun getColorsFlow(): Flow<List<ColorEntity>> = configDao.getColors()
     fun getCoreColorRulesFlow() = configDao.getCoreColorRules()
 
+    suspend fun getWarehouseConfig(): Result<Map<String, Any>> {
+        return try {
+            val config = api.getWarehouseConfig()
+            Result.success(config)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun refreshConfig(): Result<Unit> {
         return try {
             val profiles = api.getProfiles()
