@@ -1,5 +1,6 @@
 package com.example.warehouse.service
 
+import com.example.warehouse.config.WarehouseConfig
 import com.example.warehouse.dto.AlertLevel
 import com.example.warehouse.dto.InventoryReceiptRequest
 import com.example.warehouse.dto.InventoryTakeRequest
@@ -25,7 +26,8 @@ class InventoryService(
     private val inventoryItemRepository: InventoryItemRepository,
     private val locationRepository: LocationRepository,
     private val operationLogRepository: OperationLogRepository,
-    private val messagingTemplate: SimpMessagingTemplate
+    private val messagingTemplate: SimpMessagingTemplate,
+    private val warehouseConfig: WarehouseConfig
 ) {
 
     @Transactional
@@ -94,13 +96,14 @@ class InventoryService(
              throw IllegalArgumentException("Niewystarczająca ilość. Dostępne: ${targetItem.quantity}, Żądane: ${request.quantity}")
         }
 
-        // Logic for Low Stock Warning (e.g. if taking this item drops below 5)
+        // Logic for Low Stock Warning (e.g. if taking this item drops below configured threshold)
         // This is a simplified check. In real world, we might check global stock for this profile.
-        if (!request.force && (targetItem.quantity - request.quantity) < 5) {
+        val limit = warehouseConfig.lowStockThreshold
+        if (!request.force && (targetItem.quantity - request.quantity) < limit) {
              return InventoryTakeResponse(
                  status = "WARNING",
                  newQuantity = targetItem.quantity,
-                 warning = "Uwaga! Osiągnięto stan minimalny (poniżej 5). Potwierdź pobranie.",
+                 warning = "Uwaga! Osiągnięto stan minimalny (poniżej $limit). Potwierdź pobranie.",
                  code = "LOW_STOCK_WARNING"
              )
         }

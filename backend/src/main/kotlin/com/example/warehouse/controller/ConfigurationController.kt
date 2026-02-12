@@ -1,5 +1,6 @@
 package com.example.warehouse.controller
 
+import com.example.warehouse.config.WarehouseConfig
 import com.example.warehouse.model.ColorDefinition
 import com.example.warehouse.model.ProfileDefinition
 import com.example.warehouse.repository.ColorDefinitionRepository
@@ -14,8 +15,19 @@ import com.example.warehouse.service.CoreColorService
 class ConfigurationController(
     private val profileRepository: ProfileDefinitionRepository,
     private val colorRepository: ColorDefinitionRepository,
-    private val coreColorService: CoreColorService
+    private val coreColorService: CoreColorService,
+    private val warehouseConfig: WarehouseConfig
 ) {
+
+    // Warehouse Config
+    @GetMapping("/warehouse")
+    fun getWarehouseConfig(): Map<String, Any> {
+        return mapOf(
+            "lowStockThreshold" to warehouseConfig.lowStockThreshold,
+            "defaultPalletCapacity" to warehouseConfig.defaultPalletCapacity,
+            "reserveWasteLengths" to warehouseConfig.reserveWasteLengths
+        )
+    }
 
     // Core Color Rules
     @GetMapping("/core-rules")

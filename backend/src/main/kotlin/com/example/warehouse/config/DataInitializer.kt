@@ -15,8 +15,15 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import java.util.Random
 
+import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.ObjectMapper
+import org.springframework.core.io.ClassPathResource
+import java.io.IOException
+
 @Configuration
-class DataInitializer {
+class DataInitializer(
+    private val objectMapper: ObjectMapper
+) {
 
     @Bean
     fun initData(
@@ -24,7 +31,8 @@ class DataInitializer {
         colorRepo: ColorDefinitionRepository,
         locationRepo: LocationRepository,
         inventoryRepo: InventoryItemRepository,
-        authService: AuthService
+        authService: AuthService,
+        warehouseConfig: WarehouseConfig
     ): CommandLineRunner {
         return CommandLineRunner {
             // Seed Admin User
@@ -33,43 +41,67 @@ class DataInitializer {
 
             // Seed Profiles
             if (profileRepo.count() == 0L) {
-                val profiles = listOf(
+                val profiles = loadProfilesFromJson() ?: listOf(
                     ProfileDefinition(code = "ALU-100", description = "Aluminium 100mm"),
                     ProfileDefinition(code = "ALU-200", description = "Aluminium 200mm"),
                     ProfileDefinition(code = "PVC-WINDOW", description = "PVC Window Profile"),
                     ProfileDefinition(code = "STEEL-BOX", description = "Steel Box Section")
                 )
                 profileRepo.saveAll(profiles)
-                println("Seeded initial profiles")
+                println("Seeded initial profiles (${if (loadProfilesFromJson() != null) "from JSON" else "defaults"    private fun loadProfilesFromJson(): List<ProfileDefinition>? {
+        return try {
+            val resource = ClassPathResource("initial_data/profiles.json")
+            if (resource.exists()) {
+                objectMapper.readValue(resource.inputStream, object : TypeReference<List<ProfileDefinition>>() {})
+            } else null
+        } catch (e: Exception) {
+            println("Failed to load profiles.json: ${e.message}")
+            null
+        }
+    }
+
+    private fun loadColorsFromJson(): List<ColorDefinition>? {
+        return try {
+            val resource = ClassPathResource("initial_data/colors.json")
+            if (resource.exists()) {
+                objectMapper.readValue(resource.inputStream, object : TypeReference<List<ColorDefinition>>() {})
+            } else null
+        } catch (e: Exception) {
+            println("Failed to load colors.json: ${e.message}")
+            null
+        }
+    }
+})")
             }
 
             // Seed Colors
             if (colorRepo.count() == 0L) {
-                val colors = listOf(
+                val colors = loadColorsFromJson() ?: listOf(
                     ColorDefinition(code = "RAL9016", description = "Traffic White"),
                     ColorDefinition(code = "RAL7016", description = "Anthracite Grey"),
                     ColorDefinition(code = "RAL9005", description = "Jet Black"),
                     ColorDefinition(code = "RAW", description = "Unpainted/Raw")
                 )
                 colorRepo.saveAll(colors)
-                println("Seeded initial colors")
+                println("Seeded initial colors (${if (loadColorsFromJson() != null) "from JSON" else "defaults"})")
             }
 
             // Seed Locations
             if (locationRepo.count() == 0L) {
                 val locations = mutableListOf<Location>()
+                val capacity = warehouseConfig.defaultPalletCapacity
                 // Create A-01-01 to A-05-02
                 for (row in 1..5) {
                     for (palette in 1..2) {
                         val label = "A-%02d-%02d".format(row, palette)
-                        locations.add(Location(rowNumber = row, paletteNumber = palette, label = label, isWastePalette = false))
+                        locations.add(Location(rowNumber = row, paletteNumber = palette, label = label, isWastePalette = false, capacity = capacity))
                     }
                 }
                 // Add one waste palette
-                locations.add(Location(rowNumber = 99, paletteNumber = 1, label = "WASTE-01", isWastePalette = true))
+                locations.add(Location(rowNumber = 99, paletteNumber = 1, label = "WASTE-01", isWastePalette = true, capacity = capacity))
                 
                 locationRepo.saveAll(locations)
-                println("Seeded initial locations")
+                println("Seeded initial locations (capacity: $capacity)")
             }
 
             // Seed Inventory Items
