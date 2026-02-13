@@ -59,6 +59,9 @@ interface WarehouseApi {
     @GET("config/core-rules")
     suspend fun getCoreRules(): Map<String, String>
 
+    @POST("config/reload-defaults")
+    suspend fun reloadDefaults(): Map<String, String>
+
     @POST("optimization/calculate")
     suspend fun calculateOptimization(@Body request: OptimizationRequest): com.example.warehouse.data.model.CutPlanResponse
 

@@ -71,23 +71,42 @@ $RemoteScriptContent = $RemoteScriptLines -join "`n"
 $RemoteScriptPath = Join-Path $ProjectRoot "remote_deploy.sh"
 [System.IO.File]::WriteAllText($RemoteScriptPath, $RemoteScriptContent)
 
-# 3. Pakowanie i wysyłanie
-Write-Host "3. Packaging and sending files..."
-try {
-    # Ensure remote directory exists
-    ssh -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_IP} "mkdir -p ${REMOTE_DIR}"
+# 3. Pakowanie i wysyłanie (Metoda plikowa dla stabilności na Windows)
+    Write-Host "3. Packaging and sending files..."
+    $DeployPackage = "deploy_package.tar"
     
-    # Tar and pipe to SSH
-    # Include remote_deploy.sh
-    tar --exclude ".git" --exclude "build" --exclude "target" --exclude "node_modules" --exclude ".DS_Store" --exclude ".gradle" -cf - backend web monitoring docker-compose.prod.yml .env.example remote_deploy.sh | ssh -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_IP} "tar -xf - -C ${REMOTE_DIR}"
-    
-    if ($LASTEXITCODE -ne 0) { throw "Transfer failed with exit code $LASTEXITCODE" }
-    Write-Host "   Transfer success." -ForegroundColor Green
-} catch {
-    Write-Error "Error sending files: $_"
-    Remove-Item $RemoteScriptPath -ErrorAction SilentlyContinue
-    exit 1
-}
+    try {
+        # Create tar locally
+        Write-Host "   Creating local package ($DeployPackage)..."
+        tar --exclude ".git" --exclude "build" --exclude "target" --exclude "node_modules" --exclude ".DS_Store" --exclude ".gradle" -cf $DeployPackage backend web monitoring docker-compose.prod.yml .env.example remote_deploy.sh
+        
+        if ($LASTEXITCODE -ne 0) { throw "Local tar creation failed" }
+
+        # Ensure remote directory exists
+        ssh -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_IP} "mkdir -p ${REMOTE_DIR}"
+
+        # SCP the file
+        Write-Host "   Uploading package..."
+        scp -o StrictHostKeyChecking=no $DeployPackage "${VPS_USER}@${VPS_IP}:${REMOTE_DIR}/$DeployPackage"
+        if ($LASTEXITCODE -ne 0) { throw "SCP failed" }
+
+        # Untar on remote
+        Write-Host "   Extracting on remote..."
+        ssh -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_IP} "tar -xf ${REMOTE_DIR}/$DeployPackage -C ${REMOTE_DIR} && rm ${REMOTE_DIR}/$DeployPackage"
+        if ($LASTEXITCODE -ne 0) { throw "Remote extraction failed" }
+
+        Write-Host "   Transfer success." -ForegroundColor Green
+    } catch {
+        Write-Error "Error sending files: $_"
+        Remove-Item $RemoteScriptPath -ErrorAction SilentlyContinue
+        Remove-Item $DeployPackage -ErrorAction SilentlyContinue
+        exit 1
+    } finally {
+        # Cleanup local tar
+        if (Test-Path $DeployPackage) {
+            Remove-Item $DeployPackage
+        }
+    }
 
 # 4. Uruchomienie skryptu zdalnego
 Write-Host "4. Running remote script..."

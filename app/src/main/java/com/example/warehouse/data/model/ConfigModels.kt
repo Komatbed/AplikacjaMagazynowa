@@ -10,7 +10,8 @@ data class ProfileDefinition(
     val beadAngle: Double = 0.0,
     val standardLengthMm: Int = 6500,
     val system: String = "",
-    val manufacturer: String = ""
+    val manufacturer: String = "",
+    val type: String = "OTHER"
 )
 
 data class ColorDefinition(

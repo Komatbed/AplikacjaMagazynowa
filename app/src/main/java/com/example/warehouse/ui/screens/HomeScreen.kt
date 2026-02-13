@@ -34,6 +34,7 @@ fun HomeScreen(
     onMapClick: () -> Unit,
     onIssueClick: () -> Unit,
     onMuntinClick: () -> Unit,
+    onMuntinV2Click: () -> Unit,
     onInventoryClick: () -> Unit,
     onWindowCalcClick: () -> Unit,
     onReservationsClick: () -> Unit,
@@ -208,6 +209,7 @@ fun HomeScreen(
                 val toolsButtons = listOf(
                     Triple("KALKULATOR OKIEN", Icons.Default.Window, onWindowCalcClick),
                     Triple("SZPROSY", Icons.Default.Calculate, onMuntinClick),
+                    Triple("SZPROSY V2", Icons.Default.GridOn, onMuntinV2Click),
                     Triple("OPTYMALIZACJA", Icons.Default.ContentCut, onOptimizationClick),
                     Triple("ASYSTENT OKUĆ", Icons.Default.Build, onHardwareClick)
                 )

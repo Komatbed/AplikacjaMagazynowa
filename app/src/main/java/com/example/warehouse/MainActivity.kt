@@ -129,6 +129,7 @@ class MainActivity : ComponentActivity() {
                                 onMapClick = { navController.navigate("map") },
                                 onIssueClick = { navController.navigate("issue_report") },
                                 onMuntinClick = { navController.navigate("muntin") },
+                                onMuntinV2Click = { navController.navigate("muntin_v2") },
                                 onInventoryClick = { navController.navigate("inventory") },
                                 onWindowCalcClick = { navController.navigate("window_calc") },
                                 onReservationsClick = { navController.navigate("reservations") },
@@ -280,6 +281,13 @@ class MainActivity : ComponentActivity() {
                         composable("muntin") {
                             com.example.warehouse.ui.screens.MuntinScreen(
                                 onBackClick = { navController.popBackStack() }
+                            )
+                        }
+
+                        composable("muntin_v2") {
+                            com.example.warehouse.ui.screens.MuntinScreen(
+                                onBackClick = { navController.popBackStack() },
+                                initialTab = 1
                             )
                         }
                     }

@@ -19,7 +19,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -50,7 +50,7 @@ import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun SettingsScreen(
-    onBackClick: () -> Unit,
+    @Suppress("UNUSED_PARAMETER") onBackClick: () -> Unit,
     onConfigClick: () -> Unit,
     onAuditLogClick: () -> Unit,
     onLogoutClick: () -> Unit,
@@ -396,7 +396,7 @@ fun AccountSettingsContent(
             modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
         ) {
-            Icon(Icons.Default.ExitToApp, contentDescription = null)
+            Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null)
             Spacer(modifier = Modifier.width(8.dp))
             Text("WYLOGUJ SIĘ")
         }

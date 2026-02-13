@@ -9,7 +9,7 @@ import org.junit.Test
 class MuntinCalculatorV2Test {
 
     // Common setup
-    val sash = SashProfileV2("SASH", 70, 70, 45.0)
+    val sash = SashProfileV2("SASH", 70, 70, 0, 45.0)
     val bead = BeadProfileV2("BEAD", 20, 20, 45.0)
     val muntin = MuntinProfileV2("MUNTIN", 26, 12, 0.0)
     val settings = V2GlobalSettings(0.0, 0.0, 1.0) // 1.0mm clearance

@@ -3,176 +3,183 @@ package com.example.warehouse.util
 import com.example.warehouse.data.model.CutPlanResponse
 import com.example.warehouse.data.model.CutStepDto
 import com.example.warehouse.data.model.InventoryItemDto
+import com.example.warehouse.model.CutItemV2
 
 enum class OptimizationMode(val displayName: String) {
-    MIN_WASTE("Minimalny Odpad"),
-    LONGEST_FIRST("Najpierw Długie"),
-    PREFER_USEFUL_WASTE("Zostawiaj Użyteczne Odpady"),
-    USE_ALL_SCRAPS("Wykorzystaj Wszystko")
+    MIN_WASTE("Minimalny odpad"),
+    PRIORITIZE_WASTE("Priorytet odpadów"),
+    MIN_CUTS("Minimalna liczba cięć")
 }
 
 object CuttingOptimizer {
 
-    private const val SAW_BLADE_WIDTH = 4 // mm
-    private const val STANDARD_BAR_LENGTH = 6500 // mm
+    // --- V2 Logic ---
+
+    data class OptimizationResult(
+        val stockLengthMm: Double,
+        val wasteMm: Double,
+        val wastePercentage: Double,
+        val bars: List<StockBar>
+    )
+
+    data class StockBar(
+        val id: Int,
+        val cuts: List<CutItemV2>,
+        val remainingMm: Double
+    )
+
+    fun optimize(
+        items: List<CutItemV2>,
+        stockLengthMm: Double = 6000.0,
+        sawWidthMm: Double = 3.0
+    ): OptimizationResult {
+        // Simple First Fit Decreasing algorithm
+        val byProfile = items.groupBy { it.profileName }
+        val allBars = mutableListOf<StockBar>()
+        var globalId = 1
+        
+        byProfile.forEach { (_, profileItems) ->
+            // Sort by length descending
+            val sortedItems = profileItems.sortedByDescending { it.lengthMm }
+            
+            val bars = mutableListOf<StockBar>()
+            
+            sortedItems.forEach { item ->
+                // Try to fit in existing bars
+                var placed = false
+                for (i in bars.indices) {
+                    val bar = bars[i]
+                    val required = item.lengthMm + sawWidthMm
+                    
+                    if (bar.remainingMm >= required) {
+                        // Add to this bar
+                        val newCuts = bar.cuts + item
+                        val newRemaining = bar.remainingMm - required 
+                        bars[i] = bar.copy(cuts = newCuts, remainingMm = newRemaining)
+                        placed = true
+                        break
+                    }
+                }
+                
+                if (!placed) {
+                    // Start new bar
+                    val required = item.lengthMm + sawWidthMm
+                    if (required <= stockLengthMm) {
+                        bars.add(StockBar(globalId++, listOf(item), stockLengthMm - required))
+                    } else {
+                        // Item too long
+                        bars.add(StockBar(globalId++, listOf(item), -1.0)) 
+                    }
+                }
+            }
+            allBars.addAll(bars)
+        }
+        
+        val totalStockLen = allBars.filter { it.remainingMm >= 0 }.size * stockLengthMm
+        val usedLen = items.sumOf { it.lengthMm }
+        val waste = totalStockLen - usedLen
+        val wastePct = if (totalStockLen > 0) (waste / totalStockLen) * 100 else 0.0
+        
+        return OptimizationResult(
+            stockLengthMm = stockLengthMm,
+            wasteMm = waste,
+            wastePercentage = wastePct,
+            bars = allBars
+        )
+    }
+
+    // --- V1 / Inventory Logic ---
 
     fun calculate(
         requiredPieces: List<Int>,
         availableWaste: List<InventoryItemDto>,
         mode: OptimizationMode,
-        usefulWasteMinLength: Int = 1000
+        usefulWasteMinLength: Int
     ): CutPlanResponse {
+        val stockLength = 6000
+        val sawWidth = 3
         
-        // 1. Prepare required pieces (sorted based on mode)
-        val sortedPieces = when (mode) {
-            OptimizationMode.LONGEST_FIRST -> requiredPieces.sortedDescending()
-            else -> requiredPieces.sortedDescending() // Default is also Longest First for packing efficiency
-        }.toMutableList()
-
-        // 2. Prepare stock
-        // Filter waste that is too short for ANY piece? No, might fit smaller ones.
-        // Sort waste?
-        val sortedWaste = when (mode) {
-            OptimizationMode.USE_ALL_SCRAPS -> availableWaste.sortedBy { it.lengthMm } // Use smallest possible waste first? Or largest? usually smallest that fits.
-            else -> availableWaste.sortedBy { it.lengthMm }
-        }.map { StockItem(it.id, it.lengthMm, it.location.label, false) }.toMutableList()
-
-        var totalStockUsed = 0
-
-        // 3. Packing Algorithm
-        // We will modify sortedPieces as we satisfy them.
+        // Convert pieces to list of lengths
+        val pieces = requiredPieces.sortedDescending().toMutableList()
+        val steps = mutableListOf<CutStepDto>()
         
-        // Phase 1: Try to cut from Waste
-
-        // For each piece, find best stock
-        // Changing logic: We should fill stock items one by one? 
-        // Or for each piece find best stock?
-        // Bin Packing: For each Item, place in First Bin that fits.
-        
-        // Better for "Cut List": Process requirements one by one?
-        // Actually, FFD (First Fit Decreasing) means take largest item, put in first bin that fits.
-        
-        // We need to construct "Bins". 
-        // Existing Waste are initial Bins.
-        // New Bars are infinite potential Bins.
-
-        // We will simulate Bins.
-        val bins = sortedWaste.map { Bin(it) }.toMutableList()
-        
-        // Add potential new bars (dynamic)
-        
-        // Helper to get a new bar bin
-        fun createNewBarBin(): Bin {
-            val bin = Bin(StockItem(null, STANDARD_BAR_LENGTH, "Nowa Sztanga", true))
-            bins.add(bin)
-            return bin
-        }
-
-        for (piece in sortedPieces) {
-            var bestBin: Bin?
+        // Helper class to track usage of a source
+        class Source(
+            val id: String?, // null for new bar
+            val length: Int,
+            val isWaste: Boolean,
+            val location: String?
+        ) {
+            val cuts = mutableListOf<Int>()
+            var remaining = length
             
-            // Find candidate bins
-            val candidates = bins.filter { bin -> 
-                val currentUsed = bin.usedLength + (if (bin.cuts.isNotEmpty()) SAW_BLADE_WIDTH else 0)
-                val remaining = bin.stock.length - currentUsed
-                remaining >= piece
+            fun canFit(len: Int) = remaining >= (len + (if(cuts.isEmpty()) 0 else sawWidth))
+            
+            fun addCut(len: Int) {
+                val cost = len + (if(cuts.isEmpty()) 0 else sawWidth)
+                remaining -= cost
+                cuts.add(len)
             }
-
-            if (candidates.isEmpty()) {
-                // Create new bar
-                bestBin = createNewBarBin()
+        }
+        
+        val wasteSources = availableWaste
+            .filter { it.lengthMm >= usefulWasteMinLength }
+            .map { Source(it.id, it.lengthMm, true, it.location.label) }
+            .toMutableList()
+        
+        val newBarSources = mutableListOf<Source>()
+        
+        // Process pieces
+        pieces.forEach { pieceLen ->
+            // Filter candidates
+            val candidates = if (mode == OptimizationMode.PRIORITIZE_WASTE) {
+                 // Check waste first, then open bars
+                 wasteSources.filter { it.canFit(pieceLen) } + newBarSources.filter { it.canFit(pieceLen) }
             } else {
-                // Select best bin based on Strategy
-                bestBin = when (mode) {
-                    OptimizationMode.MIN_WASTE -> {
-                        // Best Fit: Select bin where remaining space is smallest (tightest fit)
-                        candidates.minByOrNull { bin ->
-                             val currentUsed = bin.usedLength + (if (bin.cuts.isNotEmpty()) SAW_BLADE_WIDTH else 0)
-                             bin.stock.length - currentUsed - piece
-                        }
-                    }
-                    OptimizationMode.PREFER_USEFUL_WASTE -> {
-                         // Try to find a bin where remainder is >= useful OR remainder is very small (~0)
-                         // Prioritize "Very Small Waste" first, then "Useful Waste". Avoid "Useless Waste".
-                         candidates.sortedWith(compareBy { bin ->
-                             val currentUsed = bin.usedLength + (if (bin.cuts.isNotEmpty()) SAW_BLADE_WIDTH else 0)
-                             val remainder = bin.stock.length - currentUsed - piece
-                             
-                             when {
-                                 remainder < 100 -> 0 // Excellent (almost no waste)
-                                 remainder >= usefulWasteMinLength -> 1 // Good (useful offcut)
-                                 else -> 2 // Bad (useless offcut)
-                             }
-                         }).firstOrNull()
-                    }
-                    OptimizationMode.USE_ALL_SCRAPS -> {
-                        // Prefer Existing Waste over New Bars
-                        // Within Waste: Best Fit
-                        val wasteCandidates = candidates.filter { !it.stock.isNew }
-                        if (wasteCandidates.isNotEmpty()) {
-                             wasteCandidates.minByOrNull { bin ->
-                                 val currentUsed = bin.usedLength + (if (bin.cuts.isNotEmpty()) SAW_BLADE_WIDTH else 0)
-                                 bin.stock.length - currentUsed - piece
-                             }
-                        } else {
-                            // If only new bars available
-                            candidates.firstOrNull() // Just take the first one (should be only one open new bar usually if we optimize well, but here we might have multiple if using FFD logic fully)
-                             // Actually for New Bars we should reuse the last opened one if possible to minimize opened bars.
-                             // But createNewBarBin adds to 'bins'.
-                             // Let's prefer existing open new bars.
-                             candidates.firstOrNull()
-                        }
-                    }
-                    else -> candidates.firstOrNull() // First Fit
-                }
-                
-                if (bestBin == null) {
-                     bestBin = createNewBarBin()
-                }
+                 // Check open bars first (to minimize new bars count), then waste
+                 newBarSources.filter { it.canFit(pieceLen) } + wasteSources.filter { it.canFit(pieceLen) }
             }
             
-            // Assign piece
-            bestBin.cuts.add(piece)
-            bestBin.usedLength += piece + (if (bestBin.cuts.size > 1) SAW_BLADE_WIDTH else 0)
-        }
-
-        // 4. Generate Result
-        val usedBins = bins.filter { it.cuts.isNotEmpty() }
-        var totalWaste = 0
-        
-        val cutSteps = usedBins.map { bin ->
-            val remaining = bin.stock.length - bin.usedLength
-            totalWaste += remaining
-            if (bin.stock.isNew) totalStockUsed++
+            // Best Fit: Choose the one with minimal remaining space after cut
+            val bestFit = candidates.minByOrNull { it.remaining - pieceLen }
             
-            CutStepDto(
-                sourceItemId = bin.stock.id,
-                sourceLengthMm = bin.stock.length,
-                cuts = bin.cuts,
-                remainingWasteMm = remaining,
-                isNewBar = bin.stock.isNew,
-                locationLabel = bin.stock.location
-            )
+            if (bestFit != null) {
+                bestFit.addCut(pieceLen)
+            } else {
+                // Open new bar
+                val newBar = Source(null, stockLength, false, null)
+                if (newBar.canFit(pieceLen)) {
+                    newBar.addCut(pieceLen)
+                    newBarSources.add(newBar)
+                }
+                // If too big, ignore or handle error (not handled here)
+            }
         }
         
-        // Calculate Efficiency
-        val totalMaterial = cutSteps.sumOf { it.sourceLengthMm }
-        val efficiency = if (totalMaterial > 0) {
-             val utilized = totalMaterial - totalWaste
-             (utilized.toDouble() / totalMaterial.toDouble()) * 100
-        } else 0.0
-
+        // Convert to Steps
+        (wasteSources.filter { it.cuts.isNotEmpty() } + newBarSources).forEach { src ->
+            steps.add(CutStepDto(
+                sourceItemId = src.id,
+                sourceLengthMm = src.length,
+                cuts = src.cuts,
+                remainingWasteMm = src.remaining,
+                isNewBar = !src.isWaste,
+                locationLabel = src.location
+            ))
+        }
+        
+        val totalStockUsed = newBarSources.size * stockLength
+        val totalInput = steps.sumOf { it.sourceLengthMm }
+        val totalCutsLen = requiredPieces.sum()
+        val totalWaste = steps.sumOf { it.remainingWasteMm }
+        
+        val efficiency = if (totalInput > 0) (totalCutsLen.toDouble() / totalInput) * 100.0 else 0.0
+        
         return CutPlanResponse(
             totalStockUsed = totalStockUsed,
-            steps = cutSteps,
+            steps = steps,
             totalWasteMm = totalWaste,
             efficiency = efficiency
         )
-    }
-
-    private data class StockItem(val id: String?, val length: Int, val location: String, val isNew: Boolean)
-    private class Bin(val stock: StockItem) {
-        val cuts = mutableListOf<Int>()
-        var usedLength = 0
     }
 }

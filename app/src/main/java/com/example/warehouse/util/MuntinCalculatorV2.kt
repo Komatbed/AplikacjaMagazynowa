@@ -90,7 +90,7 @@ object MuntinCalculatorV2 {
                     sashNo = 1,
                     muntinNo = cuts.size + 1,
                     axis = Axis.VERTICAL,
-                    lengthMm = finalLen,
+                    lengthMm = kotlin.math.round(finalLen),
                     leftAngleDeg = 90.0,
                     rightAngleDeg = 90.0,
                     profileName = muntinProfile.profileNo,
@@ -126,7 +126,7 @@ object MuntinCalculatorV2 {
                         sashNo = 1,
                         muntinNo = cuts.size + 1,
                         axis = Axis.VERTICAL,
-                        lengthMm = len,
+                        lengthMm = kotlin.math.round(len),
                         leftAngleDeg = 90.0,
                         rightAngleDeg = 90.0,
                         profileName = muntinProfile.profileNo,
@@ -148,7 +148,7 @@ object MuntinCalculatorV2 {
                     sashNo = 1,
                     muntinNo = cuts.size + 1,
                     axis = Axis.HORIZONTAL,
-                    lengthMm = finalLen,
+                    lengthMm = kotlin.math.round(finalLen),
                     leftAngleDeg = 90.0,
                     rightAngleDeg = 90.0,
                     profileName = muntinProfile.profileNo,
@@ -175,7 +175,7 @@ object MuntinCalculatorV2 {
                         sashNo = 1,
                         muntinNo = cuts.size + 1,
                         axis = Axis.HORIZONTAL,
-                        lengthMm = len,
+                        lengthMm = kotlin.math.round(len),
                         leftAngleDeg = 90.0,
                         rightAngleDeg = 90.0,
                         profileName = muntinProfile.profileNo,
@@ -196,10 +196,10 @@ object MuntinCalculatorV2 {
     ): List<String> {
         val marks = mutableListOf<String>()
         verticalPositions.forEachIndexed { i, pos ->
-            marks.add("Pion ${i+1}: $pos mm od lewej")
+            marks.add("Pion ${i+1} (V${i+1}): Oś = ${"%.1f".format(pos)} mm od lewej krawędzi zewn.")
         }
         horizontalPositions.forEachIndexed { i, pos ->
-            marks.add("Poziom ${i+1}: $pos mm od góry")
+            marks.add("Poziom ${i+1} (H${i+1}): Oś = ${"%.1f".format(pos)} mm od górnej krawędzi zewn.")
         }
         return marks
     }

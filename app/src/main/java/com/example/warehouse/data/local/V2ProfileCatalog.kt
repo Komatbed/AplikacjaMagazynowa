@@ -7,9 +7,9 @@ import com.example.warehouse.model.SashProfileV2
 object V2ProfileCatalog {
 
     val sashProfiles = listOf(
-        SashProfileV2("SASH-82", 82, 70, 45.0),
-        SashProfileV2("SASH-70", 70, 65, 45.0),
-        SashProfileV2("RENO-FRAME", 70, 50, 45.0)
+        SashProfileV2("SASH-82", 82, 70, 0, 45.0),
+        SashProfileV2("SASH-70", 70, 65, 0, 45.0),
+        SashProfileV2("RENO-FRAME", 70, 50, 0, 45.0)
     )
 
     val beadProfiles = listOf(

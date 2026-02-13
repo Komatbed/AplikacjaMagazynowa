@@ -38,7 +38,10 @@ data class ProfileDefinition(
     val system: String = "", // e.g. "Softline 82", "Veka 70"
 
     @Column(name = "manufacturer")
-    val manufacturer: String = "" // e.g. "Veka", "Aluplast"
+    val manufacturer: String = "", // e.g. "Veka", "Aluplast"
+
+    @Column(name = "type")
+    val type: String = "OTHER" // SASH, BEAD, MUNTIN, FRAME, OTHER
 )
 
 @Entity

@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.core.io.ClassPathResource
 import org.springframework.stereotype.Service
 import java.io.IOException
+import java.io.File
 
 @Service
 class CoreColorService(
@@ -17,19 +18,35 @@ class CoreColorService(
 
     @PostConstruct
     fun init() {
+        reload()
+    }
+
+    fun reload() {
         try {
+            // Try FileSystem first
+            val file = File("src/main/resources/core_color_map.json")
+            if (file.exists()) {
+                coreColorMap = objectMapper.readValue(
+                    file,
+                    object : TypeReference<Map<String, String>>() {}
+                )
+                logger.info("Reloaded core_color_map.json from file system with ${coreColorMap.size} entries.")
+                return
+            }
+
+            // Fallback to Classpath
             val resource = ClassPathResource("core_color_map.json")
             if (resource.exists()) {
                 coreColorMap = objectMapper.readValue(
                     resource.inputStream,
                     object : TypeReference<Map<String, String>>() {}
                 )
-                logger.info("Loaded core_color_map.json with ${coreColorMap.size} entries.")
+                logger.info("Reloaded core_color_map.json from classpath with ${coreColorMap.size} entries.")
             } else {
                 logger.warn("core_color_map.json not found!")
             }
         } catch (e: IOException) {
-            logger.error("Failed to load core_color_map.json", e)
+            logger.error("Failed to reload core_color_map.json", e)
         }
     }
 

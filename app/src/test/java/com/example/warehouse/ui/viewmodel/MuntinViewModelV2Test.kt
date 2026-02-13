@@ -1,15 +1,50 @@
 package com.example.warehouse.ui.viewmodel
 
+import android.app.Application
+import com.example.warehouse.data.repository.ConfigRepository
 import com.example.warehouse.util.MuntinCalculatorV2.IntersectionType
+import io.mockk.coEvery
+import io.mockk.every
+import io.mockk.mockk
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 
 class MuntinViewModelV2Test {
 
+    private lateinit var application: Application
+    private lateinit var configRepository: ConfigRepository
+    private val testDispatcher = StandardTestDispatcher()
+
+    @Before
+    fun setup() {
+        Dispatchers.setMain(testDispatcher)
+        application = mockk(relaxed = true)
+        configRepository = mockk(relaxed = true)
+        
+        // Mock the flow to avoid NPE or hanging
+        coEvery { configRepository.getProfilesFlow() } returns flowOf(emptyList())
+    }
+
+    @After
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
+    private fun createViewModel(): MuntinViewModelV2 {
+        return MuntinViewModelV2(application, configRepository)
+    }
+
     @Test
     fun `test initial state`() {
-        val viewModel = MuntinViewModelV2()
+        val viewModel = createViewModel()
         val state = viewModel.uiState.value
         
         assertEquals("1000", state.sashWidth)
@@ -21,7 +56,7 @@ class MuntinViewModelV2Test {
 
     @Test
     fun `test add vertical muntin updates state and cut list`() {
-        val viewModel = MuntinViewModelV2()
+        val viewModel = createViewModel()
         
         viewModel.addVerticalMuntin()
         
@@ -36,7 +71,7 @@ class MuntinViewModelV2Test {
 
     @Test
     fun `test dimension change triggers recalculation`() {
-        val viewModel = MuntinViewModelV2()
+        val viewModel = createViewModel()
         viewModel.addVerticalMuntin() // 1 muntin at 500 (center of 1000)
         
         // Initial length: 1000 - offsets ~ 818
@@ -55,7 +90,7 @@ class MuntinViewModelV2Test {
 
     @Test
     fun `test mode switch to angular`() {
-        val viewModel = MuntinViewModelV2()
+        val viewModel = createViewModel()
         
         viewModel.setMode(true) // Switch to Angular
         
@@ -71,7 +106,7 @@ class MuntinViewModelV2Test {
 
     @Test
     fun `test spider pattern toggle`() {
-        val viewModel = MuntinViewModelV2()
+        val viewModel = createViewModel()
         viewModel.setMode(true)
         
         viewModel.setSpiderPattern(true)

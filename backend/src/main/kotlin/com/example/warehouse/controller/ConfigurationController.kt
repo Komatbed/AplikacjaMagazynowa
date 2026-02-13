@@ -9,6 +9,11 @@ import jakarta.validation.Valid
 import org.springframework.web.bind.annotation.*
 
 import com.example.warehouse.service.CoreColorService
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.core.type.TypeReference
+import org.springframework.core.io.ClassPathResource
+import org.springframework.core.io.FileSystemResource
+import java.io.File
 
 @RestController
 @RequestMapping("/api/v1/config")
@@ -16,7 +21,8 @@ class ConfigurationController(
     private val profileRepository: ProfileDefinitionRepository,
     private val colorRepository: ColorDefinitionRepository,
     private val coreColorService: CoreColorService,
-    private val warehouseConfig: WarehouseConfig
+    private val warehouseConfig: WarehouseConfig,
+    private val objectMapper: ObjectMapper
 ) {
 
     // Warehouse Config
@@ -28,6 +34,112 @@ class ConfigurationController(
             "reserveWasteLengths" to warehouseConfig.reserveWasteLengths,
             "customMultiCoreColors" to warehouseConfig.customMultiCoreColors
         )
+    }
+
+    // Reload Defaults
+    @PostMapping("/reload-defaults")
+    fun reloadDefaults(): Map<String, String> {
+        val stats = mutableMapOf<String, String>()
+        
+        // Reload Beans
+        warehouseConfig.reload()
+        coreColorService.reload()
+        stats["beans"] = "Reloaded WarehouseConfig and CoreColorService"
+        
+        // Reload Profiles
+        try {
+            val profiles = loadProfiles()
+            if (profiles != null) {
+                var added = 0
+                var updated = 0
+                profiles.forEach { profile ->
+                    val existing = profileRepository.findByCode(profile.code)
+                    if (existing != null) {
+                        profileRepository.save(existing.copy(
+                            description = profile.description,
+                            standardLengthMm = profile.standardLengthMm,
+                            heightMm = profile.heightMm,
+                            widthMm = profile.widthMm,
+                            beadHeightMm = profile.beadHeightMm,
+                            beadAngle = profile.beadAngle,
+                            system = profile.system,
+                            manufacturer = profile.manufacturer,
+                            type = profile.type
+                        ))
+                        updated++
+                    } else {
+                        profileRepository.save(profile)
+                        added++
+                    }
+                }
+                stats["profiles"] = "Added: $added, Updated: $updated"
+            } else {
+                stats["profiles"] = "Failed to load profiles.json"
+            }
+        } catch (e: Exception) {
+            stats["profiles"] = "Error: ${e.message}"
+        }
+
+        // Reload Colors
+        try {
+            val colors = loadColors()
+            if (colors != null) {
+                var added = 0
+                var updated = 0
+                colors.forEach { color ->
+                    val existing = colorRepository.findByCode(color.code)
+                    if (existing != null) {
+                        colorRepository.save(existing.copy(
+                            description = color.description,
+                            name = color.name,
+                            paletteCode = color.paletteCode,
+                            vekaCode = color.vekaCode,
+                            type = color.type,
+                            foilManufacturer = color.foilManufacturer
+                        ))
+                        updated++
+                    } else {
+                        colorRepository.save(color)
+                        added++
+                    }
+                }
+                stats["colors"] = "Added: $added, Updated: $updated"
+            } else {
+                stats["colors"] = "Failed to load colors.json"
+            }
+        } catch (e: Exception) {
+            stats["colors"] = "Error: ${e.message}"
+        }
+
+        return stats
+    }
+
+    private fun loadProfiles(): List<ProfileDefinition>? {
+        // Try FileSystem first (for dev/hot reload)
+        val file = File("src/main/resources/initial_data/profiles.json")
+        if (file.exists()) {
+             return objectMapper.readValue(file, object : TypeReference<List<ProfileDefinition>>() {})
+        }
+        // Fallback to Classpath
+        val resource = ClassPathResource("initial_data/profiles.json")
+        if (resource.exists()) {
+            return objectMapper.readValue(resource.inputStream, object : TypeReference<List<ProfileDefinition>>() {})
+        }
+        return null
+    }
+
+    private fun loadColors(): List<ColorDefinition>? {
+        // Try FileSystem first
+        val file = File("src/main/resources/initial_data/colors.json")
+        if (file.exists()) {
+             return objectMapper.readValue(file, object : TypeReference<List<ColorDefinition>>() {})
+        }
+        // Fallback to Classpath
+        val resource = ClassPathResource("initial_data/colors.json")
+        if (resource.exists()) {
+            return objectMapper.readValue(resource.inputStream, object : TypeReference<List<ColorDefinition>>() {})
+        }
+        return null
     }
 
     // Core Color Rules

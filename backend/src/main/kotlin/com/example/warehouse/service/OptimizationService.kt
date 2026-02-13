@@ -132,7 +132,7 @@ class OptimizationService(
             }
             
             // Execute Cut
-            bestBin!!.remaining -= piece
+            bestBin.remaining -= piece
             bestBin.cuts.add(piece)
         }
         

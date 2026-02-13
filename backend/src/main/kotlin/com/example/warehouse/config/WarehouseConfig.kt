@@ -6,6 +6,7 @@ import jakarta.annotation.PostConstruct
 import org.slf4j.LoggerFactory
 import org.springframework.core.io.ClassPathResource
 import org.springframework.stereotype.Component
+import java.io.File
 
 @Component
 class WarehouseConfig(
@@ -23,21 +24,37 @@ class WarehouseConfig(
 
     @PostConstruct
     fun init() {
+        reload()
+    }
+
+    fun reload() {
         try {
+            // Try FileSystem first
+            val file = File("src/main/resources/warehouse_config.json")
+            if (file.exists()) {
+                loadFromDto(objectMapper.readValue(file, WarehouseConfigDto::class.java))
+                logger.info("Reloaded warehouse_config.json from file system")
+                return
+            }
+
+            // Fallback to Classpath
             val resource = ClassPathResource("warehouse_config.json")
             if (resource.exists()) {
-                val config = objectMapper.readValue(resource.inputStream, WarehouseConfigDto::class.java)
-                this.lowStockThreshold = config.lowStockThreshold
-                this.defaultPalletCapacity = config.defaultPalletCapacity
-                this.reserveWasteLengths = config.reserveWasteLengths
-                this.customMultiCoreColors = config.customMultiCoreColors
-                logger.info("Loaded warehouse_config.json: $config")
+                loadFromDto(objectMapper.readValue(resource.inputStream, WarehouseConfigDto::class.java))
+                logger.info("Reloaded warehouse_config.json from classpath")
             } else {
                 logger.warn("warehouse_config.json not found, using defaults.")
             }
         } catch (e: Exception) {
-            logger.error("Failed to load warehouse_config.json", e)
+            logger.error("Failed to reload warehouse_config.json", e)
         }
+    }
+
+    private fun loadFromDto(config: WarehouseConfigDto) {
+        this.lowStockThreshold = config.lowStockThreshold
+        this.defaultPalletCapacity = config.defaultPalletCapacity
+        this.reserveWasteLengths = config.reserveWasteLengths
+        this.customMultiCoreColors = config.customMultiCoreColors
     }
 
     private data class WarehouseConfigDto(

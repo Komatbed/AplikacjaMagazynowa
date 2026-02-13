@@ -34,7 +34,10 @@ data class ProfileEntity(
     val system: String = "",
 
     @ColumnInfo(name = "manufacturer")
-    val manufacturer: String = ""
+    val manufacturer: String = "",
+
+    @ColumnInfo(name = "type")
+    val type: String = "OTHER"
 )
 
 @Entity(tableName = "color_definitions")

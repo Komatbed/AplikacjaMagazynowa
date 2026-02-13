@@ -29,7 +29,7 @@ def get_input(prompt, default=None, required=True, val_type=str):
 def create_profile():
     print("\n--- Dodawanie Profilu ---")
     return {
-        "code": get_input("Kod Profilu (np. 82001)"),
+        "code": get_input("Kod Profilu (np. 103341)"),
         "description": get_input("Opis", default=""),
         "system": get_input("System (np. Veka Softline 82)", default="Veka"),
         "manufacturer": get_input("Producent", default="Veka"),

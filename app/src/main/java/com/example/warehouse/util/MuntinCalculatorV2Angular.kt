@@ -160,10 +160,13 @@ object MuntinCalculatorV2Angular {
              val cy = minY + (arch.radiusMm ?: 500.0)
              val radius = arch.radiusMm ?: 500.0
              
+             // Use parameters from ArchPatternV2
+             val startAngle = arch.arcStartDeg
+             val endAngle = arch.arcEndDeg
+             val sweep = endAngle - startAngle
+             
              // Generate segments approximating arch
              val steps = 20
-             val startAngle = 180.0 + 45.0
-             val sweep = 90.0
              val step = sweep / steps
              
              for(i in 0 until steps) {
@@ -176,6 +179,23 @@ object MuntinCalculatorV2Angular {
                  if (seg != null) {
                      val angle = Math.toDegrees(atan2(p2.y - p1.y, p2.x - p1.x))
                      rawSegments.add(ProcessedSegment(seg.p1, seg.p2, false, "Łuk", angle, muntinProfile.widthMm.toDouble()))
+                 }
+             }
+
+             // Generate Rays (Słoneczko)
+             if (arch.divisionCount > 0) {
+                 val rayStep = sweep / (arch.divisionCount + 1)
+                 for (i in 1..arch.divisionCount) {
+                     val angle = startAngle + i * rayStep
+                     val rad = Math.toRadians(angle)
+                     // Ray from Center to Arc
+                     val p1 = Point(cx, cy)
+                     val p2 = Point(cx + radius * cos(rad), cy + radius * sin(rad))
+                     
+                     val seg = clipSegmentToRect(p1, p2, minX, minY, maxX, maxY)
+                     if (seg != null) {
+                         rawSegments.add(ProcessedSegment(seg.p1, seg.p2, false, "Promień $i", angle, muntinProfile.widthMm.toDouble()))
+                     }
                  }
              }
         }
@@ -195,7 +215,7 @@ object MuntinCalculatorV2Angular {
                 sashNo = 1,
                 muntinNo = index + 1,
                 axis = if (abs(seg.angleDeg) % 180 in 45.0..135.0) Axis.VERTICAL else Axis.HORIZONTAL,
-                lengthMm = max(0.0, len + settings.sawCorrectionMm),
+                lengthMm = kotlin.math.round(max(0.0, len + settings.sawCorrectionMm)),
                 leftAngleDeg = 90.0, // Placeholder
                 rightAngleDeg = 90.0, // Placeholder
                 qty = 1,
@@ -205,23 +225,37 @@ object MuntinCalculatorV2Angular {
             )
         }
 
-        val marks = resolvedSegments.mapIndexed { index, seg ->
-            val mid = Point((seg.p1.x + seg.p2.x)/2, (seg.p1.y + seg.p2.y)/2)
-            // Reference from Outer Edge.
-            // Our minX/minY are GLASS edges.
-            // So Outer Top = 0. Glass Top = frameOffset.
-            // Mark Y = mid.y (Glass coord) + frameOffset? 
-            // Wait, minX is frameOffset. So mid.x is already relative to Outer (0,0)?
-            // No, in step 1 we defined minX = frameOffset.
-            // So (0,0) is the outer corner of Sash.
-            // So mid.x, mid.y ARE relative to Outer Edge.
+        val marks = resolvedSegments.flatMapIndexed { index, seg ->
+            val mList = mutableListOf<MountMarkV2>()
             
-            MountMarkV2(
-                itemId = "${index + 1}",
-                referenceEdge = "Góra/Lewa",
-                offsetMm = 0.0,
-                axisDescription = "X=${"%.1f".format(mid.x)}, Y=${"%.1f".format(mid.y)}"
-            )
+            // Helper to check edge proximity
+            fun checkEdge(p: Point, tag: String): String? {
+                return when {
+                    abs(p.y - minY) < 1.0 -> "Góra: X=${"%.1f".format(p.x)}mm"
+                    abs(p.y - maxY) < 1.0 -> "Dół: X=${"%.1f".format(p.x)}mm"
+                    abs(p.x - minX) < 1.0 -> "Lewa: Y=${"%.1f".format(p.y)}mm"
+                    abs(p.x - maxX) < 1.0 -> "Prawa: Y=${"%.1f".format(p.y)}mm"
+                    else -> null
+                }
+            }
+
+            val startMark = checkEdge(seg.p1, "Start")
+            if (startMark != null) {
+                mList.add(MountMarkV2("${index+1} (Start)", "Krawędź", 0.0, startMark))
+            }
+            
+            val endMark = checkEdge(seg.p2, "Koniec")
+            if (endMark != null) {
+                mList.add(MountMarkV2("${index+1} (Koniec)", "Krawędź", 0.0, endMark))
+            }
+            
+            if (mList.isEmpty()) {
+                // Internal segment
+                val mid = Point((seg.p1.x + seg.p2.x)/2, (seg.p1.y + seg.p2.y)/2)
+                mList.add(MountMarkV2("${index+1}", "Środek", 0.0, "X=${"%.1f".format(mid.x)}, Y=${"%.1f".format(mid.y)}"))
+            }
+            
+            mList
         }
 
         return AngularResult(
@@ -290,7 +324,6 @@ object MuntinCalculatorV2Angular {
                 val sortedCuts = cuts.sortedBy { seg.p1.dist(it) }
                 
                 // Create sub-segments
-                var currentStart = seg.p1
                 // We need to know IF currentStart is a "cut point" (needs gap) or "frame point" (no gap).
                 // p1 is Frame (usually), unless we chained segments (not here).
                 // But cuts ARE cuts.
@@ -321,8 +354,6 @@ object MuntinCalculatorV2Angular {
                     // Is pStart a cut? Yes if k > 0.
                     // Is pEnd a cut? Yes if k < size - 2. (Last point is p2)
                     
-                    val isStartCut = (k > 0)
-                    val isEndCut = (k < points.size - 2) // Actually points.size is N+2 (S, c1...cN, E). 
                     // k=0: S->c1. End is cut.
                     // k=last: cN->E. Start is cut.
                     

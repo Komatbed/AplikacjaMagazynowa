@@ -9,6 +9,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,14 +24,59 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.warehouse.ui.theme.SafetyOrange
 import com.example.warehouse.ui.viewmodel.MuntinViewModel
+import com.example.warehouse.ui.viewmodel.MuntinViewModelV2
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MuntinScreen(
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    initialTab: Int = 0
 ) {
-    var selectedTab by remember { mutableStateOf(0) }
+    var selectedTab by remember { mutableStateOf(initialTab) }
     val tabs = listOf("V1 (Prosty)", "V2 (Naklejane)")
+    
+    // State for V2 Settings Dialog
+    var showV2Settings by remember { mutableStateOf(false) }
+    
+    // We need access to V2 ViewModel here to pass to dialog
+    // But MuntinScreenV2 instantiates it internally.
+    // We should lift the viewModel instantiation or access it via koin/hilt/factory if shared.
+    // Since we don't have Hilt, let's instantiate it here if selectedTab is 1?
+    // Or better, let MuntinScreenV2 handle the dialog state? 
+    // But we want the button in the TopBar which is here.
+    
+    // Let's instantiate ViewModels here or use a shared one?
+    // They are different ViewModels.
+    
+    // Solution: Instantiate MuntinViewModelV2 here and pass it down.
+    val viewModelV2: MuntinViewModelV2 = viewModel()
+    
+    // Additional state for Profile Manager invoked from Settings
+    var showProfileManager by remember { mutableStateOf(false) }
+
+    if (showV2Settings) {
+        val state by viewModelV2.uiState
+        MuntinV2SettingsDialog(
+            viewModel = viewModelV2,
+            state = state,
+            onDismiss = { showV2Settings = false },
+            onManageProfiles = { 
+                showV2Settings = false
+                showProfileManager = true
+            },
+            onForceImport = {
+                viewModelV2.refreshConfig()
+                showV2Settings = false
+            }
+        )
+    }
+    
+    if (showProfileManager) {
+        ProfileManagerDialog(
+            viewModel = viewModelV2,
+            onDismiss = { showProfileManager = false }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -39,6 +85,13 @@ fun MuntinScreen(
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Wstecz", tint = Color.White)
+                    }
+                },
+                actions = {
+                    if (selectedTab == 1) {
+                        IconButton(onClick = { showV2Settings = true }) {
+                            Icon(Icons.Default.Settings, contentDescription = "Ustawienia", tint = SafetyOrange)
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -62,7 +115,7 @@ fun MuntinScreen(
             
             when (selectedTab) {
                 0 -> MuntinScreenV1()
-                1 -> MuntinScreenV2()
+                1 -> MuntinScreenV2(viewModel = viewModelV2)
             }
         }
     }

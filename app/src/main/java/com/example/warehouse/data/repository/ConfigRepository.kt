@@ -64,7 +64,8 @@ class ConfigRepository(
                     beadAngle = it.beadAngle,
                     standardLengthMm = it.standardLengthMm,
                     system = it.system,
-                    manufacturer = it.manufacturer
+                    manufacturer = it.manufacturer,
+                    type = it.type
                 ) 
             })
             configDao.insertColors(colors.map { 
@@ -81,6 +82,20 @@ class ConfigRepository(
             })
             
             Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun forceReloadAndSync(): Result<Map<String, String>> {
+        return try {
+            // 1. Tell server to reload from files
+            val stats = api.reloadDefaults()
+            
+            // 2. Refresh local data from server
+            refreshConfig()
+            
+            Result.success(stats)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -117,7 +132,8 @@ class ConfigRepository(
                     beadAngle = profile.beadAngle,
                     standardLengthMm = profile.standardLengthMm,
                     system = profile.system,
-                    manufacturer = profile.manufacturer
+                    manufacturer = profile.manufacturer,
+                    type = profile.type
                 )
             ))
         } catch (e: Exception) {
@@ -174,7 +190,8 @@ class ConfigRepository(
                     beadAngle = profile.beadAngle,
                     standardLengthMm = profile.standardLengthMm,
                     system = profile.system,
-                    manufacturer = profile.manufacturer
+                    manufacturer = profile.manufacturer,
+                    type = profile.type
                 )
             ))
 
@@ -204,7 +221,8 @@ class ConfigRepository(
                         beadAngle = profile.beadAngle,
                         standardLengthMm = profile.standardLengthMm,
                         system = profile.system,
-                        manufacturer = profile.manufacturer
+                        manufacturer = profile.manufacturer,
+                        type = profile.type
                     )
                 ))
                  auditLogDao.insert(AuditLogEntity(

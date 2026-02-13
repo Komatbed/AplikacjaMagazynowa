@@ -4,13 +4,14 @@ data class SashProfileV2(
     val profileNo: String,
     val widthMm: Int,
     val heightMm: Int,
+    val rebateHeightMm: Int = 0, // Added for display
     val outerConstructionAngleDeg: Double // Angle of the outer sash corner (usually 45 or 90)
 )
 
 data class BeadProfileV2(
     val profileNo: String,
     val widthMm: Int,
-    val heightMm: Int,
+    val heightMm: Int, // This is effectively the bead height
     val innerBeadAngleDeg: Double // Angle of the bead miter (usually 45)
 )
 
