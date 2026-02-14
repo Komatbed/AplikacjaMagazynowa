@@ -40,17 +40,22 @@ class MuntinsV3Repository(
 
     // --- Configuration (Profiles, Beads, Muntins) ---
     val allProfiles: Flow<List<ProfileEntity>> = dao.getAllProfiles()
-    val allGlassBeads: Flow<List<GlassBeadEntity>> = dao.getAllGlassBeads()
+    val allBeads: Flow<List<GlassBeadEntity>> = dao.getAllGlassBeads()
     val allMuntins: Flow<List<MuntinEntity>> = dao.getAllMuntins()
-
-    suspend fun getProfileById(id: Long): ProfileEntity? {
-        return dao.getProfileById(id)
+    
+    suspend fun getProfileById(id: Long): ProfileEntity? = dao.getProfileById(id)
+    suspend fun getGlassBeadById(id: Long): GlassBeadEntity? = dao.getGlassBeadById(id)
+    suspend fun getMuntinById(id: Long): MuntinEntity? = dao.getMuntinById(id)
+    
+    // --- Maintenance ---
+    suspend fun clearAll() {
+        // Order matters due to FKs
+        dao.clearLayouts()
+        dao.clearProjects()
+        dao.clearMuntins()
+        dao.clearGlassBeads()
+        dao.clearProfiles()
     }
-
-    suspend fun getGlassBeadById(id: Long): GlassBeadEntity? {
-        return dao.getGlassBeadById(id)
-    }
-
     suspend fun saveProfile(profile: ProfileEntity) {
         dao.insertProfile(profile)
     }

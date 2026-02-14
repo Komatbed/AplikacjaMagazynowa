@@ -1,0 +1,26 @@
+*klik w canvas:ma dodawać/usuwać szprosa,szprosy muszą mieć równy podział. przyciski +pion/+poziom też się przydadzą
+*symetria
+*ma być zachowany pion/poziom
+*opcje
+*siatka opcjonalna, zoom zbędny 
+*tak, chcę możliwość zmiany szprosa ciągłego
+*reguła globalna
+*tak
+*tak np.pion1 lewy1 (od lewej od góry)
+*tak jako luz"globalny", korekta luzu szpros-listewka, korekta luzu szpros-szpros
+*kąty są skorelowane z konkretnymi listewkami przyszybowymi/szprosami do których przylegają, a po stronie zewnętrznej trzeba zamiast kąta listewki przyszybowej wziąć pod uwagę kąt płaszczyny skrzydła. kąty bierzemy z parametrów w bazie danych przypisanych do konkretnego profila więc podczas konfiguracji skrzudła musimy wybrać z bazy:jakie skrzydło, jaka listewka przyszybowa, jaki szpros.
+*dane na temat szprosa pobierzmy z bazy danych (szprosy to profile veka których numery zaczynają się od "109"). możemy też dodać awaryjną opcję wpisania parametrów szprosa ręcznie (schowajmy to w ustawieniach i dodajmy przełącznik "wpisz dane ręcznie")
+*pobieramy z bazy
+*„kąt1 → wymiar → kąt2 → opis” unikalny dla każdego szprosa
+*tak
+*chciałbym aby wybranie szprosa na liście cięć podświetlał go na wirtualnym skrzydle
+*opcja eksportu do pdf/lub natychmiastowego druku (na połączonej drukace zebra .będzie połączona z apklacją- w pszyszłości) naklejek 40x100.kazda to osobny element 
+*zawsze podajemy wymiary
+* tak zawsze musimy wybrać profile to ma wpływ na wymiary docelowe
+*tak ale dodajmy je do instniejących już presetów. podstawą ma być ręczne wskazanie ukąłdu na canvasie
+*nie zaglądamy do magazynu 
+*tak
+*jak wolisz, zrób tak aby kod umożliwiał łatwą refaktoryzację
+*może oddzielmy te dwie funkcje, zróbmy w nawigacji "szprosy proste", "szprosy skośne"
+*w "prostym tylko proste"
++do listy cięć dodajmy możliwość optymalizacji dla kolejnych 10 skrzydeł "po podaniu ich wymiarów", wymiar sztangi w ustawieniach

@@ -14,6 +14,9 @@ import androidx.room.ForeignKey
             childColumns = ["project_id"],
             onDelete = ForeignKey.CASCADE
         )
+    ],
+    indices = [
+        androidx.room.Index(value = ["project_id"])
     ]
 )
 data class LayoutEntity(

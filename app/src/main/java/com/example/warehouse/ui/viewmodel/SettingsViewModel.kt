@@ -152,6 +152,12 @@ class SettingsViewModel @JvmOverloads constructor(
         SharingStarted.WhileSubscribed(5000),
         false
     )
+    
+    val muntinManualInput = settingsDataStore.muntinManualInput.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        false
+    )
 
     init {
         startPeriodicCheck()
@@ -194,6 +200,10 @@ class SettingsViewModel @JvmOverloads constructor(
     
     fun saveScrapThreshold(threshold: Int) {
         viewModelScope.launch { settingsDataStore.saveScrapThreshold(threshold) }
+    }
+    
+    fun saveMuntinManualInput(enabled: Boolean) {
+        viewModelScope.launch { settingsDataStore.saveMuntinManualInput(enabled) }
     }
     
     fun saveReservedWasteLengths(lengths: String) {

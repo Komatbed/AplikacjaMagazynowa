@@ -27,11 +27,12 @@ class AuthService(
             login = request.username,
             passwordHash = passwordEncoder.encode(request.password),
             fullName = request.fullName,
-            role = request.role
+            role = request.role,
+            mustChangePassword = false
         )
         userRepository.save(user)
         val token = jwtService.generateToken(user)
-        return AuthResponse(token, user.login, user.role, user.fullName)
+        return AuthResponse(token, user.login, user.role, user.fullName, user.mustChangePassword)
     }
 
     fun login(request: LoginRequest): AuthResponse {
@@ -41,7 +42,7 @@ class AuthService(
         val user = userRepository.findByLogin(request.username)
             .orElseThrow()
         val token = jwtService.generateToken(user)
-        return AuthResponse(token, user.login, user.role, user.fullName)
+        return AuthResponse(token, user.login, user.role, user.fullName, user.mustChangePassword)
     }
     
     // Helper to init default admin if needed

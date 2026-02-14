@@ -23,6 +23,7 @@ class AddInventoryViewModel(application: Application) : AndroidViewModel(applica
     private val db = WarehouseDatabase.getDatabase(application)
     private val configRepository = ConfigRepository(application)
     private val settingsDataStore = SettingsDataStore(application)
+    private val inventoryRepository = com.example.warehouse.data.repository.InventoryRepository(application)
     private val presetDao = db.presetDao()
 
     // Data Sources
@@ -54,16 +55,28 @@ class AddInventoryViewModel(application: Application) : AndroidViewModel(applica
 
     private val _isCoreSelectionEnabled = MutableStateFlow(false)
     val isCoreSelectionEnabled: StateFlow<Boolean> = _isCoreSelectionEnabled
+    
+    // Preferred orders / favorites
+    private val preferredProfileOrderCodes = MutableStateFlow<List<String>>(emptyList())
+    private val preferredColorOrderCodes = MutableStateFlow<List<String>>(emptyList())
+    private val favoriteProfileCodes = MutableStateFlow<Set<String>>(emptySet())
+    private val favoriteColorCodes = MutableStateFlow<Set<String>>(emptySet())
 
     // Rules Cache
     private var coreColorRules: Map<String, String> = emptyMap()
 
     init {
         viewModelScope.launch {
-            configRepository.getProfilesFlow().collect { (profiles as MutableStateFlow).value = it }
+            configRepository.getProfilesFlow().collect { list ->
+                val ordered = applyPreferredOrderToProfiles(list, preferredProfileOrderCodes.value, favoriteProfileCodes.value)
+                (profiles as MutableStateFlow).value = ordered
+            }
         }
         viewModelScope.launch {
-            configRepository.getColorsFlow().collect { (colors as MutableStateFlow).value = it }
+            configRepository.getColorsFlow().collect { list ->
+                val ordered = applyPreferredOrderToColors(list, preferredColorOrderCodes.value, favoriteColorCodes.value)
+                (colors as MutableStateFlow).value = ordered
+            }
         }
         viewModelScope.launch {
             settingsDataStore.customMultiCoreColors.collect { csv ->
@@ -73,16 +86,43 @@ class AddInventoryViewModel(application: Application) : AndroidViewModel(applica
             }
         }
         viewModelScope.launch {
+            settingsDataStore.preferredProfileOrder.collect { csv ->
+                preferredProfileOrderCodes.value = csv.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+                // Re-apply ordering with current profiles
+                (profiles as MutableStateFlow).value = applyPreferredOrderToProfiles(profiles.value, preferredProfileOrderCodes.value, favoriteProfileCodes.value)
+            }
+        }
+        viewModelScope.launch {
+            settingsDataStore.preferredColorOrder.collect { csv ->
+                preferredColorOrderCodes.value = csv.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+                (colors as MutableStateFlow).value = applyPreferredOrderToColors(colors.value, preferredColorOrderCodes.value, favoriteColorCodes.value)
+            }
+        }
+        viewModelScope.launch {
+            settingsDataStore.favoriteProfileCodes.collect { csv ->
+                favoriteProfileCodes.value = csv.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()
+                (profiles as MutableStateFlow).value = applyPreferredOrderToProfiles(profiles.value, preferredProfileOrderCodes.value, favoriteProfileCodes.value)
+            }
+        }
+        viewModelScope.launch {
+            settingsDataStore.favoriteColorCodes.collect { csv ->
+                favoriteColorCodes.value = csv.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()
+                (colors as MutableStateFlow).value = applyPreferredOrderToColors(colors.value, preferredColorOrderCodes.value, favoriteColorCodes.value)
+            }
+        }
+        viewModelScope.launch {
             configRepository.getCoreColorRulesFlow().collect { rules ->
+                // Use ext code -> core display name mapping, translated
                 coreColorRules = rules.associate { it.extColorCode to it.coreColorCode }
                 
                 // Extract unique core colors for the dropdown
                 val cores = rules.map { it.coreColorCode }.distinct().sorted().toMutableList()
                 // Ensure basic cores are present if not in rules
-                val basicCores = listOf("white", "brown", "caramel", "anthracite", "grey", "black")
+                val basicCores = listOf("biały", "brąz", "karmel", "antracyt", "szary", "czarny", "kremowy")
                 basicCores.forEach { if (!cores.contains(it)) cores.add(it) }
                 
-                _availableCoreColors.value = cores
+                // Translate possible English codes to PL for the dropdown
+                _availableCoreColors.value = cores.map { translateCoreToPL(it) }
                 
                 recalculateCoreColor()
             }
@@ -162,7 +202,7 @@ class AddInventoryViewModel(application: Application) : AndroidViewModel(applica
         val extName = extEntity.name
         
         val intCode = when (_internalColorMode.value) {
-            InternalColorMode.WHITE -> "white"
+            InternalColorMode.WHITE -> "biały"
             InternalColorMode.RAL_9001 -> "RAL 9001"
             InternalColorMode.SAME_AS_EXTERNAL -> extCode
         }
@@ -207,6 +247,60 @@ class AddInventoryViewModel(application: Application) : AndroidViewModel(applica
                c.contains("krem") ||
                c.contains("cream") ||
                c.contains("papirus")
+    }
+    
+    private fun translateCoreToPL(code: String): String {
+        return when (code.lowercase()) {
+            "white", "biały", "bialy", "9016" -> "biały"
+            "brown", "brąz", "braz" -> "brąz"
+            "caramel", "karmel" -> "karmel"
+            "anthracite", "antracyt" -> "antracyt"
+            "grey", "gray", "szary" -> "szary"
+            "black", "czarny" -> "czarny"
+            "cream", "krem", "kremowy", "9001" -> "kremowy"
+            else -> code
+        }
+    }
+    
+    private fun applyPreferredOrderToProfiles(list: List<ProfileEntity>, order: List<String>, favorites: Set<String>): List<ProfileEntity> {
+        val orderIndex = order.withIndex().associate { it.value to it.index }
+        return list.sortedWith(compareBy(
+            { if (favorites.contains(it.code)) 0 else 1 },
+            { orderIndex[it.code] ?: Int.MAX_VALUE },
+            { it.code.lowercase() }
+        ))
+    }
+    
+    private fun applyPreferredOrderToColors(list: List<ColorEntity>, order: List<String>, favorites: Set<String>): List<ColorEntity> {
+        val orderIndex = order.withIndex().associate { it.value to it.index }
+        return list.sortedWith(compareBy(
+            { if (favorites.contains(it.code)) 0 else 1 },
+            { orderIndex[it.code] ?: Int.MAX_VALUE },
+            { (it.name.ifBlank { it.code }).lowercase() }
+        ))
+    }
+    
+    fun addToInventory(locationLabel: String, lengthMm: Int, quantity: Int) {
+        val profile = _selectedProfile.value ?: return
+        val external = _selectedExternalColor.value ?: return
+        val internal = when (_internalColorMode.value) {
+            InternalColorMode.WHITE -> "biały"
+            InternalColorMode.RAL_9001 -> "RAL 9001"
+            InternalColorMode.SAME_AS_EXTERNAL -> external.code
+        }
+        val core = _calculatedCoreColor.value
+        viewModelScope.launch {
+            inventoryRepository.addItem(
+                locationLabel = locationLabel,
+                profileCode = profile.code,
+                internalColor = internal,
+                externalColor = external.code,
+                coreColor = if (_isCoreSelectionEnabled.value) core else core, // core is auto-PL
+                lengthMm = lengthMm,
+                quantity = quantity,
+                status = "AVAILABLE"
+            )
+        }
     }
 
     enum class InternalColorMode {

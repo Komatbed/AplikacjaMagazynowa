@@ -243,15 +243,15 @@ class ConfigRepository(
 
     suspend fun deleteProfile(id: String): Result<Unit> {
         return try {
-            api.deleteProfile(id)
-            refreshConfig()
-            
+            // Local-first deletion (offline-friendly)
+            configDao.deleteProfileById(id)
+            // Try remote, ignore failures
+            try { if (id.isNotBlank()) api.deleteProfile(id) } catch (_: Exception) {}
             auditLogDao.insert(AuditLogEntity(
                 action = "DELETE_PROFILE",
                 itemType = "CONFIG",
-                details = "Usunięto profil ID: $id"
+                details = "Usunięto profil ID: $id (local)"
             ))
-            
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -364,15 +364,15 @@ class ConfigRepository(
 
     suspend fun deleteColor(id: String): Result<Unit> {
         return try {
-            api.deleteColor(id)
-            refreshConfig()
-            
+            // Local-first deletion (offline-friendly)
+            configDao.deleteColorById(id)
+            // Try remote, ignore failures
+            try { if (id.isNotBlank()) api.deleteColor(id) } catch (_: Exception) {}
             auditLogDao.insert(AuditLogEntity(
                 action = "DELETE_COLOR",
                 itemType = "CONFIG",
-                details = "Usunięto kolor ID: $id"
+                details = "Usunięto kolor ID: $id (local)"
             ))
-            
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
@@ -384,6 +384,48 @@ class ConfigRepository(
         val profiles: List<ProfileEntity> = emptyList(),
         val colors: List<ColorEntity> = emptyList()
     )
+
+    suspend fun saveInitialData(profiles: List<ProfileDefinition>, colors: List<ColorDefinition>): Result<Unit> {
+        return try {
+            // Purge existing to ensure only JSON data remain
+            configDao.clearProfiles()
+            configDao.clearColors()
+            if (profiles.isNotEmpty()) {
+                configDao.insertProfiles(profiles.map {
+                    ProfileEntity(
+                        code = it.code,
+                        id = it.id ?: java.util.UUID.randomUUID().toString(),
+                        description = it.description,
+                        heightMm = it.heightMm,
+                        widthMm = it.widthMm,
+                        beadHeightMm = it.beadHeightMm,
+                        beadAngle = it.beadAngle,
+                        standardLengthMm = it.standardLengthMm,
+                        system = it.system,
+                        manufacturer = it.manufacturer,
+                        type = it.type
+                    )
+                })
+            }
+            if (colors.isNotEmpty()) {
+                configDao.insertColors(colors.map {
+                    ColorEntity(
+                        code = it.code,
+                        id = it.id ?: java.util.UUID.randomUUID().toString(),
+                        description = it.description,
+                        name = it.name,
+                        paletteCode = it.paletteCode,
+                        vekaCode = it.vekaCode,
+                        type = it.type,
+                        foilManufacturer = it.foilManufacturer
+                    )
+                })
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
     suspend fun exportConfig(): String {
         val profiles = configDao.getProfilesSync()

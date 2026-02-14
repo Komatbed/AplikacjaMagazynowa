@@ -20,6 +20,10 @@ import androidx.room.ForeignKey
             childColumns = ["bead_id"],
             onDelete = ForeignKey.RESTRICT
         )
+    ],
+    indices = [
+        androidx.room.Index(value = ["profile_id"]),
+        androidx.room.Index(value = ["bead_id"])
     ]
 )
 data class ProjectEntity(

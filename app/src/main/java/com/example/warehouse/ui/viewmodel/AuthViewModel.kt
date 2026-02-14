@@ -42,11 +42,13 @@ import kotlinx.coroutines.launch
         data class Register(val username: String, val password: String, val confirmPassword: String) : AuthEvent()
         data class ForgotPassword(val username: String) : AuthEvent()
         data class ChangePassword(val oldPass: String, val newPassword: String, val confirmNewPassword: String) : AuthEvent()
-        data class AddUser(val username: String, val role: String) : AuthEvent()
+        data class AddUser(val username: String, val role: String, val password: String? = null, val fullName: String? = null) : AuthEvent()
         data class DeleteUser(val userId: String) : AuthEvent()
         data class SetPin(val pin: String) : AuthEvent()
         data class SetLoginMethod(val method: LoginMethod) : AuthEvent()
         data class AdminResetPassword(val userId: String) : AuthEvent()
+        data class AdminResetPasswordWithValue(val userId: String, val newPassword: String) : AuthEvent()
+        data class ChangeUserRole(val userId: String, val role: String) : AuthEvent()
         data class CompletePasswordChange(val newPassword: String) : AuthEvent()
         object EmergencyLogin : AuthEvent()
         object AdminLogin : AuthEvent()
@@ -107,6 +109,8 @@ import kotlinx.coroutines.launch
             is AuthEvent.SetPin -> setPin(event)
             is AuthEvent.SetLoginMethod -> setLoginMethod(event)
             is AuthEvent.AdminResetPassword -> adminResetPassword(event)
+            is AuthEvent.AdminResetPasswordWithValue -> adminResetPasswordWithValue(event)
+            is AuthEvent.ChangeUserRole -> changeUserRole(event)
             is AuthEvent.CompletePasswordChange -> completePasswordChange(event)
         }
     }
@@ -133,12 +137,28 @@ import kotlinx.coroutines.launch
                      settingsDataStore.saveSkipLogin(false)
                 }
                 
+                val mappedRole = when {
+                    response.role.equals("ADMIN", ignoreCase = true) -> "Administrator"
+                    response.role.equals("KIEROWNIK", ignoreCase = true) -> "Kierownik"
+                    response.role.equals("BRYGADZISTA", ignoreCase = true) -> "Brygadzista"
+                    else -> "Pracownik"
+                }
                 val user = User(
                     id = response.username,
                     username = response.username,
                     password = event.password,
-                    role = response.role
+                    role = mappedRole,
+                    requiresPasswordChange = response.requiresPasswordChange
                 )
+                
+                try {
+                    val prefs = com.example.warehouse.data.NetworkModule.api.getUserPreferences()
+                    settingsDataStore.saveFavoriteProfiles(prefs.favoriteProfileCodes)
+                    settingsDataStore.saveFavoriteColors(prefs.favoriteColorCodes)
+                    settingsDataStore.savePreferredProfileOrder(prefs.preferredProfileOrder)
+                    settingsDataStore.savePreferredColorOrder(prefs.preferredColorOrder)
+                } catch (_: Exception) { }
+                
                 handleSuccessfulLogin(user)
                 return@launch
             } catch (e: Exception) {
@@ -235,22 +255,92 @@ import kotlinx.coroutines.launch
     }
 
     private fun adminResetPassword(event: AuthEvent.AdminResetPassword) {
-        val updatedUsers = _uiState.value.users.map {
-            if (it.id == event.userId) it.copy(requiresPasswordChange = true) else it
+        viewModelScope.launch {
+            try {
+                com.example.warehouse.data.NetworkModule.api.resetPassword(
+                    event.userId,
+                    com.example.warehouse.data.model.PasswordResetRequest(newPassword = "changeme123")
+                )
+                refreshUsers()
+                _uiState.value = _uiState.value.copy(message = "Hasło zresetowane na 'changeme123'")
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = "Nie udało się zresetować hasła")
+            }
         }
-        _uiState.value = _uiState.value.copy(users = updatedUsers, message = "Wymuszono zmianę hasła")
+    }
+    
+    private fun adminResetPasswordWithValue(event: AuthEvent.AdminResetPasswordWithValue) {
+        viewModelScope.launch {
+            try {
+                com.example.warehouse.data.NetworkModule.api.resetPassword(
+                    event.userId,
+                    com.example.warehouse.data.model.PasswordResetRequest(newPassword = event.newPassword)
+                )
+                refreshUsers()
+                _uiState.value = _uiState.value.copy(message = "Hasło zresetowane")
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = "Nie udało się zresetować hasła")
+            }
+        }
+    }
+    
+    private fun changeUserRole(event: AuthEvent.ChangeUserRole) {
+        viewModelScope.launch {
+            try {
+                com.example.warehouse.data.NetworkModule.api.changeUserRole(
+                    event.userId,
+                    com.example.warehouse.data.model.RoleChangeRequest(role = event.role)
+                )
+                refreshUsers()
+                _uiState.value = _uiState.value.copy(message = "Zmieniono rolę użytkownika")
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = "Nie udało się zmienić roli")
+            }
+        }
+    }
+    
+    private suspend fun refreshUsers() {
+        try {
+            val users = com.example.warehouse.data.NetworkModule.api.getUsers()
+                val mapped = users.map {
+                    val mr = when {
+                        it.role.equals("ADMIN", ignoreCase = true) -> "Administrator"
+                        it.role.equals("KIEROWNIK", ignoreCase = true) -> "Kierownik"
+                        it.role.equals("BRYGADZISTA", ignoreCase = true) -> "Brygadzista"
+                        else -> "Pracownik"
+                    }
+                User(
+                    id = it.id,
+                    username = it.username,
+                    password = "",
+                    role = mr,
+                    requiresPasswordChange = it.requiresPasswordChange
+                )
+            }
+            _uiState.value = _uiState.value.copy(users = mapped, message = null, error = null)
+        } catch (_: Exception) {
+        }
     }
 
     private fun completePasswordChange(event: AuthEvent.CompletePasswordChange) {
          val current = _uiState.value.currentUsername ?: return
-         val updatedUsers = _uiState.value.users.map {
-            if (it.username == current) it.copy(requiresPasswordChange = false, password = event.newPassword) else it
-        }
-        _uiState.value = _uiState.value.copy(
-            users = updatedUsers, 
-            isPasswordChangeRequired = false, 
-            message = "Hasło zostało zmienione"
-        )
+         viewModelScope.launch {
+             try {
+                 com.example.warehouse.data.NetworkModule.api.changeOwnPassword(
+                     com.example.warehouse.data.model.PasswordResetRequest(event.newPassword)
+                 )
+                 val updatedUsers = _uiState.value.users.map {
+                    if (it.username == current) it.copy(requiresPasswordChange = false, password = event.newPassword) else it
+                 }
+                 _uiState.value = _uiState.value.copy(
+                    users = updatedUsers, 
+                    isPasswordChangeRequired = false, 
+                    message = "Hasło zostało zmienione"
+                 )
+             } catch (e: Exception) {
+                 _uiState.value = _uiState.value.copy(error = "Nie udało się zmienić hasła")
+             }
+         }
     }
 
     private fun register(event: AuthEvent.Register) {
@@ -302,6 +392,29 @@ import kotlinx.coroutines.launch
             isAdmin = true,
             currentUsername = "admin"
         )
+        viewModelScope.launch {
+            try {
+                val users = com.example.warehouse.data.NetworkModule.api.getUsers()
+                val mapped = users.map {
+                    val mr = when {
+                        it.role.equals("ADMIN", ignoreCase = true) -> "Administrator"
+                        it.role.equals("KIEROWNIK", ignoreCase = true) -> "Kierownik"
+                        it.role.equals("BRYGADZISTA", ignoreCase = true) -> "Brygadzista"
+                        else -> "Pracownik"
+                    }
+                    User(
+                        id = it.id,
+                        username = it.username,
+                        password = "",
+                        role = mr,
+                        requiresPasswordChange = it.requiresPasswordChange
+                    )
+                }
+                _uiState.value = _uiState.value.copy(users = mapped, message = null, error = null)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(message = null, error = "Błąd pobierania użytkowników")
+            }
+        }
     }
 
 
@@ -315,39 +428,72 @@ import kotlinx.coroutines.launch
     private fun changePassword(event: AuthEvent.ChangePassword) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, error = null, message = null)
-            delay(1500)
-            
-            val current = _uiState.value.currentUsername
-            val user = _uiState.value.users.find { it.username == current }
-
-            if (user != null && user.password == event.oldPass) {
-                 if (event.newPassword == event.confirmNewPassword && event.newPassword.isNotBlank()) {
-                    val updatedUsers = _uiState.value.users.map {
-                        if (it.username == current) it.copy(password = event.newPassword) else it
-                    }
-                    _uiState.value = _uiState.value.copy(users = updatedUsers, isLoading = false, message = "Hasło zostało zmienione pomyślnie")
-                } else {
-                     _uiState.value = _uiState.value.copy(isLoading = false, error = "Nowe hasła nie są identyczne")
+            val current = _uiState.value.currentUsername ?: run {
+                _uiState.value = _uiState.value.copy(isLoading = false, error = "Brak zalogowanego użytkownika")
+                return@launch
+            }
+            if (event.newPassword != event.confirmNewPassword || event.newPassword.isBlank()) {
+                _uiState.value = _uiState.value.copy(isLoading = false, error = "Nowe hasła nie są identyczne")
+                return@launch
+            }
+            try {
+                com.example.warehouse.data.NetworkModule.api.changeOwnPasswordWithOld(
+                    com.example.warehouse.data.model.ChangePasswordWithOldRequest(event.oldPass, event.newPassword)
+                )
+                val updatedUsers = _uiState.value.users.map {
+                    if (it.username == current) it.copy(password = event.newPassword) else it
                 }
-            } else {
-                _uiState.value = _uiState.value.copy(isLoading = false, error = "Stare hasło jest nieprawidłowe")
+                _uiState.value = _uiState.value.copy(users = updatedUsers, isLoading = false, message = "Hasło zostało zmienione pomyślnie")
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(isLoading = false, error = "Błąd zmiany hasła: ${e.message}")
             }
         }
     }
     private fun addUser(event: AuthEvent.AddUser) {
-        val newUser = User(
-            id = System.currentTimeMillis().toString(),
-            username = event.username,
-            password = event.username, // Default password = username
-            role = event.role,
-            requiresPasswordChange = true
-        )
-        val updatedList = _uiState.value.users + newUser
-        _uiState.value = _uiState.value.copy(users = updatedList, message = "Dodano użytkownika ${event.username} (Hasło: ${event.username})")
+        viewModelScope.launch {
+            try {
+                val req = com.example.warehouse.data.model.UserCreateRequest(
+                    username = event.username,
+                    password = event.password ?: event.username,
+                    fullName = event.fullName,
+                    role = event.role
+                )
+                com.example.warehouse.data.NetworkModule.api.createUser(req)
+                val users = com.example.warehouse.data.NetworkModule.api.getUsers()
+                val mapped = users.map {
+                    User(
+                        id = it.id,
+                        username = it.username,
+                        password = "",
+                        role = it.role,
+                        requiresPasswordChange = false
+                    )
+                }
+                _uiState.value = _uiState.value.copy(users = mapped, message = "Dodano użytkownika ${event.username}", error = null)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = "Nie udało się dodać użytkownika")
+            }
+        }
     }
 
     private fun deleteUser(event: AuthEvent.DeleteUser) {
-        val updatedList = _uiState.value.users.filter { it.id != event.userId }
-        _uiState.value = _uiState.value.copy(users = updatedList, message = "Usunięto użytkownika")
+        viewModelScope.launch {
+            try {
+                com.example.warehouse.data.NetworkModule.api.deleteUser(event.userId)
+                val users = com.example.warehouse.data.NetworkModule.api.getUsers()
+                val mapped = users.map {
+                    User(
+                        id = it.id,
+                        username = it.username,
+                        password = "",
+                        role = it.role,
+                        requiresPasswordChange = false
+                    )
+                }
+                _uiState.value = _uiState.value.copy(users = mapped, message = "Usunięto użytkownika", error = null)
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(error = "Nie udało się usunąć użytkownika")
+            }
+        }
     }
 }

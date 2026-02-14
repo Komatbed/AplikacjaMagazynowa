@@ -16,5 +16,8 @@ data class ProfileEntity(
     val glassOffsetX: Double,
     
     @ColumnInfo(name = "glass_offset_y")
-    val glassOffsetY: Double
+    val glassOffsetY: Double,
+    
+    @ColumnInfo(name = "outer_construction_angle_deg")
+    val outerConstructionAngleDeg: Double = 90.0
 )

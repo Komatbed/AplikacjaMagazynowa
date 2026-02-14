@@ -33,8 +33,8 @@ fun HomeScreen(
     onConfigClick: () -> Unit,
     onMapClick: () -> Unit,
     onIssueClick: () -> Unit,
-    onMuntinClick: () -> Unit,
-    onMuntinV2Click: () -> Unit,
+    onMuntinStraightClick: () -> Unit,
+    onMuntinDiagonalClick: () -> Unit,
     onInventoryClick: () -> Unit,
     onWindowCalcClick: () -> Unit,
     onReservationsClick: () -> Unit,
@@ -202,21 +202,21 @@ fun HomeScreen(
                 )
 
                 val knowledgeButtons = listOf(
-                    Triple("KATALOG PRODUKTÓW", Icons.AutoMirrored.Filled.MenuBook, onCatalogClick),
-                    Triple("BAZA WIEDZY", Icons.Default.Info, onTrainingClick)
+                    Triple("KATALOG OKUĆ", Icons.AutoMirrored.Filled.MenuBook, onCatalogClick),
+                    Triple("SZKOLENIA", Icons.Default.School, onTrainingClick)
                 )
 
                 val toolsButtons = listOf(
                     Triple("KALKULATOR OKIEN", Icons.Default.Window, onWindowCalcClick),
-                    Triple("SZPROSY", Icons.Default.Calculate, onMuntinClick),
-                    Triple("SZPROSY V2", Icons.Default.GridOn, onMuntinV2Click),
+                    Triple("SZPROSY PROSTE", Icons.Default.ViewComfy, onMuntinStraightClick),
+                    Triple("SZPROSY SKOŚNE", Icons.Default.GridOn, onMuntinDiagonalClick),
                     Triple("OPTYMALIZACJA", Icons.Default.ContentCut, onOptimizationClick),
                     Triple("ASYSTENT OKUĆ", Icons.Default.Build, onHardwareClick)
                 )
 
                 val adminButtons = listOf(
                     Triple("SŁOWNIKI", Icons.AutoMirrored.Filled.List, onConfigClick),
-                    Triple("ZGŁOŚ PROBLEM", Icons.Default.Warning, onIssueClick)
+                    Triple("ZGŁOŚ PROBLEM", Icons.Default.ReportProblem, onIssueClick)
                 )
 
                 val cols = if (isDesktop) 4 else if (isTablet) 3 else 2

@@ -40,7 +40,7 @@ class InventoryViewModel @JvmOverloads constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     val colors = configRepository.getColorsFlow()
-        .map { list -> list.map { it.code } }
+        .map { list -> list.map { it.name.ifBlank { it.code } } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _isLoading = mutableStateOf(false)
@@ -121,6 +121,16 @@ class InventoryViewModel @JvmOverloads constructor(
                 currentItems[index] = item.copy(lengthMm = newLength)
                 _items.value = currentItems
             }
+        }
+    }
+    
+    fun deleteItem(id: String, onSuccess: () -> Unit = {}) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            val result = repository.deleteItemById(id)
+            result.onFailure { _error.value = it.message }
+            _isLoading.value = false
+            onSuccess()
         }
     }
 

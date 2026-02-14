@@ -103,7 +103,10 @@ class MuntinViewModelV2 @JvmOverloads constructor(
                 _allProfiles.value = definitions
 
                 // Filter by Type and Map to V2 Models
-                val sashes = definitions.filter { it.type == "SASH" }
+                val sashes = definitions.filter { 
+                        it.type == "SASH" || 
+                        (it.type == "OTHER" && (it.description.contains("Skrzydło", ignoreCase = true) || it.description.contains("Rama", ignoreCase = true)))
+                    }
                     .map { 
                         SashProfileV2(
                             profileNo = it.code,
@@ -115,7 +118,10 @@ class MuntinViewModelV2 @JvmOverloads constructor(
                     }
                     .ifEmpty { V2ProfileCatalog.sashProfiles }
 
-                val beads = definitions.filter { it.type == "BEAD" }
+                val beads = definitions.filter { 
+                        it.type == "BEAD" ||
+                        (it.type == "OTHER" && it.description.contains("Listwa", ignoreCase = true))
+                    }
                     .map {
                         BeadProfileV2(
                             profileNo = it.code,
@@ -126,7 +132,10 @@ class MuntinViewModelV2 @JvmOverloads constructor(
                     }
                     .ifEmpty { V2ProfileCatalog.beadProfiles }
 
-                val muntins = definitions.filter { it.type == "MUNTIN" }
+                val muntins = definitions.filter { 
+                        it.type == "MUNTIN" ||
+                        (it.type == "OTHER" && (it.description.contains("Szpros", ignoreCase = true) || it.description.contains("Słupek", ignoreCase = true)))
+                    }
                     .map {
                         MuntinProfileV2(
                             profileNo = it.code,

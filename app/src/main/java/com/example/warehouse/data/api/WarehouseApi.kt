@@ -91,4 +91,37 @@ interface WarehouseApi {
 
     @PUT("inventory/items/{id}/length")
     suspend fun updateItemLength(@Path("id") id: String, @Body length: Int): InventoryItemDto
+    
+    @POST("inventory/items")
+    suspend fun addItem(@Body item: InventoryItemDto): InventoryItemDto
+    
+    @DELETE("inventory/items/{id}")
+    suspend fun deleteItem(@Path("id") id: String): Any
+    
+    @GET("users")
+    suspend fun getUsers(): List<com.example.warehouse.data.model.UserDto>
+    
+    @POST("users")
+    suspend fun createUser(@Body request: com.example.warehouse.data.model.UserCreateRequest): com.example.warehouse.data.model.UserDto
+    
+    @DELETE("users/{id}")
+    suspend fun deleteUser(@Path("id") id: String): Any
+    
+    @PUT("users/{id}/role")
+    suspend fun changeUserRole(@Path("id") id: String, @Body request: com.example.warehouse.data.model.RoleChangeRequest): com.example.warehouse.data.model.UserDto
+    
+    @POST("users/{id}/reset-password")
+    suspend fun resetPassword(@Path("id") id: String, @Body request: com.example.warehouse.data.model.PasswordResetRequest): Any
+    
+    @PUT("users/me/password")
+    suspend fun changeOwnPassword(@Body request: com.example.warehouse.data.model.PasswordResetRequest): Any
+    
+    @PUT("users/me/password-with-old")
+    suspend fun changeOwnPasswordWithOld(@Body request: com.example.warehouse.data.model.ChangePasswordWithOldRequest): Any
+    
+    @GET("users/me/preferences")
+    suspend fun getUserPreferences(): com.example.warehouse.data.model.UserPreferencesDto
+    
+    @PUT("users/me/preferences")
+    suspend fun updateUserPreferences(@Body request: com.example.warehouse.data.model.UserPreferencesDto): com.example.warehouse.data.model.UserPreferencesDto
 }

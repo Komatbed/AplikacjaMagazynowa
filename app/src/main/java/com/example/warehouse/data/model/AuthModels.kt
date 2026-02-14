@@ -9,5 +9,6 @@ data class AuthResponse(
     val token: String,
     val username: String,
     val role: String,
-    val fullName: String
+    val fullName: String,
+    val requiresPasswordChange: Boolean
 )

@@ -20,6 +20,12 @@ interface ConfigDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertProfiles(profiles: List<ProfileEntity>)
+    
+    @Query("DELETE FROM profile_definitions")
+    suspend fun clearProfiles()
+    
+    @Query("DELETE FROM profile_definitions WHERE id = :id")
+    suspend fun deleteProfileById(id: String)
 
     @Query("SELECT * FROM color_definitions ORDER BY code ASC")
     fun getColors(): Flow<List<ColorEntity>>
@@ -29,6 +35,12 @@ interface ConfigDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertColors(colors: List<ColorEntity>)
+    
+    @Query("DELETE FROM color_definitions")
+    suspend fun clearColors()
+    
+    @Query("DELETE FROM color_definitions WHERE id = :id")
+    suspend fun deleteColorById(id: String)
 
     @Query("SELECT * FROM core_color_rules")
     fun getCoreColorRules(): Flow<List<CoreColorRuleEntity>>

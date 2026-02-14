@@ -1,0 +1,758 @@
+[
+  {
+    "code": "2178001",
+    "name": "Złoty Dąb",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "2178007",
+    "name": "Orzech",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "2065021",
+    "name": "Machoń",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "2052089",
+    "name": "Dąb Bagienny",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "887505",
+    "name": "Brąz",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "49233",
+    "name": "Siena PR Rosso",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "smooth",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "49237",
+    "name": "Siena PN Noce",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "smooth",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "49240",
+    "name": "Winchester XA",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "smooth",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "3069037",
+    "name": "Daglezja",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "3152009",
+    "name": "Daglezja Cieniowana",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "3069041",
+    "name": "Sosna Górska",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "2115008",
+    "name": "Oregon III",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "3118076",
+    "name": "Jasny Dąb",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "3156003",
+    "name": "Dąb Rustykalny",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "49195",
+    "name": "Shogun AD",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "49198",
+    "name": "Shogun AF",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "3162002",
+    "name": "Macore",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "4563081",
+    "name": "Dąb Sheffield Jasny",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "4363086",
+    "name": "Dąb Sheffield Szary",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "780010",
+    "name": "Dąb Klejony Pieprzowy Super Mat",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "Dąb Klejony Coriander Super Mat",
+    "name": "Dąb Klejony Coriander Super Mat",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "30078011",
+    "name": "Dąb Klejony Coriander Super Mat",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "30078007",
+    "name": "Dąb Klejony Miodowy Super Mat",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "915205",
+    "name": "Biały2",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "XXXXXXXX",
+    "name": "Czarno-szary",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "901805",
+    "name": "Papirusowo-Biały",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "137905",
+    "name": "Kremowo-biały",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "101505",
+    "name": "Kość Słoniowa",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "108705",
+    "name": "Zółty",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "725105",
+    "name": "Jasnoszary",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "703805",
+    "name": "Agatowo-szary",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "715505",
+    "name": "Srebrno-szary",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "715505083",
+    "name": "Srebrno szary-gładki",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "smooth",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "701205",
+    "name": "Bazaltowo-szary",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "701205083",
+    "name": "Bazaltowo szary-gładki",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "smooth",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "701605",
+    "name": "Ciemnoszary",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "4367003",
+    "name": "Ciemnoszary Jedwab",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "smooth",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "701505",
+    "name": "Łupkowo-szary",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "smooth",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "701505083",
+    "name": "Łupkowo szary-gładki",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "smooth",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "703905",
+    "name": "Kwarcowo-szary",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "703905083",
+    "name": "Kwarcowo-szary gładki",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "smooth",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "500705",
+    "name": "Brylantowo-niebieski",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "501305",
+    "name": "Kobaltowo-niebieski",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "515005",
+    "name": "Granatowy",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "600505",
+    "name": "Zielony",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "612505",
+    "name": "Ciemno-zielony",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "992505",
+    "name": "Zielony Monumentalny",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "300305",
+    "name": "Rubinowo-czerwony",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "308105",
+    "name": "Czerwono-brązowy",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "300505",
+    "name": "Bordowy",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "8518053",
+    "name": "Czarno-brązowy",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "851805",
+    "name": "Czarno-brązowy",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "4467062",
+    "name": "Jet Black",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "smooth",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "4361001",
+    "name": "Aluminium szczotkowane",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "4361002",
+    "name": "Aluminium szczotkowane srebrne",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "smooth",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "4361016",
+    "name": "Alux Aluminiowo-szary",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "smooth",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "4361014",
+    "name": "Alux DB 703",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "smooth",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "4361007",
+    "name": "Mosiądz szczotkowany",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "1293001",
+    "name": "Platyna Crown",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "wood",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "1293002",
+    "name": "Platynowo-kwarcowy",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "smooth",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "1293010",
+    "name": "Platyna EARL",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "smooth",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "915205002",
+    "name": "Biały FS",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "mat",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "Srebrno-szary FS",
+    "name": "Srebrno-szary FS",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "smooth",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "715505002",
+    "name": "Srebrno-szary FS",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "mat",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "800400002",
+    "name": "Umbra FS",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "mat",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "703905002",
+    "name": "Kwarcowo-szary FS",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "mat",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "701205002",
+    "name": "Bazaltowo-szary FS",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "mat",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "701505002",
+    "name": "Łupkowo-szary FS",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "mat",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "701605002",
+    "name": "Ciemnoszary FS",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "mat",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "301900002",
+    "name": "Czarny FS",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "mat",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "900000009",
+    "name": "VSP Dąb Tender Biały Ultramatowy",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "mat",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "900000010",
+    "name": "VSP Dąb Tender Antyczny Ultramatowy",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "mat",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "900000011",
+    "name": "VSP Dąb Tender Szary Ultramatowy",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "mat",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "915205001",
+    "name": "VSP Veka-biały Ultramatowy",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "mat",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "901000001",
+    "name": "VSP Mlecznobiały Ultramatowy",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "mat",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "704000001",
+    "name": "VSP Platynowo-szary Ultramatowy",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "mat",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "801405001",
+    "name": "VSP Sepia Brąz Ultramatowy",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "mat",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "800400001",
+    "name": "VSP Umbra Ultramatowy",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "mat",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "300505001",
+    "name": "VSP Czerwone Wino",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "mat",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "901100001",
+    "name": "VSP Grafitowo-czarny Ultramatowy",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "mat",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "515005001",
+    "name": "VSP Granatowy Ultramatowy",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "mat",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "600900001",
+    "name": "VSP Ciemnozielony Ultramatowy",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "mat",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "992505001",
+    "name": "VSP Zielony Monumentalny Ultramatowy",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "mat",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "701605001",
+    "name": "VSP Antracytowy Ultramatowy",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "mat",
+    "foilManufacturer": "55"
+  }
+]

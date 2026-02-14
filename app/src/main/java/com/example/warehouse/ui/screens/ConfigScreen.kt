@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -38,6 +39,8 @@ fun ConfigScreen(
 ) {
     val profiles by viewModel.profiles.collectAsState()
     val colors by viewModel.colors.collectAsState()
+    val favoriteProfilesCsv by viewModel.favoriteProfileCodes.collectAsState()
+    val favoriteColorsCsv by viewModel.favoriteColorCodes.collectAsState()
     val isLoading by viewModel.isLoading
     val error by viewModel.error
 
@@ -173,6 +176,14 @@ fun ConfigScreen(
                                 showMenu = false
                             }
                         )
+                        HorizontalDivider()
+                        DropdownMenuItem(
+                            text = { Text("Importuj dane początkowe (Assets)") },
+                            onClick = {
+                                viewModel.importFromAssets()
+                                showMenu = false
+                            }
+                        )
                     }
                 }
             }
@@ -219,15 +230,28 @@ fun ConfigScreen(
                     CircularProgressIndicator(color = SafetyOrange)
                 }
             } else {
+                val favProfiles = favoriteProfilesCsv.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()
+                val favColors = favoriteColorsCsv.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()
+                val sortedProfiles = profiles.sortedWith(compareBy<com.example.warehouse.data.local.entity.ProfileEntity>(
+                    { if (favProfiles.contains(it.code)) 0 else 1 },
+                    { it.code.lowercase() }
+                ))
+                val sortedColors = colors.sortedWith(compareBy<com.example.warehouse.data.local.entity.ColorEntity>(
+                    { if (favColors.contains(it.code)) 0 else 1 },
+                    { (it.name.ifBlank { it.code }).lowercase() }
+                ))
+                
                 LazyColumn(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(bottom = 80.dp) // Space for FAB
                 ) {
                     if (selectedTab == 0) {
-                        items(profiles) { profile ->
+                        items(sortedProfiles) { profile ->
                             ConfigItemRow(
                                 code = profile.code,
                                 description = profile.description,
+                                isFavorite = favProfiles.contains(profile.code),
+                                onToggleFavorite = { viewModel.toggleFavoriteProfile(profile.code) },
                                 onClick = {
                                     editingProfile = ProfileDefinition(
                                         id = profile.id,
@@ -246,10 +270,12 @@ fun ConfigScreen(
                             )
                         }
                     } else {
-                        items(colors) { color ->
+                        items(sortedColors) { color ->
                             ConfigItemRow(
                                 code = color.code,
                                 description = color.description,
+                                isFavorite = favColors.contains(color.code),
+                                onToggleFavorite = { viewModel.toggleFavoriteColor(color.code) },
                                 onClick = {
                                     editingColor = ColorDefinition(
                                         id = color.id,
@@ -273,7 +299,7 @@ fun ConfigScreen(
 }
 
 @Composable
-fun ConfigItemRow(code: String, description: String, onClick: () -> Unit, onDelete: () -> Unit) {
+fun ConfigItemRow(code: String, description: String, isFavorite: Boolean, onToggleFavorite: () -> Unit, onClick: () -> Unit, onDelete: () -> Unit) {
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         onClick = onClick
@@ -290,6 +316,13 @@ fun ConfigItemRow(code: String, description: String, onClick: () -> Unit, onDele
                 if (description.isNotBlank()) {
                     Text(text = description, style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                 }
+            }
+            IconButton(onClick = onToggleFavorite) {
+                Icon(
+                    imageVector = Icons.Default.Star,
+                    contentDescription = "Ulubione",
+                    tint = if (isFavorite) SafetyOrange else Color.Gray
+                )
             }
             IconButton(onClick = onDelete) {
                 Icon(Icons.Default.Delete, contentDescription = "Usuń", tint = Color.Gray)

@@ -35,6 +35,9 @@ interface InventoryDao {
 
     @Query("UPDATE inventory_items SET lengthMm = :newLength WHERE id = :id")
     suspend fun updateLength(id: String, newLength: Int)
+    
+    @Query("DELETE FROM inventory_items WHERE id = :id")
+    suspend fun deleteById(id: String)
 
     // Assembler Tool: Find the smallest piece that is long enough (reduces waste of full bars)
     @Query("""

@@ -23,14 +23,17 @@ data class User(
     val login: String,
 
     @Column(nullable = false)
-    val passwordHash: String,
+    var passwordHash: String,
 
     @Column(nullable = false)
-    val fullName: String,
+    var fullName: String,
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    val role: Role
+    var role: Role,
+    
+    @Column(name = "must_change_password", nullable = false)
+    var mustChangePassword: Boolean = false
 ) : UserDetails {
     override fun getAuthorities(): Collection<GrantedAuthority> {
         return listOf(SimpleGrantedAuthority("ROLE_${role.name}"))

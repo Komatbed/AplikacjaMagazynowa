@@ -43,3 +43,33 @@ data class IssueReportRequest(
 
 // Optimization
 // OptimizationRequest and WasteRecommendationResponse are in OptimizationModels.kt
+
+data class UserDto(
+    val id: String,
+    val username: String,
+    val fullName: String?,
+    val role: String,
+    val requiresPasswordChange: Boolean
+)
+
+data class UserPreferencesDto(
+    val favoriteProfileCodes: String,
+    val favoriteColorCodes: String,
+    val preferredProfileOrder: String,
+    val preferredColorOrder: String
+)
+
+data class UserCreateRequest(
+    val username: String,
+    val password: String,
+    val fullName: String?,
+    val role: String
+)
+
+data class PasswordResetRequest(
+    val newPassword: String
+)
+
+data class RoleChangeRequest(
+    val role: String
+)

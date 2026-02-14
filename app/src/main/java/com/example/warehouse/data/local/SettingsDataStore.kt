@@ -22,9 +22,14 @@ class SettingsDataStore(private val context: Context) {
         val PREFER_WASTE_RESERVATION = androidx.datastore.preferences.core.booleanPreferencesKey("prefer_waste_reservation")
         val RESERVED_WASTE_LENGTHS = stringPreferencesKey("reserved_waste_lengths") // Comma separated
         val CUSTOM_MULTI_CORE_COLORS = stringPreferencesKey("custom_multi_core_colors") // Comma separated
+        val PREFERRED_PROFILE_ORDER = stringPreferencesKey("preferred_profile_order") // CSV of profile codes
+        val PREFERRED_COLOR_ORDER = stringPreferencesKey("preferred_color_order") // CSV of color codes
+        val FAVORITE_PROFILE_CODES = stringPreferencesKey("favorite_profile_codes") // CSV of codes
+        val FAVORITE_COLOR_CODES = stringPreferencesKey("favorite_color_codes") // CSV of codes
         val REMEMBERED_USERNAME = stringPreferencesKey("remembered_username")
         val SKIP_LOGIN = androidx.datastore.preferences.core.booleanPreferencesKey("skip_login")
         val AUTH_TOKEN = stringPreferencesKey("auth_token")
+        val MUNTIN_MANUAL_INPUT = androidx.datastore.preferences.core.booleanPreferencesKey("muntin_manual_input")
     }
 
     val apiUrl: Flow<String> = context.dataStore.data.map { preferences ->
@@ -54,6 +59,22 @@ class SettingsDataStore(private val context: Context) {
     val customMultiCoreColors: Flow<String> = context.dataStore.data.map { preferences ->
         preferences[CUSTOM_MULTI_CORE_COLORS] ?: "Złoty Dąb, Orzech, Winchester XA, Dąb Bagienny, Machoń, Daglezja, Sosna Górska, Oregon III, Dąb Rustykalny, Bazaltowo-szary, Ciemnoszary, Antracytowy Ultramatowy, Dąb Sheffield Jasny, Dąb Sheffield Szary, Kwarcowo-szary, Dąb Klejony Miodowy Super Mat, Dąb Klejony Coriander Super Mat, Dąb Klejony Pieprzowy Super Mat"
     }
+    
+    val preferredProfileOrder: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[PREFERRED_PROFILE_ORDER] ?: ""
+    }
+    
+    val preferredColorOrder: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[PREFERRED_COLOR_ORDER] ?: ""
+    }
+    
+    val favoriteProfileCodes: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[FAVORITE_PROFILE_CODES] ?: ""
+    }
+    
+    val favoriteColorCodes: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[FAVORITE_COLOR_CODES] ?: ""
+    }
 
     val printerIp: Flow<String> = context.dataStore.data.map { preferences ->
         preferences[PRINTER_IP] ?: "192.168.1.100"
@@ -65,6 +86,10 @@ class SettingsDataStore(private val context: Context) {
     
     val scrapThreshold: Flow<Int> = context.dataStore.data.map { preferences ->
         preferences[SCRAP_THRESHOLD] ?: 500
+    }
+    
+    val muntinManualInput: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[MUNTIN_MANUAL_INPUT] ?: false
     }
 
     suspend fun saveApiUrl(url: String) {
@@ -90,6 +115,12 @@ class SettingsDataStore(private val context: Context) {
             preferences[SCRAP_THRESHOLD] = threshold
         }
     }
+    
+    suspend fun saveMuntinManualInput(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[MUNTIN_MANUAL_INPUT] = enabled
+        }
+    }
 
     suspend fun savePreferWasteReservation(enabled: Boolean) {
         context.dataStore.edit { preferences ->
@@ -106,6 +137,30 @@ class SettingsDataStore(private val context: Context) {
     suspend fun saveCustomMultiCoreColors(colors: String) {
         context.dataStore.edit { preferences ->
             preferences[CUSTOM_MULTI_CORE_COLORS] = colors
+        }
+    }
+    
+    suspend fun savePreferredProfileOrder(csv: String) {
+        context.dataStore.edit { preferences ->
+            preferences[PREFERRED_PROFILE_ORDER] = csv
+        }
+    }
+    
+    suspend fun savePreferredColorOrder(csv: String) {
+        context.dataStore.edit { preferences ->
+            preferences[PREFERRED_COLOR_ORDER] = csv
+        }
+    }
+    
+    suspend fun saveFavoriteProfiles(csv: String) {
+        context.dataStore.edit { preferences ->
+            preferences[FAVORITE_PROFILE_CODES] = csv
+        }
+    }
+    
+    suspend fun saveFavoriteColors(csv: String) {
+        context.dataStore.edit { preferences ->
+            preferences[FAVORITE_COLOR_CODES] = csv
         }
     }
 

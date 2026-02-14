@@ -678,6 +678,21 @@ fun SystemSettingsContent(
             color = Color.Gray
         )
         
+        val manualInputEnabled by viewModel.muntinManualInput.collectAsState()
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text("Szprosy: wpisz dane ręcznie", style = MaterialTheme.typography.titleSmall)
+                Text("Pozwala ustawić ręcznie szerokość i kąty", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+            }
+            Switch(checked = manualInputEnabled, onCheckedChange = { viewModel.saveMuntinManualInput(it) })
+        }
+        
         OutlinedTextField(
             value = reservedLengths,
             onValueChange = { reservedLengths = it },
@@ -745,11 +760,17 @@ fun UserManagementContent(
 ) {
     val authState by authViewModel.uiState.collectAsState()
     var showAddUserDialog by remember { mutableStateOf(false) }
+    var showResetDialogForUserId by remember { mutableStateOf<String?>(null) }
+    var resetPasswordInput by remember { mutableStateOf("") }
     
     var newUsername by remember { mutableStateOf("") }
-    var newRole by remember { mutableStateOf("Operator") }
+    var newPassword by remember { mutableStateOf("") }
+    var newFullName by remember { mutableStateOf("") }
+    var newRole by remember { mutableStateOf("Pracownik") }
     var expanded by remember { mutableStateOf(false) }
-    val roles = listOf("Operator", "Administrator")
+    val roles = listOf("Pracownik", "Brygadzista", "Kierownik", "Administrator")
+    
+    var query by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -768,16 +789,28 @@ fun UserManagementContent(
                 style = MaterialTheme.typography.titleMedium, 
                 color = SafetyOrange
             )
-            IconButton(onClick = { showAddUserDialog = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Dodaj użytkownika", tint = SafetyOrange)
+            Row {
+                IconButton(onClick = { authViewModel.onEvent(AuthEvent.AdminLogin) }) {
+                    Icon(Icons.Default.Refresh, contentDescription = "Odśwież", tint = SafetyOrange)
+                }
+                IconButton(onClick = { showAddUserDialog = true }) {
+                    Icon(Icons.Default.Add, contentDescription = "Dodaj użytkownika", tint = SafetyOrange)
+                }
             }
         }
         
         if (authState.message != null) {
             Text(authState.message!!, color = Color.Green)
         }
+        
+        OutlinedTextField(
+            value = query,
+            onValueChange = { query = it },
+            label = { Text("Szukaj użytkownika") },
+            singleLine = true
+        )
 
-        authState.users.forEach { user ->
+        authState.users.filter { query.isBlank() || it.username.contains(query, ignoreCase = true) }.forEach { user ->
             Card(
                 colors = CardDefaults.cardColors(containerColor = DarkGrey),
                 modifier = Modifier.fillMaxWidth()
@@ -789,10 +822,34 @@ fun UserManagementContent(
                 ) {
                     Column {
                         Text(user.username, style = MaterialTheme.typography.titleMedium, color = Color.White)
-                        Text(user.role, style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Rola:", style = MaterialTheme.typography.bodyMedium, color = Color.Gray)
+                            var roleExpanded by remember { mutableStateOf(false) }
+                            AssistChip(
+                                onClick = { roleExpanded = true },
+                                label = { Text(user.role) }
+                            )
+                            DropdownMenu(expanded = roleExpanded, onDismissRequest = { roleExpanded = false }) {
+                                roles.forEach { r ->
+                                    DropdownMenuItem(
+                                        text = { Text(r) },
+                                        onClick = {
+                                            roleExpanded = false
+                                            val backendRole = when (r) {
+                                                "Administrator" -> "ADMIN"
+                                                "Kierownik" -> "KIEROWNIK"
+                                                "Brygadzista" -> "BRYGADZISTA"
+                                                else -> "PRACOWNIK"
+                                            }
+                                            authViewModel.onEvent(AuthEvent.ChangeUserRole(user.id, backendRole))
+                                        }
+                                    )
+                                }
+                            }
+                        }
                     }
                     if (user.username != "admin") { // Prevent deleting default admin
-                        IconButton(onClick = { authViewModel.onEvent(AuthEvent.AdminResetPassword(user.id)) }) {
+                        IconButton(onClick = { showResetDialogForUserId = user.id; resetPasswordInput = "" }) {
                             Icon(Icons.Default.Lock, contentDescription = "Resetuj hasło", tint = Color.Yellow)
                         }
                         IconButton(onClick = { authViewModel.onEvent(AuthEvent.DeleteUser(user.id)) }) {
@@ -814,6 +871,21 @@ fun UserManagementContent(
                         value = newUsername,
                         onValueChange = { newUsername = it },
                         label = { Text("Nazwa użytkownika") },
+                        singleLine = true
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = newPassword,
+                        onValueChange = { newPassword = it },
+                        label = { Text("Hasło początkowe") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation()
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = newFullName,
+                        onValueChange = { newFullName = it },
+                        label = { Text("Imię i nazwisko (opcjonalnie)") },
                         singleLine = true
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -851,9 +923,11 @@ fun UserManagementContent(
                 Button(
                     onClick = {
                         if (newUsername.isNotBlank()) {
-                            authViewModel.onEvent(AuthEvent.AddUser(newUsername, newRole))
+                            authViewModel.onEvent(AuthEvent.AddUser(newUsername, newRole, newPassword.ifBlank { null }, newFullName.ifBlank { null }))
                             showAddUserDialog = false
                             newUsername = ""
+                            newPassword = ""
+                            newFullName = ""
                             newRole = "Operator"
                         }
                     }
@@ -865,6 +939,40 @@ fun UserManagementContent(
                 TextButton(onClick = { showAddUserDialog = false }) {
                     Text("Anuluj")
                 }
+            }
+        )
+    }
+    
+    if (showResetDialogForUserId != null) {
+        AlertDialog(
+            onDismissRequest = { showResetDialogForUserId = null },
+            title = { Text("Resetuj Hasło") },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = resetPasswordInput,
+                        onValueChange = { resetPasswordInput = it },
+                        label = { Text("Nowe hasło") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val id = showResetDialogForUserId!!
+                        val pass = if (resetPasswordInput.isNotBlank()) resetPasswordInput else "changeme123"
+                        authViewModel.onEvent(AuthEvent.AdminResetPasswordWithValue(id, pass))
+                        showResetDialogForUserId = null
+                        resetPasswordInput = ""
+                    }
+                ) {
+                    Text("Resetuj")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetDialogForUserId = null }) { Text("Anuluj") }
             }
         )
     }

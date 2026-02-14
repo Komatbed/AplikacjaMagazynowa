@@ -10,24 +10,34 @@ data class CutItem(
     val length: Double,
     val angleStart: Double,
     val angleEnd: Double,
-    val count: Int
+    val count: Int,
+    val description: String = ""
 )
 
 object CutListCalculator {
     private const val EPSILON = 0.001
+    
+    data class Clearances(
+        val global: Double = 1.0,
+        val bead: Double = 0.0,
+        val muntin: Double = 0.0
+    )
 
     fun calculateCutList(
         segments: List<Segment>,
         glassWidth: Double,
-        glassHeight: Double
+        glassHeight: Double,
+        clearances: Clearances = Clearances(),
+        groupIdentical: Boolean = true,
+        labelProvider: ((Segment) -> String)? = null
     ): List<CutItem> {
-        val cuts = mutableListOf<Triple<Double, Double, Double>>() // length, angleStart, angleEnd
+        val cuts = mutableListOf<Pair<Triple<Double, Double, Double>, String>>() // length, angleStart, angleEnd + label
 
         for (segment in segments) {
             // Find start boundary
-            val (startBoundary, startClearance) = findBoundary(segment.startNode, segments, segment, glassWidth, glassHeight)
+            val (startBoundary, startClearance) = findBoundary(segment.startNode, segments, segment, glassWidth, glassHeight, clearances)
             // Find end boundary
-            val (endBoundary, endClearance) = findBoundary(segment.endNode, segments, segment, glassWidth, glassHeight)
+            val (endBoundary, endClearance) = findBoundary(segment.endNode, segments, segment, glassWidth, glassHeight, clearances)
 
             val result = SegmentCalculator.calculateRealLength(
                 segment,
@@ -36,23 +46,31 @@ object CutListCalculator {
                 startClearance,
                 endClearance
             )
-            cuts.add(Triple(result.finalLength, result.cutAngleStart, result.cutAngleEnd))
+            val label = labelProvider?.invoke(segment) ?: ""
+            cuts.add(Triple(result.finalLength, result.cutAngleStart, result.cutAngleEnd) to label)
         }
 
-        // Group by identical cuts (tolerance 0.1mm)
-        // Normalize angles (smaller first) to group symmetric cuts
-        return cuts.groupBy { 
-            val len = Math.round(it.first * 10) / 10.0
-            val a1 = Math.round(it.second * 10) / 10.0
-            val a2 = Math.round(it.third * 10) / 10.0
-            Triple(
-                len,
-                min(a1, a2),
-                max(a1, a2)
-            )
-        }.map { (key, list) ->
-            CutItem(key.first, key.second, key.third, list.size)
-        }.sortedByDescending { it.length }
+        if (groupIdentical) {
+            return cuts.groupBy { 
+                val len = Math.round(it.first.first * 10) / 10.0
+                val a1 = Math.round(it.first.second * 10) / 10.0
+                val a2 = Math.round(it.first.third * 10) / 10.0
+                Triple(
+                    len,
+                    min(a1, a2),
+                    max(a1, a2)
+                )
+            }.map { (key, list) ->
+                CutItem(key.first, key.second, key.third, list.size)
+            }.sortedByDescending { it.length }
+        } else {
+            return cuts.map { (triple, label) ->
+                val len = Math.round(triple.first * 10) / 10.0
+                val a1 = Math.round(triple.second * 10) / 10.0
+                val a2 = Math.round(triple.third * 10) / 10.0
+                CutItem(len, a1, a2, 1, label)
+            }.sortedByDescending { it.length }
+        }
     }
 
     private fun findBoundary(
@@ -60,13 +78,14 @@ object CutListCalculator {
         allSegments: List<Segment>,
         currentSegment: Segment,
         width: Double,
-        height: Double
+        height: Double,
+        clearances: Clearances
     ): Pair<Pair<Node, Node>, Double> {
         // 1. Check Glass Edges
-        if (abs(node.y) < EPSILON) return Pair(Node(0.0, 0.0) to Node(width, 0.0), 1.0) // Top
-        if (abs(node.y - height) < EPSILON) return Pair(Node(0.0, height) to Node(width, height), 1.0) // Bottom
-        if (abs(node.x) < EPSILON) return Pair(Node(0.0, 0.0) to Node(0.0, height), 1.0) // Left
-        if (abs(node.x - width) < EPSILON) return Pair(Node(width, 0.0) to Node(width, height), 1.0) // Right
+        if (abs(node.y) < EPSILON) return Pair(Node(0.0, 0.0) to Node(width, 0.0), clearances.global + clearances.bead) // Top
+        if (abs(node.y - height) < EPSILON) return Pair(Node(0.0, height) to Node(width, height), clearances.global + clearances.bead) // Bottom
+        if (abs(node.x) < EPSILON) return Pair(Node(0.0, 0.0) to Node(0.0, height), clearances.global + clearances.bead) // Left
+        if (abs(node.x - width) < EPSILON) return Pair(Node(width, 0.0) to Node(width, height), clearances.global + clearances.bead) // Right
 
         // 2. Check other segments
         for (other in allSegments) {
@@ -80,8 +99,8 @@ object CutListCalculator {
                 
                 // Found intersection with another muntin
                 // Boundary is the axis of the other muntin
-                // Clearance is half width + 1.0
-                return Pair(other.startNode to other.endNode, other.width / 2.0 + 1.0)
+                // Clearance: half width + global + muntin-specific
+                return Pair(other.startNode to other.endNode, other.width / 2.0 + clearances.global + clearances.muntin)
             }
         }
 

@@ -46,11 +46,21 @@ class MuntinV3ViewModel(
         val selectedSegmentId: String? = null,
         val presetType: String? = null,
         val isLoading: Boolean = false,
+        val rows: Int = 2,
+        val cols: Int = 2,
+        val continuousMaster: ContinuousMaster = ContinuousMaster.VERTICAL,
+        val clearanceGlobal: Double = 1.0,
+        val clearanceBead: Double = 0.0,
+        val clearanceMuntin: Double = 0.0,
+        val groupCuts: Boolean = false,
+        val snapThresholdMm: Double = 5.0,
         // Config Data
         val availableProfiles: List<ProfileEntity> = emptyList(),
         val availableBeads: List<GlassBeadEntity> = emptyList(),
+        val availableMuntins: List<MuntinEntity> = emptyList(),
         val selectedProfile: ProfileEntity? = null,
         val selectedBead: GlassBeadEntity? = null,
+        val selectedMuntin: MuntinEntity? = null,
         // Corrections
         val manualCorrection: Double = 0.0,
         val compTop: Double = 0.0,
@@ -58,27 +68,17 @@ class MuntinV3ViewModel(
         val compLeft: Double = 0.0,
         val compRight: Double = 0.0
     )
+    
+    enum class ContinuousMaster { VERTICAL, HORIZONTAL }
+    enum class AddMode { VERTICAL, HORIZONTAL, DIAGONAL_45, DIAGONAL_135 }
 
     private val _uiState = MutableStateFlow(MuntinV3UiState())
     val uiState: StateFlow<MuntinV3UiState> = _uiState.asStateFlow()
+    private var diagonalMode: Boolean = false
+    private var manualMuntinWidth: Double? = null
+    private val history = ArrayDeque<Pair<List<Segment>, String?>>()
 
     init {
-        // Load config data
-        viewModelScope.launch {
-            // Seed DB if empty
-            val profiles = repository.allProfiles.first()
-            if (profiles.isEmpty()) {
-                repository.saveProfile(ProfileEntity(name = "Standard 68mm", glassOffsetX = 48.0, glassOffsetY = 48.0))
-                repository.saveProfile(ProfileEntity(name = "Renowacja 40mm", glassOffsetX = 30.0, glassOffsetY = 30.0))
-            }
-            
-            val beads = repository.allGlassBeads.first()
-            if (beads.isEmpty()) {
-                repository.saveGlassBead(GlassBeadEntity(name = "Classic 18mm", angleFace = 15.0, effectiveGlassOffset = 18.0))
-                repository.saveGlassBead(GlassBeadEntity(name = "Rondo 20mm", angleFace = 10.0, effectiveGlassOffset = 20.0))
-            }
-        }
-
         // Observe config data
         viewModelScope.launch {
             repository.allProfiles.collect { profiles ->
@@ -93,7 +93,7 @@ class MuntinV3ViewModel(
         }
         
         viewModelScope.launch {
-            repository.allGlassBeads.collect { beads ->
+            repository.allBeads.collect { beads ->
                 _uiState.value = _uiState.value.copy(availableBeads = beads)
                  // If we have a project but no selected bead, try to find it
                 val currentProject = _uiState.value.currentProject
@@ -103,16 +103,44 @@ class MuntinV3ViewModel(
                 }
             }
         }
-
-        // Load initial data or create a default project if needed
-        // For testing purposes, create a dummy project immediately
-        // We delay slightly to let config load or just use defaults
+        
         viewModelScope.launch {
-            // Wait for data? Or just proceed. createNewProject will fetch from DB/Repo if needed.
-            // But for the dummy call, we need valid IDs.
-            // Let's assume ID 1 exists after seeding.
-            createNewProject(1000.0, 1000.0, 1, 1)
+            repository.allMuntins.collect { muntins ->
+                _uiState.value = _uiState.value.copy(availableMuntins = muntins)
+                if (_uiState.value.selectedMuntin == null && muntins.isNotEmpty()) {
+                    // Auto-select first VEKA 109* if present
+                    val veka = muntins.find { it.name.contains("109") } ?: muntins.first()
+                    _uiState.value = _uiState.value.copy(selectedMuntin = veka)
+                }
+            }
         }
+    }
+
+    fun selectProfile(profile: ProfileEntity?) {
+        _uiState.value = _uiState.value.copy(selectedProfile = profile)
+        updateCorrections(
+            _uiState.value.manualCorrection,
+            _uiState.value.compTop,
+            _uiState.value.compBottom,
+            _uiState.value.compLeft,
+            _uiState.value.compRight
+        )
+    }
+
+    fun selectBead(bead: GlassBeadEntity?) {
+        _uiState.value = _uiState.value.copy(selectedBead = bead)
+        updateCorrections(
+            _uiState.value.manualCorrection,
+            _uiState.value.compTop,
+            _uiState.value.compBottom,
+            _uiState.value.compLeft,
+            _uiState.value.compRight
+        )
+    }
+    
+    fun selectMuntin(muntin: MuntinEntity?) {
+        _uiState.value = _uiState.value.copy(selectedMuntin = muntin)
+        // No need to recalc corrections; width will be used on next generation
     }
 
     fun selectSegment(id: String?) {
@@ -132,15 +160,151 @@ class MuntinV3ViewModel(
         val height = _uiState.value.glassHeight
         if (width <= 0.0 || height <= 0.0) return
 
-        val segments = LayoutEngine.generateGrid(
-            width = width,
-            height = height,
-            rows = rows,
-            cols = cols,
-            muntinWidth = 26.0 // Default muntin width for V3
-        )
+        val mWidth = manualMuntinWidth ?: _uiState.value.selectedMuntin?.width ?: 26.0
+        val segments = when (_uiState.value.continuousMaster) {
+            ContinuousMaster.VERTICAL -> LayoutEngine.generateGrid(width, height, rows, cols, mWidth)
+            ContinuousMaster.HORIZONTAL -> LayoutEngine.generateGridHorizontalMaster(width, height, rows, cols, mWidth)
+        }
         
+        _uiState.value = _uiState.value.copy(rows = rows, cols = cols)
         updateCalculations(segments, "GRID")
+    }
+    
+    fun addVertical() {
+        val newCols = _uiState.value.cols + 1
+        generateGrid(_uiState.value.rows, newCols)
+    }
+    
+    fun addHorizontal() {
+        val newRows = _uiState.value.rows + 1
+        generateGrid(newRows, _uiState.value.cols)
+    }
+    
+    fun setAddMode(mode: AddMode) {
+        _uiState.value = _uiState.value.copy() // no-op; maintained via internal
+        _addMode = mode
+    }
+    
+    private var _addMode: AddMode = AddMode.VERTICAL
+    
+    fun setDiagonalMode(enabled: Boolean) {
+        diagonalMode = enabled
+    }
+    
+    fun setManualMuntinWidth(width: Double?) {
+        manualMuntinWidth = width
+        // Re-generate grid with new width if layout exists
+        if (_uiState.value.segments.isNotEmpty()) {
+            generateGrid(_uiState.value.rows, _uiState.value.cols)
+        }
+    }
+    
+    fun setSnapThreshold(thresholdMm: Double) {
+        _uiState.value = _uiState.value.copy(snapThresholdMm = thresholdMm)
+    }
+    
+    fun setRowsN(n: Int) {
+        if (n <= 0) return
+        generateGrid(n, _uiState.value.cols)
+    }
+    
+    fun setColsN(n: Int) {
+        if (n <= 0) return
+        generateGrid(_uiState.value.rows, n)
+    }
+    
+    fun undo() {
+        val prev = history.removeLastOrNull() ?: return
+        updateCalculations(prev.first, prev.second)
+    }
+    
+    fun onCanvasTap(segmentId: String?, tapX: Double, tapY: Double) {
+        if (segmentId != null) {
+            val currentSegments = _uiState.value.segments.toMutableList()
+            currentSegments.removeAll { it.id == segmentId }
+            updateCalculations(currentSegments, "CUSTOM")
+        } else {
+            val mWidth = manualMuntinWidth ?: _uiState.value.selectedMuntin?.width ?: 26.0
+            if (diagonalMode) {
+                val width = _uiState.value.glassWidth
+                val height = _uiState.value.glassHeight
+                if (width <= 0.0 || height <= 0.0) return
+                val slope = when (_addMode) {
+                    AddMode.DIAGONAL_45 -> 1.0
+                    AddMode.DIAGONAL_135 -> -1.0
+                    AddMode.VERTICAL -> Double.POSITIVE_INFINITY
+                    AddMode.HORIZONTAL -> 0.0
+                }
+                val newSeg = createDiagonalSegment(tapX, tapY, slope, width, height, mWidth)
+                val currentSegments = _uiState.value.segments.toMutableList()
+                currentSegments.add(newSeg)
+                updateCalculations(currentSegments, "CUSTOM")
+            } else {
+                when (_addMode) {
+                    AddMode.VERTICAL -> addVertical()
+                    AddMode.HORIZONTAL -> addHorizontal()
+                    AddMode.DIAGONAL_45, AddMode.DIAGONAL_135 -> {
+                        // Diagonal modes ignored in straight mode
+                    }
+                }
+            }
+        }
+    }
+    
+    private fun createDiagonalSegment(
+        x0: Double,
+        y0: Double,
+        slope: Double,
+        width: Double,
+        height: Double,
+        muntinWidth: Double
+    ): Segment {
+        val rows = _uiState.value.rows
+        val cols = _uiState.value.cols
+        val tx = if (cols > 0) width / cols else width
+        val ty = if (rows > 0) height / rows else height
+        val vx = (0..cols).map { it * tx }
+        val vy = (0..rows).map { it * ty }
+        val snapT = _uiState.value.snapThresholdMm
+        val nearestX = (vx + listOf(0.0, width)).minByOrNull { kotlin.math.abs(it - x0) } ?: x0
+        val nearestY = (vy + listOf(0.0, height)).minByOrNull { kotlin.math.abs(it - y0) } ?: y0
+        val sx = if (kotlin.math.abs(nearestX - x0) <= snapT) nearestX else x0
+        val sy = if (kotlin.math.abs(nearestY - y0) <= snapT) nearestY else y0
+        val b = sy - slope * sx
+        val candidates = mutableListOf<Node>()
+        fun addIfInBounds(x: Double, y: Double) {
+            if (x in 0.0..width && y in 0.0..height) candidates.add(Node(x, y))
+        }
+        if (slope.isFinite()) {
+            addIfInBounds(0.0, b)
+            addIfInBounds(width, slope * width + b)
+            if (slope != 0.0) {
+                addIfInBounds((-b) / slope, 0.0)
+                addIfInBounds((height - b) / slope, height)
+            }
+        } else {
+            // Vertical line through x = x0
+            addIfInBounds(sx, 0.0)
+            addIfInBounds(sx, height)
+        }
+        // Pick extreme pair
+        val pts = candidates.distinct().sortedBy { it.x + it.y }
+        val start = pts.firstOrNull() ?: Node(0.0, 0.0)
+        val end = pts.lastOrNull() ?: Node(width, height)
+        val angle = if (!slope.isFinite()) 90.0 else 45.0
+        return Segment(
+            id = java.util.UUID.randomUUID().toString(),
+            startNode = start,
+            endNode = end,
+            width = muntinWidth,
+            angleStart = angle,
+            angleEnd = angle
+        )
+    }
+    
+    fun setContinuousMaster(master: ContinuousMaster) {
+        _uiState.value = _uiState.value.copy(continuousMaster = master)
+        generateGrid(_uiState.value.rows, _uiState.value.cols)
     }
 
     fun generateCross() {
@@ -307,6 +471,7 @@ class MuntinV3ViewModel(
     }
 
     private fun updateCalculations(segments: List<Segment>, newPresetType: String? = null) {
+        history.addLast(_uiState.value.segments to _uiState.value.presetType)
         val width = _uiState.value.glassWidth
         val height = _uiState.value.glassHeight
         
@@ -314,10 +479,34 @@ class MuntinV3ViewModel(
         // But for now, let's just stick to what's passed or current.
         val finalPresetType = newPresetType ?: _uiState.value.presetType
 
+        val rows = _uiState.value.rows
+        val cols = _uiState.value.cols
+        val labelProvider: (Segment) -> String = { s ->
+            val isVertical = kotlin.math.abs(s.endNode.x - s.startNode.x) < 0.001
+            if (isVertical) {
+                val stepX = if (cols > 0) width / cols else width
+                val index = kotlin.math.round(s.startNode.x / stepX).toInt()
+                "pion$index"
+            } else {
+                val stepY = if (rows > 0) height / rows else height
+                val row = kotlin.math.round(s.startNode.y / stepY).toInt()
+                val rowSegments = segments.filter { kotlin.math.abs(it.startNode.y - s.startNode.y) < 0.001 }.sortedBy { it.startNode.x }
+                val segIdx = rowSegments.indexOfFirst { it.id == s.id } + 1
+                "poziom$row lewy$segIdx"
+            }
+        }
+        
         val cutList = CutListCalculator.calculateCutList(
             segments,
             width,
-            height
+            height,
+            CutListCalculator.Clearances(
+                global = _uiState.value.clearanceGlobal,
+                bead = _uiState.value.clearanceBead,
+                muntin = _uiState.value.clearanceMuntin
+            ),
+            groupIdentical = _uiState.value.groupCuts,
+            labelProvider = labelProvider
         )
         
         val assemblySteps = AssemblyInstructionCalculator.generateInstructions(
@@ -342,6 +531,109 @@ class MuntinV3ViewModel(
             selectedSegmentId = null,
             presetType = finalPresetType
         )
+    }
+    
+    fun updateClearances(global: Double, bead: Double, muntin: Double) {
+        _uiState.value = _uiState.value.copy(
+            clearanceGlobal = global,
+            clearanceBead = bead,
+            clearanceMuntin = muntin
+        )
+        updateCalculations(_uiState.value.segments, _uiState.value.presetType)
+    }
+    
+    fun setGroupCuts(enabled: Boolean) {
+        _uiState.value = _uiState.value.copy(groupCuts = enabled)
+        updateCalculations(_uiState.value.segments, _uiState.value.presetType)
+    }
+
+    fun addV3Profile(name: String, glassOffsetX: Double, glassOffsetY: Double, outerAngleDeg: Double = 90.0) {
+        viewModelScope.launch {
+            repository.saveProfile(ProfileEntity(name = name, glassOffsetX = glassOffsetX, glassOffsetY = glassOffsetY, outerConstructionAngleDeg = outerAngleDeg))
+        }
+    }
+
+    fun addV3Bead(name: String, angleFace: Double, effectiveOffset: Double) {
+        viewModelScope.launch {
+            repository.saveGlassBead(GlassBeadEntity(name = name, angleFace = angleFace, effectiveGlassOffset = effectiveOffset))
+        }
+    }
+
+    fun addV3Muntin(name: String, width: Double, thickness: Double, wallAngleDeg: Double = 90.0) {
+        viewModelScope.launch {
+            repository.saveMuntin(MuntinEntity(name = name, width = width, thickness = thickness, wallAngleDeg = wallAngleDeg))
+        }
+    }
+    
+    fun highlightByCut(item: CutItem) {
+        val width = _uiState.value.glassWidth
+        val height = _uiState.value.glassHeight
+        val clearances = CutListCalculator.Clearances(
+            global = _uiState.value.clearanceGlobal,
+            bead = _uiState.value.clearanceBead,
+            muntin = _uiState.value.clearanceMuntin
+        )
+        
+        fun findBoundary(node: Node, current: Segment): Pair<Pair<Node, Node>, Double> {
+            val EPS = 0.001
+            if (kotlin.math.abs(node.y) < EPS) return Pair(Node(0.0, 0.0) to Node(width, 0.0), clearances.global + clearances.bead)
+            if (kotlin.math.abs(node.y - height) < EPS) return Pair(Node(0.0, height) to Node(width, height), clearances.global + clearances.bead)
+            if (kotlin.math.abs(node.x) < EPS) return Pair(Node(0.0, 0.0) to Node(0.0, height), clearances.global + clearances.bead)
+            if (kotlin.math.abs(node.x - width) < EPS) return Pair(Node(width, 0.0) to Node(width, height), clearances.global + clearances.bead)
+            for (other in _uiState.value.segments) {
+                if (other.id == current.id) continue
+                // Simple collinearity and point-on-segment check
+                val on = isPointOnSegment(node, other)
+                if (on) {
+                    val parallel = areParallel(current, other)
+                    if (parallel) continue
+                    return Pair(other.startNode to other.endNode, other.width / 2.0 + clearances.global + clearances.muntin)
+                }
+            }
+            val dx = current.endNode.x - current.startNode.x
+            val dy = current.endNode.y - current.startNode.y
+            val p1 = Node(node.x - dy, node.y + dx)
+            val p2 = Node(node.x + dy, node.y - dx)
+            return Pair(p1 to p2, 0.0)
+        }
+        
+        val matched = _uiState.value.segments.firstOrNull { seg ->
+            val (sb, sc) = findBoundary(seg.startNode, seg)
+            val (eb, ec) = findBoundary(seg.endNode, seg)
+            val res = com.example.warehouse.features.muntins_v3.calculations.SegmentCalculator.calculateRealLength(seg, sb, eb, sc, ec)
+            val len = kotlin.math.round(res.finalLength * 10) / 10.0
+            val a1 = kotlin.math.round(res.cutAngleStart * 10) / 10.0
+            val a2 = kotlin.math.round(res.cutAngleEnd * 10) / 10.0
+            val mi = minOf(a1, a2)
+            val ma = maxOf(a1, a2)
+            kotlin.math.abs(len - item.length) < 0.1 && kotlin.math.abs(mi - minOf(item.angleStart, item.angleEnd)) < 0.1 && kotlin.math.abs(ma - maxOf(item.angleStart, item.angleEnd)) < 0.1
+        }
+        
+        _uiState.value = _uiState.value.copy(selectedSegmentId = matched?.id)
+    }
+    
+    private fun isPointOnSegment(p: Node, s: Segment): Boolean {
+        val EPS = 0.001
+        val crossProduct = (p.y - s.startNode.y) * (s.endNode.x - s.startNode.x) -
+                (p.x - s.startNode.x) * (s.endNode.y - s.startNode.y)
+        if (kotlin.math.abs(crossProduct) > EPS) return false
+        val dotProduct = (p.x - s.startNode.x) * (s.endNode.x - s.startNode.x) +
+                (p.y - s.startNode.y) * (s.endNode.y - s.startNode.y)
+        if (dotProduct < 0) return false
+        val squaredLength = (s.endNode.x - s.startNode.x) * (s.endNode.x - s.startNode.x) +
+                (s.endNode.y - s.startNode.y) * (s.endNode.y - s.startNode.y)
+        if (dotProduct > squaredLength + EPS) return false
+        return true
+    }
+    
+    private fun areParallel(s1: Segment, s2: Segment): Boolean {
+        val EPS = 0.001
+        val dx1 = s1.endNode.x - s1.startNode.x
+        val dy1 = s1.endNode.y - s1.startNode.y
+        val dx2 = s2.endNode.x - s2.startNode.x
+        val dy2 = s2.endNode.y - s2.startNode.y
+        val cross = dx1 * dy2 - dy1 * dx2
+        return kotlin.math.abs(cross) < EPS
     }
 
     fun clearLayout() {

@@ -16,5 +16,8 @@ data class MuntinEntity(
     val width: Double,
     
     @ColumnInfo(name = "thickness")
-    val thickness: Double
+    val thickness: Double,
+    
+    @ColumnInfo(name = "wall_angle_deg")
+    val wallAngleDeg: Double = 90.0
 )

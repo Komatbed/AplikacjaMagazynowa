@@ -12,13 +12,13 @@ echo Using JAVA_HOME: %JAVA_HOME%
 
 echo.
 echo Cleaning project...
-call gradlew.bat clean -Dorg.gradle.java.home="%JAVA_HOME%"
+call gradlew.bat clean --no-daemon -Dorg.gradle.java.home="%JAVA_HOME%"
 
 echo.
 echo ===================================================
 echo   1. Building DEBUG APK...
 echo ===================================================
-call gradlew.bat :app:assembleDebug -Dorg.gradle.java.home="%JAVA_HOME%"
+call gradlew.bat :app:assembleDebug --no-daemon -Dorg.gradle.java.home="%JAVA_HOME%"
 
 if %ERRORLEVEL% NEQ 0 (
     echo.
@@ -31,7 +31,7 @@ echo.
 echo ===================================================
 echo   2. Building RELEASE APK (Unsigned)
 echo ===================================================
-call gradlew.bat :app:assembleRelease -Dorg.gradle.java.home="%JAVA_HOME%"
+call gradlew.bat :app:assembleRelease --no-daemon -Dorg.gradle.java.home="%JAVA_HOME%"
 
 if %ERRORLEVEL% NEQ 0 (
     echo.

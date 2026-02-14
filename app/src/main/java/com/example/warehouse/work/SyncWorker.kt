@@ -75,6 +75,14 @@ class SyncWorker(
                         val payload = gson.fromJson(op.payloadJson, ColorDefinition::class.java)
                         api.addColor(payload)
                     }
+                    OperationType.ADD_ITEM -> {
+                        val payload = gson.fromJson(op.payloadJson, com.example.warehouse.data.model.InventoryItemDto::class.java)
+                        api.addItem(payload)
+                    }
+                    OperationType.DELETE_ITEM -> {
+                        val payload = gson.fromJson(op.payloadJson, com.example.warehouse.data.model.InventoryItemDeletePayload::class.java)
+                        api.deleteItem(payload.id)
+                    }
                 }
                 // If successful, remove from queue
                 pendingDao.delete(op)

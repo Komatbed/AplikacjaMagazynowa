@@ -59,8 +59,8 @@ object LayoutEngine {
                         startNode = Node(0.0, y),
                         endNode = Node(width, y),
                         width = muntinWidth,
-                        angleStart = 90.0,
-                        angleEnd = 90.0
+                        angleStart = 0.0,
+                        angleEnd = 0.0
                     )
                 )
             } else {
@@ -75,8 +75,8 @@ object LayoutEngine {
                             startNode = Node(currentX, y),
                             endNode = Node(vX, y),
                             width = muntinWidth,
-                            angleStart = 90.0,
-                            angleEnd = 90.0
+                            angleStart = 0.0,
+                            angleEnd = 0.0
                         )
                     )
                     currentX = vX
@@ -89,13 +89,78 @@ object LayoutEngine {
                         startNode = Node(currentX, y),
                         endNode = Node(width, y),
                         width = muntinWidth,
-                        angleStart = 90.0,
-                        angleEnd = 90.0
+                        angleStart = 0.0,
+                        angleEnd = 0.0
                     )
                 )
             }
         }
 
+        return segments
+    }
+    
+    /**
+     * Grid with horizontal as masters (continuous), verticals split by horizontals.
+     */
+    fun generateGridHorizontalMaster(
+        width: Double,
+        height: Double,
+        rows: Int,
+        cols: Int,
+        muntinWidth: Double
+    ): List<Segment> {
+        val segments = mutableListOf<Segment>()
+        
+        val stepX = if (cols > 0) width / cols else width
+        val stepY = if (rows > 0) height / rows else height
+        
+        // Horizontal masters
+        val horizontalY = mutableListOf<Double>()
+        for (j in 1 until rows) {
+            val y = stepY * j
+            horizontalY.add(y)
+            segments.add(
+                Segment(
+                    id = UUID.randomUUID().toString(),
+                    startNode = Node(0.0, y),
+                    endNode = Node(width, y),
+                    width = muntinWidth,
+                    angleStart = 0.0,
+                    angleEnd = 0.0
+                )
+            )
+        }
+        
+        // Vertical split by horizontals
+        for (i in 1 until cols) {
+            val x = stepX * i
+            var startY = 0.0
+            for (y in horizontalY) {
+                segments.add(
+                    Segment(
+                        id = UUID.randomUUID().toString(),
+                        startNode = Node(x, startY),
+                        endNode = Node(x, y),
+                        width = muntinWidth,
+                        angleStart = 90.0,
+                        angleEnd = 90.0
+                    )
+                )
+                startY = y
+            }
+            // Last segment to bottom edge
+            segments.add(
+                Segment(
+                    id = UUID.randomUUID().toString(),
+                    startNode = Node(x, startY),
+                    endNode = Node(x, height),
+                    width = muntinWidth,
+                    angleStart = 90.0,
+                    angleEnd = 90.0
+                )
+            )
+        }
+        
         return segments
     }
 

@@ -18,6 +18,9 @@ interface MuntinsV3Dao {
 
     @Delete
     suspend fun deleteProject(project: ProjectEntity)
+    
+    @Query("DELETE FROM v3_projects")
+    suspend fun clearProjects()
 
     // Layouts
     @Query("SELECT * FROM v3_layouts WHERE project_id = :projectId")
@@ -25,6 +28,9 @@ interface MuntinsV3Dao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertLayout(layout: LayoutEntity)
+    
+    @Query("DELETE FROM v3_layouts")
+    suspend fun clearLayouts()
 
     // Profiles
     @Query("SELECT * FROM v3_profiles")
@@ -35,6 +41,9 @@ interface MuntinsV3Dao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertProfile(profile: ProfileEntity)
+    
+    @Query("DELETE FROM v3_profiles")
+    suspend fun clearProfiles()
 
     // Glass Beads
     @Query("SELECT * FROM v3_glass_beads")
@@ -45,11 +54,22 @@ interface MuntinsV3Dao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertGlassBead(bead: GlassBeadEntity)
-
+    
     // Muntins
     @Query("SELECT * FROM v3_muntins")
     fun getAllMuntins(): Flow<List<MuntinEntity>>
-
+    
+    @Query("SELECT * FROM v3_muntins WHERE id = :id")
+    suspend fun getMuntinById(id: Long): MuntinEntity?
+    
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMuntin(muntin: MuntinEntity)
+    
+    @Query("DELETE FROM v3_muntins")
+    suspend fun clearMuntins()
+    
+    @Query("DELETE FROM v3_glass_beads")
+    suspend fun clearGlassBeads()
+
+    
 }

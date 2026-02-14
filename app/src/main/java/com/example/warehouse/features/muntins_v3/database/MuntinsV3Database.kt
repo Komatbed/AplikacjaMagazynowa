@@ -15,7 +15,7 @@ import com.example.warehouse.features.muntins_v3.database.entity.*
         ProjectEntity::class,
         LayoutEntity::class
     ],
-    version = 1,
+    version = 3,
     exportSchema = false
 )
 abstract class MuntinsV3Database : RoomDatabase() {

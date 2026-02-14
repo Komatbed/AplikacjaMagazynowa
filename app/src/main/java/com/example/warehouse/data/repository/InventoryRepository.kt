@@ -58,7 +58,7 @@ class InventoryRepository(
                 entities.map { entity ->
                     InventoryItemDto(
                         id = entity.id,
-                        location = LocationDto(0, 0, 0, entity.locationLabel), // Simplified location
+                        location = mapLocation(entity.locationLabel), // Simplified location
                         profileCode = entity.profileCode,
                         internalColor = entity.internalColor,
                         externalColor = entity.externalColor,
@@ -110,6 +110,74 @@ class InventoryRepository(
             Result.success(Unit)
         } catch (e: Exception) {
             Log.e(TAG, "refreshItems Error: ${e.message}")
+            Result.failure(e)
+        }
+    }
+
+    suspend fun addItem(
+        locationLabel: String,
+        profileCode: String,
+        internalColor: String,
+        externalColor: String,
+        coreColor: String?,
+        lengthMm: Int,
+        quantity: Int,
+        status: String = "AVAILABLE"
+    ): Result<Unit> {
+        return try {
+            val id = java.util.UUID.randomUUID().toString()
+            val entity = InventoryItemEntity(
+                id = id,
+                locationLabel = locationLabel,
+                profileCode = profileCode,
+                internalColor = internalColor,
+                externalColor = externalColor,
+                coreColor = coreColor,
+                lengthMm = lengthMm,
+                quantity = quantity,
+                status = status
+            )
+            inventoryDao.insertAll(listOf(entity))
+            auditLogDao.insert(AuditLogEntity(
+                action = "ADD_ITEM",
+                itemType = "INVENTORY",
+                details = "Dodano: $profileCode $lengthMm mm ($quantity) do $locationLabel"
+            ))
+            try {
+                val dto = InventoryItemDto(
+                    id = id,
+                    location = mapLocation(locationLabel),
+                    profileCode = profileCode,
+                    internalColor = internalColor,
+                    externalColor = externalColor,
+                    coreColor = coreColor,
+                    lengthMm = lengthMm,
+                    quantity = quantity,
+                    status = status
+                )
+                api.addItem(dto)
+            } catch (e: Exception) {
+                val dto = InventoryItemDto(
+                    id = id,
+                    location = mapLocation(locationLabel),
+                    profileCode = profileCode,
+                    internalColor = internalColor,
+                    externalColor = externalColor,
+                    coreColor = coreColor,
+                    lengthMm = lengthMm,
+                    quantity = quantity,
+                    status = status
+                )
+                val op = PendingOperationEntity(
+                    type = OperationType.ADD_ITEM,
+                    payloadJson = gson.toJson(dto)
+                )
+                pendingDao.insert(op)
+                scheduleSync()
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Log.e(TAG, "addItem Error: ${e.message}")
             Result.failure(e)
         }
     }
@@ -209,12 +277,38 @@ class InventoryRepository(
         }
     }
 
+    suspend fun deleteItemById(id: String): Result<Unit> {
+        return try {
+            inventoryDao.deleteById(id)
+            auditLogDao.insert(AuditLogEntity(
+                action = "DELETE_ITEM",
+                itemType = "INVENTORY",
+                details = "Usunięto element: $id"
+            ))
+            try {
+                api.deleteItem(id)
+                Result.success(Unit)
+            } catch (e: Exception) {
+                val payload = com.example.warehouse.data.model.InventoryItemDeletePayload(id)
+                val op = PendingOperationEntity(
+                    type = OperationType.DELETE_ITEM,
+                    payloadJson = gson.toJson(payload)
+                )
+                pendingDao.insert(op)
+                scheduleSync()
+                Result.success(Unit)
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     // Assembler Tools
     suspend fun findOptimalWaste(profileCode: String, minLength: Int, externalColor: String? = null, internalColor: String? = null): InventoryItemDto? {
         return inventoryDao.findBestWaste(profileCode, minLength, externalColor, internalColor)?.let { entity ->
             InventoryItemDto(
                 id = entity.id,
-                location = LocationDto(0, 0, 0, entity.locationLabel),
+                location = mapLocation(entity.locationLabel),
                 profileCode = entity.profileCode,
                 internalColor = entity.internalColor,
                 externalColor = entity.externalColor,
@@ -235,11 +329,22 @@ class InventoryRepository(
             .setConstraints(constraints)
             .setBackoffCriteria(
                 BackoffPolicy.EXPONENTIAL,
-                10,
+                10L,
                 TimeUnit.SECONDS
             )
             .build()
 
         workManager.enqueue(syncRequest)
+    }
+    
+    private fun mapLocation(label: String): LocationDto {
+        val regex = Regex("""Z(\d+)[\-\s]?R(\d+)[\-\s]?P(\d+)""", RegexOption.IGNORE_CASE)
+        val match = regex.find(label)
+        return if (match != null) {
+            val (zone, row, pos) = match.destructured
+            LocationDto(zone.toLongOrNull() ?: 0L, row.toIntOrNull() ?: 0, pos.toIntOrNull() ?: 0, label)
+        } else {
+            LocationDto(0L, 0, 0, label)
+        }
     }
 }

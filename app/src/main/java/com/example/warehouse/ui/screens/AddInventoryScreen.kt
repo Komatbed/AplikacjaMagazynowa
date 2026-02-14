@@ -42,6 +42,10 @@ fun AddInventoryScreen(
     val coreColor by viewModel.calculatedCoreColor.collectAsState()
     val availableCoreColors by viewModel.availableCoreColors.collectAsState()
     val isCoreEnabled by viewModel.isCoreSelectionEnabled.collectAsState()
+    
+    var location by remember { mutableStateOf("") }
+    var length by remember { mutableStateOf("") }
+    var quantity by remember { mutableStateOf("1") }
 
     var profileExpanded by remember { mutableStateOf(false) }
     var colorExpanded by remember { mutableStateOf(false) }
@@ -212,7 +216,7 @@ fun AddInventoryScreen(
                 ) {
                     colors.forEach { color ->
                         DropdownMenuItem(
-                            text = { Text("${color.name} (${color.code})") },
+                            text = { Text(color.name.ifBlank { color.code }) },
                             onClick = {
                                 viewModel.selectExternalColor(color)
                                 colorExpanded = false
@@ -297,10 +301,63 @@ fun AddInventoryScreen(
                 }
             }
             
+            // Location / Length / Quantity
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = location,
+                        onValueChange = { location = it.uppercase() },
+                        label = { Text("Lokalizacja (np. 01A)") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White,
+                            focusedBorderColor = SafetyOrange,
+                            unfocusedBorderColor = Color.Gray
+                        )
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = length,
+                            onValueChange = { if (it.all { ch -> ch.isDigit() }) length = it },
+                            label = { Text("Długość (mm)") },
+                            modifier = Modifier.weight(1f),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White,
+                                focusedBorderColor = SafetyOrange,
+                                unfocusedBorderColor = Color.Gray
+                            )
+                        )
+                        OutlinedTextField(
+                            value = quantity,
+                            onValueChange = { if (it.all { ch -> ch.isDigit() }) quantity = it },
+                            label = { Text("Ilość (szt)") },
+                            modifier = Modifier.weight(1f),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color.White,
+                                unfocusedTextColor = Color.White,
+                                focusedBorderColor = SafetyOrange,
+                                unfocusedBorderColor = Color.Gray
+                            )
+                        )
+                    }
+                }
+            }
+            
             Spacer(Modifier.height(16.dp))
             
             Button(
-                onClick = { /* TODO: Save logic */ },
+                onClick = { 
+                    val len = length.toIntOrNull() ?: 0
+                    val qty = quantity.toIntOrNull() ?: 1
+                    if (selectedProfile != null && selectedExtColor != null && location.isNotBlank() && len > 0 && qty > 0) {
+                        viewModel.addToInventory(location, len, qty)
+                    }
+                },
                 modifier = Modifier.fillMaxWidth().height(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = SafetyOrange)
             ) {

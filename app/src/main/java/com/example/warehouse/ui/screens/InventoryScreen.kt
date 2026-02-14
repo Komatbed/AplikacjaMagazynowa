@@ -146,13 +146,7 @@ fun InventoryScreen(
                                 )) {}
                             },
                             onDelete = {
-                                viewModel.takeItem(InventoryTakeRequest(
-                                    locationLabel = item.location.label,
-                                    profileCode = item.profileCode,
-                                    lengthMm = item.lengthMm,
-                                    quantity = item.quantity,
-                                    reason = "PRODUCTION"
-                                )) {}
+                                viewModel.deleteItem(item.id) {}
                             },
                             onEditLength = {
                                 showEditLengthDialog = item

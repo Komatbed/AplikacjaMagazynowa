@@ -17,5 +17,7 @@ enum class OperationType {
     TAKE_ITEM,
     UPDATE_ITEM_LENGTH,
     ADD_PROFILE,
-    ADD_COLOR
+    ADD_COLOR,
+    ADD_ITEM,
+    DELETE_ITEM
 }

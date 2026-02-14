@@ -128,8 +128,8 @@ class MainActivity : ComponentActivity() {
                                 onConfigClick = { navController.navigate("config") },
                                 onMapClick = { navController.navigate("map") },
                                 onIssueClick = { navController.navigate("issue_report") },
-                                onMuntinClick = { navController.navigate("muntin") },
-                                onMuntinV2Click = { navController.navigate("muntin_v2") },
+                                onMuntinStraightClick = { navController.navigate("szprosy_proste") },
+                                onMuntinDiagonalClick = { navController.navigate("szprosy_skosne") },
                                 onInventoryClick = { navController.navigate("inventory") },
                                 onWindowCalcClick = { navController.navigate("window_calc") },
                                 onReservationsClick = { navController.navigate("reservations") },
@@ -277,17 +277,18 @@ class MainActivity : ComponentActivity() {
                             AuditLogScreen(onBackClick = { navController.popBackStack() })
                         }
 
-                        // MUNTIN SCREEN
-                        composable("muntin") {
-                            com.example.warehouse.ui.screens.MuntinScreen(
-                                onBackClick = { navController.popBackStack() }
+                        // SZPROSY PROSTE
+                        composable("szprosy_proste") {
+                            com.example.warehouse.features.muntins_v3.ui.screens.MuntinV3Screen(
+                                onBackClick = { navController.popBackStack() },
+                                isDiagonalMode = false
                             )
                         }
-
-                        composable("muntin_v2") {
-                            com.example.warehouse.ui.screens.MuntinScreen(
+                        // SZPROSY SKOŚNE
+                        composable("szprosy_skosne") {
+                            com.example.warehouse.features.muntins_v3.ui.screens.MuntinV3Screen(
                                 onBackClick = { navController.popBackStack() },
-                                initialTab = 1
+                                isDiagonalMode = true
                             )
                         }
                     }
