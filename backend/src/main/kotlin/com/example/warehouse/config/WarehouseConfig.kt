@@ -22,6 +22,8 @@ class WarehouseConfig(
 
     var customMultiCoreColors: List<String> = emptyList()
 
+    var ral9001EligibleColors: List<String> = emptyList()
+
     @PostConstruct
     fun init() {
         reload()
@@ -55,12 +57,14 @@ class WarehouseConfig(
         this.defaultPalletCapacity = config.defaultPalletCapacity
         this.reserveWasteLengths = config.reserveWasteLengths
         this.customMultiCoreColors = config.customMultiCoreColors
+        this.ral9001EligibleColors = config.ral9001EligibleColors.ifEmpty { config.customMultiCoreColors }
     }
 
     private data class WarehouseConfigDto(
         @JsonProperty("lowStockThreshold") val lowStockThreshold: Int = 5,
         @JsonProperty("defaultPalletCapacity") val defaultPalletCapacity: Int = 50,
         @JsonProperty("reserveWasteLengths") val reserveWasteLengths: List<Int> = emptyList(),
-        @JsonProperty("customMultiCoreColors") val customMultiCoreColors: List<String> = emptyList()
+        @JsonProperty("customMultiCoreColors") val customMultiCoreColors: List<String> = emptyList(),
+        @JsonProperty("ral9001EligibleColors") val ral9001EligibleColors: List<String> = emptyList()
     )
 }

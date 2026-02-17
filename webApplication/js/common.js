@@ -25,6 +25,7 @@ function loadNavbar(activePage) {
                             <a href="quality_control.html" class="${activePage === 'quality' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'} px-3 py-2 rounded-md text-sm font-medium">Kontrola Jakości</a>
                             <a href="shortages.html" class="${activePage === 'shortages' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'} px-3 py-2 rounded-md text-sm font-medium">Zgłoszenia Braków</a>
                             <a href="messages.html" class="${activePage === 'messages' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'} px-3 py-2 rounded-md text-sm font-medium">Wiadomości</a>
+                            <a href="core_config.html" class="${activePage === 'core-config' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'} px-3 py-2 rounded-md text-sm font-medium">Kolory Rdzeni</a>
                         </div>
                     </div>
                 </div>

@@ -12,6 +12,7 @@ import com.example.warehouse.data.local.dao.PendingOperationDao
 import com.example.warehouse.data.local.entity.OperationType
 import com.example.warehouse.data.local.entity.PendingOperationEntity
 import com.example.warehouse.data.local.entity.ProfileEntity
+import com.example.warehouse.data.local.entity.CoreColorRuleEntity
 import com.example.warehouse.data.model.ColorDefinition
 import com.example.warehouse.data.model.ProfileDefinition
 import com.google.gson.Gson
@@ -52,6 +53,7 @@ class ConfigRepository(
         return try {
             val profiles = api.getProfiles()
             val colors = api.getColors()
+            val coreRules = api.getCoreRules()
 
             configDao.insertProfiles(profiles.map { 
                 ProfileEntity(
@@ -80,6 +82,15 @@ class ConfigRepository(
                     foilManufacturer = it.foilManufacturer
                 ) 
             })
+
+            configDao.insertCoreColorRules(
+                coreRules.map { (extCode, coreCode) ->
+                    CoreColorRuleEntity(
+                        extColorCode = extCode,
+                        coreColorCode = coreCode
+                    )
+                }
+            )
             
             Result.success(Unit)
         } catch (e: Exception) {

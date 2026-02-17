@@ -3,6 +3,7 @@ package com.example.warehouse.features.muntins_v3.ui.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.warehouse.data.NetworkModule
 import com.example.warehouse.features.muntins_v3.calculations.AssemblyInstructionCalculator
 import com.example.warehouse.features.muntins_v3.calculations.AssemblyStep
 import com.example.warehouse.features.muntins_v3.calculations.BarOptimizer
@@ -29,6 +30,7 @@ class MuntinV3ViewModel(
 ) : AndroidViewModel(application) {
 
     private val repository = MuntinsV3Repository(application)
+    private var defaultsInserted = false
 
     // UI State
     data class MuntinV3UiState(
@@ -79,6 +81,7 @@ class MuntinV3ViewModel(
     private val history = ArrayDeque<Pair<List<Segment>, String?>>()
 
     init {
+        ensureDefaultConfig()
         // Observe config data
         viewModelScope.launch {
             repository.allProfiles.collect { profiles ->
@@ -114,6 +117,82 @@ class MuntinV3ViewModel(
                 }
             }
         }
+    }
+
+    private fun ensureDefaultConfig() {
+        viewModelScope.launch {
+            if (defaultsInserted) return@launch
+            val profiles = repository.allProfiles.first()
+            val beads = repository.allBeads.first()
+            val muntins = repository.allMuntins.first()
+            if (profiles.isEmpty() && beads.isEmpty() && muntins.isEmpty()) {
+                try {
+                    val cfg = NetworkModule.api.getMuntinsV3Config()
+                    if (cfg.profiles.isNotEmpty() || cfg.beads.isNotEmpty() || cfg.muntins.isNotEmpty()) {
+                        cfg.profiles.forEach {
+                            repository.saveProfile(
+                                ProfileEntity(
+                                    name = it.name,
+                                    glassOffsetX = it.glassOffsetX,
+                                    glassOffsetY = it.glassOffsetY,
+                                    outerConstructionAngleDeg = it.outerConstructionAngleDeg
+                                )
+                            )
+                        }
+                        cfg.beads.forEach {
+                            repository.saveGlassBead(
+                                GlassBeadEntity(
+                                    name = it.name,
+                                    angleFace = it.angleFace,
+                                    effectiveGlassOffset = it.effectiveGlassOffset
+                                )
+                            )
+                        }
+                        cfg.muntins.forEach {
+                            repository.saveMuntin(
+                                MuntinEntity(
+                                    name = it.name,
+                                    width = it.width,
+                                    thickness = it.thickness,
+                                    wallAngleDeg = it.wallAngleDeg
+                                )
+                            )
+                        }
+                    } else {
+                        insertDefaultMuntinsConfig()
+                    }
+                } catch (e: Exception) {
+                    insertDefaultMuntinsConfig()
+                }
+            }
+            defaultsInserted = true
+        }
+    }
+
+    private suspend fun insertDefaultMuntinsConfig() {
+        repository.saveProfile(
+            ProfileEntity(
+                name = "Profil PVC 82",
+                glassOffsetX = 32.0,
+                glassOffsetY = 32.0,
+                outerConstructionAngleDeg = 90.0
+            )
+        )
+        repository.saveGlassBead(
+            GlassBeadEntity(
+                name = "Listwa 25/27,5",
+                angleFace = 18.0,
+                effectiveGlassOffset = 26.0
+            )
+        )
+        repository.saveMuntin(
+            MuntinEntity(
+                name = "Szpros 25/12",
+                width = 25.0,
+                thickness = 12.0,
+                wallAngleDeg = 18.0
+            )
+        )
     }
 
     fun selectProfile(profile: ProfileEntity?) {
@@ -241,14 +320,61 @@ class MuntinV3ViewModel(
                 updateCalculations(currentSegments, "CUSTOM")
             } else {
                 when (_addMode) {
-                    AddMode.VERTICAL -> addVertical()
-                    AddMode.HORIZONTAL -> addHorizontal()
+                    AddMode.VERTICAL -> addVerticalAt(tapX, mWidth)
+                    AddMode.HORIZONTAL -> addHorizontalAt(tapY, mWidth)
                     AddMode.DIAGONAL_45, AddMode.DIAGONAL_135 -> {
-                        // Diagonal modes ignored in straight mode
                     }
                 }
             }
         }
+    }
+    
+    private fun addVerticalAt(tapX: Double, muntinWidth: Double) {
+        val width = _uiState.value.glassWidth
+        val height = _uiState.value.glassHeight
+        if (width <= 0.0 || height <= 0.0) return
+        val snapT = _uiState.value.snapThresholdMm
+        val existingX = _uiState.value.segments
+            .filter { kotlin.math.abs(it.startNode.x - it.endNode.x) < 0.1 }
+            .map { it.startNode.x }
+        val candidates = (existingX + listOf(0.0, width)).distinct()
+        val nearest = candidates.minByOrNull { kotlin.math.abs(it - tapX) } ?: tapX
+        val finalX = if (kotlin.math.abs(nearest - tapX) <= snapT) nearest else tapX
+        val newSeg = Segment(
+            id = java.util.UUID.randomUUID().toString(),
+            startNode = Node(finalX, 0.0),
+            endNode = Node(finalX, height),
+            width = muntinWidth,
+            angleStart = 90.0,
+            angleEnd = 90.0
+        )
+        val currentSegments = _uiState.value.segments.toMutableList()
+        currentSegments.add(newSeg)
+        updateCalculations(currentSegments, "CUSTOM")
+    }
+    
+    private fun addHorizontalAt(tapY: Double, muntinWidth: Double) {
+        val width = _uiState.value.glassWidth
+        val height = _uiState.value.glassHeight
+        if (width <= 0.0 || height <= 0.0) return
+        val snapT = _uiState.value.snapThresholdMm
+        val existingY = _uiState.value.segments
+            .filter { kotlin.math.abs(it.startNode.y - it.endNode.y) < 0.1 }
+            .map { it.startNode.y }
+        val candidates = (existingY + listOf(0.0, height)).distinct()
+        val nearest = candidates.minByOrNull { kotlin.math.abs(it - tapY) } ?: tapY
+        val finalY = if (kotlin.math.abs(nearest - tapY) <= snapT) nearest else tapY
+        val newSeg = Segment(
+            id = java.util.UUID.randomUUID().toString(),
+            startNode = Node(0.0, finalY),
+            endNode = Node(width, finalY),
+            width = muntinWidth,
+            angleStart = 0.0,
+            angleEnd = 0.0
+        )
+        val currentSegments = _uiState.value.segments.toMutableList()
+        currentSegments.add(newSeg)
+        updateCalculations(currentSegments, "CUSTOM")
     }
     
     private fun createDiagonalSegment(
@@ -509,10 +635,21 @@ class MuntinV3ViewModel(
             labelProvider = labelProvider
         )
         
+        val profile = _uiState.value.selectedProfile
+        val bead = _uiState.value.selectedBead
+        val project = _uiState.value.currentProject
+        val offsetFromFrame = if (project != null && profile != null && bead != null) {
+            (profile.glassOffsetX + bead.effectiveGlassOffset)
+        } else {
+            0.0
+        }
+        
         val assemblySteps = AssemblyInstructionCalculator.generateInstructions(
             segments,
             width,
             height,
+            offsetFromFrame,
+            offsetFromFrame,
             finalPresetType
         )
 
@@ -640,8 +777,12 @@ class MuntinV3ViewModel(
         _uiState.value = _uiState.value.copy(
             segments = emptyList(),
             cutList = emptyList(),
-            assemblySteps = emptyList()
+            assemblySteps = emptyList(),
+            presetType = null,
+            rows = 2,
+            cols = 2
         )
+        history.clear()
     }
 
     fun createNewProject(

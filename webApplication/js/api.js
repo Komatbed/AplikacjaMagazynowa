@@ -137,6 +137,17 @@ class ApiClient {
         });
     }
 
+    async getCoreMap() {
+        return this.request('/config/core-map');
+    }
+
+    async updateCoreMap(map) {
+        return this.request('/config/core-map', {
+            method: 'PUT',
+            body: JSON.stringify(map)
+        });
+    }
+
     async getUsers() {
         return this.request('/messages/users');
     }

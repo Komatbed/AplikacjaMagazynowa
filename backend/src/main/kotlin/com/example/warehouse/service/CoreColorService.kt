@@ -26,10 +26,11 @@ class CoreColorService(
             // Try FileSystem first
             val file = File("src/main/resources/core_color_map.json")
             if (file.exists()) {
-                coreColorMap = objectMapper.readValue(
+                val raw: Map<String, String> = objectMapper.readValue(
                     file,
                     object : TypeReference<Map<String, String>>() {}
                 )
+                coreColorMap = raw.mapKeys { it.key.lowercase() }
                 logger.info("Reloaded core_color_map.json from file system with ${coreColorMap.size} entries.")
                 return
             }
@@ -37,10 +38,11 @@ class CoreColorService(
             // Fallback to Classpath
             val resource = ClassPathResource("core_color_map.json")
             if (resource.exists()) {
-                coreColorMap = objectMapper.readValue(
+                val raw: Map<String, String> = objectMapper.readValue(
                     resource.inputStream,
                     object : TypeReference<Map<String, String>>() {}
                 )
+                coreColorMap = raw.mapKeys { it.key.lowercase() }
                 logger.info("Reloaded core_color_map.json from classpath with ${coreColorMap.size} entries.")
             } else {
                 logger.warn("core_color_map.json not found!")

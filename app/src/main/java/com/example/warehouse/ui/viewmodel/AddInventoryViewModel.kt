@@ -37,6 +37,10 @@ class AddInventoryViewModel(application: Application) : AndroidViewModel(applica
     private val _customMultiCoreColors = MutableStateFlow<Set<String>>(emptySet())
     val customMultiCoreColors: StateFlow<Set<String>> = _customMultiCoreColors
 
+    // Colors that allow RAL 9001 internal option
+    private val _ral9001EligibleColors = MutableStateFlow<Set<String>>(emptySet())
+    val ral9001EligibleColors: StateFlow<Set<String>> = _ral9001EligibleColors
+
     // Selection State
     private val _selectedProfile = MutableStateFlow<ProfileEntity?>(null)
     val selectedProfile: StateFlow<ProfileEntity?> = _selectedProfile
@@ -83,6 +87,12 @@ class AddInventoryViewModel(application: Application) : AndroidViewModel(applica
                 val list = csv.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()
                 _customMultiCoreColors.value = list
                 recalculateCoreColor()
+            }
+        }
+        viewModelScope.launch {
+            settingsDataStore.ral9001EligibleColors.collect { csv ->
+                val list = csv.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()
+                _ral9001EligibleColors.value = list
             }
         }
         viewModelScope.launch {
@@ -179,6 +189,12 @@ class AddInventoryViewModel(application: Application) : AndroidViewModel(applica
 
     fun selectExternalColor(color: ColorEntity) {
         _selectedExternalColor.value = color
+        val name = color.name.lowercase()
+        if (name.contains("biały z czarną") || name.contains("biały z szarą")) {
+            _internalColorMode.value = InternalColorMode.WHITE
+        } else if (name.contains("ral9001 z czarną") || name.contains("ral9001 z szarą")) {
+            _internalColorMode.value = InternalColorMode.RAL_9001
+        }
         recalculateCoreColor()
     }
 

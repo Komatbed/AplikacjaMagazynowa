@@ -1,5 +1,6 @@
 package com.example.warehouse.ui.screens
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.rememberScrollState
@@ -18,6 +19,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -33,6 +35,7 @@ fun AddInventoryScreen(
     onBackClick: () -> Unit,
     viewModel: AddInventoryViewModel = viewModel()
 ) {
+    val context = LocalContext.current
     val profiles by viewModel.profiles.collectAsState()
     val colors by viewModel.colors.collectAsState()
     val presets by viewModel.presets.collectAsState()
@@ -241,15 +244,9 @@ fun AddInventoryScreen(
             onClick = { viewModel.setInternalColorMode(InternalColorMode.SAME_AS_EXTERNAL) },
             modifier = Modifier.weight(1f)
         )
-        // Show RAL 9001 only if core selection is potentially enabled (meaning it's a "premium" color)
-        // or if it's explicitly in the multi-core list. 
-        // User logic: "add RAL9001 - of course this will appear/activate only for selected group of colors"
-        // We use the same 'isCoreEnabled' logic or similar check to decide visibility.
-        // For simplicity, let's show it if core selection WOULD be enabled if we were in bi-color mode,
-        // or simply if the external color is one of the "Custom Multi-Core" colors.
-        val customMultiCoreColors by viewModel.customMultiCoreColors.collectAsState()
+        val ral9001EligibleColors by viewModel.ral9001EligibleColors.collectAsState()
         val extName = selectedExtColor?.name ?: ""
-        val isPremiumColor = customMultiCoreColors.any { extName.contains(it, ignoreCase = true) }
+        val isPremiumColor = ral9001EligibleColors.any { extName.contains(it, ignoreCase = true) }
         
         if (isPremiumColor) {
             SelectableButton(
@@ -351,14 +348,25 @@ fun AddInventoryScreen(
             Spacer(Modifier.height(16.dp))
             
             Button(
-                onClick = { 
+                onClick = {
                     val len = length.toIntOrNull() ?: 0
                     val qty = quantity.toIntOrNull() ?: 1
                     if (selectedProfile != null && selectedExtColor != null && location.isNotBlank() && len > 0 && qty > 0) {
                         viewModel.addToInventory(location, len, qty)
+                        Toast.makeText(context, "Dodano do magazynu", Toast.LENGTH_SHORT).show()
+                        length = ""
+                        quantity = "1"
+                    } else {
+                        Toast.makeText(
+                            context,
+                            "Uzupełnij profil, kolor, lokalizację, długość i ilość",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = SafetyOrange)
             ) {
                 Text("DODAJ DO MAGAZYNU", fontWeight = FontWeight.Bold)

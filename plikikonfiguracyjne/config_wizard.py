@@ -26,6 +26,28 @@ def get_input(prompt, default=None, required=True, val_type=str):
         except ValueError:
             print(f"Niepoprawny format. Oczekiwano {val_type.__name__}.")
 
+def load_json_list(path):
+    if os.path.exists(path):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, list):
+                    return data
+        except Exception:
+            pass
+    return []
+
+def load_json_object(path):
+    if os.path.exists(path):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    return data
+        except Exception:
+            pass
+    return {}
+
 def create_profile():
     print("\n--- Dodawanie Profilu ---")
     return {
@@ -61,7 +83,10 @@ def create_warehouse_config():
             int(x.strip()) for x in get_input("Zastrzeżone długości odpadów (po przecinku, np. 1000, 1500)", default="").split(',') if x.strip()
         ],
         "customMultiCoreColors": [
-            x.strip() for x in get_input("Kolory specjalne (wybór rdzenia/RAL9001) (po przecinku, np. Złoty Dąb, Orzech)", default="").split(',') if x.strip()
+            x.strip() for x in get_input("Kolory multi-core (ręczny wybór rdzenia X/X, X/Y) (po przecinku)", default="").split(',') if x.strip()
+        ],
+        "ral9001EligibleColors": [
+            x.strip() for x in get_input("Kolory, dla których dostępna jest opcja RAL 9001 (po przecinku)", default="").split(',') if x.strip()
         ]
     }
 
@@ -84,6 +109,32 @@ def create_core_color_map():
             
     return mapping
 
+def create_muntins_profile():
+    print("\n--- Profil skrzydła dla SZPROSÓW V3 ---")
+    return {
+        "name": get_input("Nazwa profilu (np. Profil PVC 82)", default="Profil PVC 82"),
+        "glassOffsetX": get_input("Odsunięcie szkła X od ramy (mm)", default=32.0, val_type=float),
+        "glassOffsetY": get_input("Odsunięcie szkła Y od ramy (mm)", default=32.0, val_type=float),
+        "outerConstructionAngleDeg": get_input("Kąt zewnętrzny naroża (°)", default=90.0, val_type=float)
+    }
+
+def create_muntins_bead():
+    print("\n--- Listwa przyszybowa dla SZPROSÓW V3 ---")
+    return {
+        "name": get_input("Nazwa listwy (np. Listwa 25/27,5)", default="Listwa 25/27,5"),
+        "angleFace": get_input("Kąt twarzy listwy (°)", default=18.0, val_type=float),
+        "effectiveGlassOffset": get_input("Efektywne odsunięcie szkła (mm)", default=26.0, val_type=float)
+    }
+
+def create_muntins_bar():
+    print("\n--- Szpros (listwa międzyszybowa) dla SZPROSÓW V3 ---")
+    return {
+        "name": get_input("Nazwa szprosa (np. Szpros 25/12)", default="Szpros 25/12"),
+        "width": get_input("Szerokość szprosa (mm)", default=25.0, val_type=float),
+        "thickness": get_input("Grubość szprosa (mm)", default=12.0, val_type=float),
+        "wallAngleDeg": get_input("Kąt ścianki szprosa (°)", default=18.0, val_type=float)
+    }
+
 def main():
     # Paths
     base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -101,6 +152,9 @@ def main():
     colors = []
     warehouse_config = None
     core_color_map = None
+    muntins_profiles = []
+    muntins_beads = []
+    muntins_bars = []
 
     print("Witaj w kreatorze konfiguracji!")
     
@@ -126,32 +180,69 @@ def main():
     if get_input("\nCzy skonfigurować mapowanie kolorów rdzenia? (t/n)", default="t").lower() == 't':
         core_color_map = create_core_color_map()
 
+    # Muntins V3 Config
+    if get_input("\nCzy skonfigurować SZPROSY V3 (profil/listwa/szpros)? (t/n)", default="t").lower() == 't':
+        # Profil skrzydła
+        muntins_profiles.append(create_muntins_profile())
+        # Listwa przyszybowa
+        muntins_beads.append(create_muntins_bead())
+        # Szprosy (może być więcej niż jeden wariant)
+        while True:
+            muntins_bars.append(create_muntins_bar())
+            if get_input("Dodać kolejny typ szprosa? (t/n)", default="n").lower() != 't':
+                break
+
     # Save Initial Data (Profiles/Colors)
     if profiles:
         path = os.path.join(initial_data_dir, "profiles.json")
+        existing = load_json_list(path)
+        existing.extend(profiles)
         with open(path, "w", encoding="utf-8") as f:
-            json.dump(profiles, f, indent=2, ensure_ascii=False)
-        print(f"\nZapisano {len(profiles)} profili do {path}")
+            json.dump(existing, f, indent=2, ensure_ascii=False)
+        print(f"\nZapisano {len(profiles)} nowych profili do {path}")
 
     if colors:
         path = os.path.join(initial_data_dir, "colors.json")
+        existing = load_json_list(path)
+        existing.extend(colors)
         with open(path, "w", encoding="utf-8") as f:
-            json.dump(colors, f, indent=2, ensure_ascii=False)
-        print(f"\nZapisano {len(colors)} kolorów do {path}")
+            json.dump(existing, f, indent=2, ensure_ascii=False)
+        print(f"\nZapisano {len(colors)} nowych kolorów do {path}")
 
     # Save Warehouse Config
     if warehouse_config:
         path = os.path.join(resources_dir, "warehouse_config.json")
+        existing = load_json_object(path)
+        existing.update(warehouse_config)
         with open(path, "w", encoding="utf-8") as f:
-            json.dump(warehouse_config, f, indent=2, ensure_ascii=False)
+            json.dump(existing, f, indent=2, ensure_ascii=False)
         print(f"\nZapisano konfigurację magazynu do {path}")
 
     # Save Core Color Map
     if core_color_map:
         path = os.path.join(resources_dir, "core_color_map.json")
+        existing = load_json_object(path)
+        existing.update(core_color_map)
         with open(path, "w", encoding="utf-8") as f:
-            json.dump(core_color_map, f, indent=2, ensure_ascii=False)
+            json.dump(existing, f, indent=2, ensure_ascii=False)
         print(f"\nZapisano mapowanie rdzeni do {path}")
+
+    # Save Muntins V3 Config
+    if muntins_profiles or muntins_beads or muntins_bars:
+        path = os.path.join(initial_data_dir, "muntins_v3.json")
+        data = load_json_object(path)
+        if not isinstance(data.get("profiles"), list):
+            data["profiles"] = []
+        if not isinstance(data.get("beads"), list):
+            data["beads"] = []
+        if not isinstance(data.get("muntins"), list):
+            data["muntins"] = []
+        data["profiles"].extend(muntins_profiles)
+        data["beads"].extend(muntins_beads)
+        data["muntins"].extend(muntins_bars)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+        print(f"\nZapisano konfigurację szprosów V3 do {path}")
 
     print("\nGotowe! Uruchom aplikację backendową, aby załadować dane.")
 

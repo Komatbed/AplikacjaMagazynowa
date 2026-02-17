@@ -15,6 +15,7 @@ import com.example.warehouse.data.model.OptimizationRequest
 import com.example.warehouse.data.model.WasteRecommendationResponse
 import com.example.warehouse.data.model.ProfileDefinition
 import com.example.warehouse.data.model.ColorDefinition
+import com.example.warehouse.data.model.MuntinsV3Config
 import com.example.warehouse.data.model.LoginRequest
 import com.example.warehouse.data.model.AuthResponse
 import retrofit2.http.DELETE
@@ -30,6 +31,9 @@ interface WarehouseApi {
 
     @GET("config/warehouse")
     suspend fun getWarehouseConfig(): Map<String, Any>
+
+    @GET("config/muntins-v3")
+    suspend fun getMuntinsV3Config(): MuntinsV3Config
 
     // Config Management
     @GET("config/profiles")

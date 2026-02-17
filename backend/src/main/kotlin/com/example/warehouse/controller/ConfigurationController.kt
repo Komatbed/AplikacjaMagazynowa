@@ -1,6 +1,7 @@
 package com.example.warehouse.controller
 
 import com.example.warehouse.config.WarehouseConfig
+import com.example.warehouse.config.MuntinsV3Config
 import com.example.warehouse.model.ColorDefinition
 import com.example.warehouse.model.ProfileDefinition
 import com.example.warehouse.repository.ColorDefinitionRepository
@@ -22,6 +23,7 @@ class ConfigurationController(
     private val colorRepository: ColorDefinitionRepository,
     private val coreColorService: CoreColorService,
     private val warehouseConfig: WarehouseConfig,
+    private val muntinsV3Config: MuntinsV3Config,
     private val objectMapper: ObjectMapper
 ) {
 
@@ -32,7 +34,8 @@ class ConfigurationController(
             "lowStockThreshold" to warehouseConfig.lowStockThreshold,
             "defaultPalletCapacity" to warehouseConfig.defaultPalletCapacity,
             "reserveWasteLengths" to warehouseConfig.reserveWasteLengths,
-            "customMultiCoreColors" to warehouseConfig.customMultiCoreColors
+            "customMultiCoreColors" to warehouseConfig.customMultiCoreColors,
+            "ral9001EligibleColors" to warehouseConfig.ral9001EligibleColors
         )
     }
 
@@ -44,7 +47,8 @@ class ConfigurationController(
         // Reload Beans
         warehouseConfig.reload()
         coreColorService.reload()
-        stats["beans"] = "Reloaded WarehouseConfig and CoreColorService"
+        muntinsV3Config.reload()
+        stats["beans"] = "Reloaded WarehouseConfig, CoreColorService and MuntinsV3Config"
         
         // Reload Profiles
         try {
@@ -145,7 +149,60 @@ class ConfigurationController(
     // Core Color Rules
     @GetMapping("/core-rules")
     fun getCoreRules(): Map<String, String> {
-        return coreColorService.getMapping()
+        val mapping = coreColorService.getMapping()
+        if (mapping.isEmpty()) return emptyMap()
+
+        val normalized = mapping.mapKeys { it.key.lowercase() }
+        val result = mutableMapOf<String, String>()
+
+        colorRepository.findAll().forEach { color ->
+            val core = normalized[color.name.lowercase()]
+            if (core != null) {
+                result[color.code] = core
+            }
+        }
+
+        return result
+    }
+
+    @GetMapping("/core-map")
+    fun getCoreMap(): Map<String, String> {
+        val file = File("src/main/resources/core_color_map.json")
+        if (file.exists()) {
+            return objectMapper.readValue(
+                file,
+                object : TypeReference<Map<String, String>>() {}
+            )
+        }
+        val resource = ClassPathResource("core_color_map.json")
+        if (resource.exists()) {
+            return objectMapper.readValue(
+                resource.inputStream,
+                object : TypeReference<Map<String, String>>() {}
+            )
+        }
+        return emptyMap()
+    }
+
+    @PutMapping("/core-map")
+    fun updateCoreMap(@RequestBody map: Map<String, String>): Map<String, String> {
+        val file = File("src/main/resources/core_color_map.json")
+        val parent = file.parentFile
+        if (parent != null && !parent.exists()) {
+            parent.mkdirs()
+        }
+        objectMapper.writerWithDefaultPrettyPrinter().writeValue(file, map)
+        coreColorService.reload()
+        return map
+    }
+
+    @GetMapping("/muntins-v3")
+    fun getMuntinsV3(): Map<String, Any> {
+        return mapOf(
+            "profiles" to muntinsV3Config.profiles,
+            "beads" to muntinsV3Config.beads,
+            "muntins" to muntinsV3Config.muntins
+        )
     }
 
     // Profiles

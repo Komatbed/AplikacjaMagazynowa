@@ -18,6 +18,8 @@ object AssemblyInstructionCalculator {
         segments: List<Segment>,
         glassWidth: Double,
         glassHeight: Double,
+        offsetFromFrameX: Double = 0.0,
+        offsetFromFrameY: Double = 0.0,
         presetType: String? = null
     ): List<AssemblyStep> {
         if (presetType == "DIAMOND") {
@@ -51,9 +53,15 @@ object AssemblyInstructionCalculator {
             AssemblyStep(
                 orderIndex = index + 1,
                 segment = segment,
-                length = (length * 10.0).roundToInt() / 10.0, // Display precision
+                length = (length * 10.0).roundToInt() / 10.0,
                 description = determineType(segment, glassWidth, glassHeight),
-                positionLabel = formatPosition(segment, glassWidth, glassHeight)
+                positionLabel = formatPosition(
+                    segment,
+                    glassWidth,
+                    glassHeight,
+                    offsetFromFrameX,
+                    offsetFromFrameY
+                )
             )
         }
     }
@@ -114,30 +122,39 @@ object AssemblyInstructionCalculator {
         }
     }
 
-    private fun formatPosition(segment: Segment, w: Double, h: Double): String {
+    private fun formatPosition(
+        segment: Segment,
+        w: Double,
+        h: Double,
+        offsetFromFrameX: Double,
+        offsetFromFrameY: Double
+    ): String {
         val isVertical = abs(segment.startNode.x - segment.endNode.x) < 0.1
         val isHorizontal = abs(segment.startNode.y - segment.endNode.y) < 0.1
 
         return when {
             isVertical -> {
-                // Distance from left
-                val x = (segment.startNode.x * 10.0).roundToInt() / 10.0
-                "Pozycja X: $x mm od lewej"
+                val xInGlass = (segment.startNode.x * 10.0).roundToInt() / 10.0
+                val axisFromFrameLeft = (xInGlass + offsetFromFrameX * 10.0).roundToInt() / 10.0
+                "Oś: $axisFromFrameLeft mm od lewej krawędzi skrzydła"
             }
             isHorizontal -> {
-                // Distance from top (Canvas Y=0 is top) or bottom?
-                // Spec says "643 mm od dołu" (from bottom).
-                // Our Y=0 is top. So distance from bottom is Height - Y.
                 val yFromTop = segment.startNode.y
                 val yFromBottom = h - yFromTop
-                val yDisplay = (yFromBottom * 10.0).roundToInt() / 10.0
-                "Pozycja Y: $yDisplay mm od dołu"
+                val yInGlassFromBottom = (yFromBottom * 10.0).roundToInt() / 10.0
+                val axisFromFrameBottom =
+                    (yInGlassFromBottom + offsetFromFrameY * 10.0).roundToInt() / 10.0
+                "Oś: $axisFromFrameBottom mm od dolnej krawędzi skrzydła"
             }
             else -> {
-                // Angled
-                val startX = (segment.startNode.x * 10.0).roundToInt() / 10.0
-                val startY = ((h - segment.startNode.y) * 10.0).roundToInt() / 10.0
-                "Start: ($startX, $startY) od lewej/dołu"
+                val startXInGlass = (segment.startNode.x * 10.0).roundToInt() / 10.0
+                val startYFromBottomInGlass =
+                    ((h - segment.startNode.y) * 10.0).roundToInt() / 10.0
+                val axisXFromFrameLeft =
+                    (startXInGlass + offsetFromFrameX * 10.0).roundToInt() / 10.0
+                val axisYFromFrameBottom =
+                    (startYFromBottomInGlass + offsetFromFrameY * 10.0).roundToInt() / 10.0
+                "Oś ukośna: start X=$axisXFromFrameLeft mm, Y=$axisYFromFrameBottom mm od krawędzi skrzydła"
             }
         }
     }

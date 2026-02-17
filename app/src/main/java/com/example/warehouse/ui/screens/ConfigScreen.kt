@@ -177,13 +177,6 @@ fun ConfigScreen(
                             }
                         )
                         HorizontalDivider()
-                        DropdownMenuItem(
-                            text = { Text("Importuj dane początkowe (Assets)") },
-                            onClick = {
-                                viewModel.importFromAssets()
-                                showMenu = false
-                            }
-                        )
                     }
                 }
             }

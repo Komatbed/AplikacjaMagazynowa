@@ -772,5 +772,41 @@
     "vekaCode": "",
     "type": "mat",
     "foilManufacturer": "55"
+  },
+  {
+    "code": "BIALY_Z_CZARNA",
+    "name": "Biały z czarną",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "multi",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "BIALY_Z_SZARA",
+    "name": "Biały z szarą",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "multi",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "RAL9001_Z_CZARNA",
+    "name": "RAL9001 z czarną",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "multi",
+    "foilManufacturer": ""
+  },
+  {
+    "code": "RAL9001_Z_SZARA",
+    "name": "RAL9001 z szarą",
+    "description": "",
+    "paletteCode": "",
+    "vekaCode": "",
+    "type": "multi",
+    "foilManufacturer": ""
   }
 ]

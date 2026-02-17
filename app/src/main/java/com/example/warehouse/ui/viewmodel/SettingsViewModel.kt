@@ -41,6 +41,8 @@ class SettingsViewModel @JvmOverloads constructor(
     private val configRepository = ConfigRepository(application)
     val bluetoothPrinterManager = BluetoothPrinterManager(application)
 
+    private var lastConfigSync: Long = 0L
+
     private val _printerStatus = mutableStateOf<String?>(null)
     val printerStatus: State<String?> = _printerStatus
 
@@ -82,6 +84,11 @@ class SettingsViewModel @JvmOverloads constructor(
                     if (colorsStr != customMultiCoreColors.value) {
                         settingsDataStore.saveCustomMultiCoreColors(colorsStr)
                     }
+                }
+                
+                (config["ral9001EligibleColors"] as? List<*>)?.let { list ->
+                    val colorsStr = list.filterIsInstance<String>().joinToString(",")
+                    settingsDataStore.saveRal9001EligibleColors(colorsStr)
                 }
                 
                 (config["lowStockThreshold"] as? Number)?.toInt()?.let {
@@ -237,6 +244,7 @@ class SettingsViewModel @JvmOverloads constructor(
     fun checkBackendConnection() {
         viewModelScope.launch {
             _backendStatus.value = BackendStatus.Checking
+            _dbStatus.value = BackendStatus.Checking
             val start = System.currentTimeMillis()
             try {
                 withTimeout(10000) {
@@ -244,31 +252,39 @@ class SettingsViewModel @JvmOverloads constructor(
                     val result = repository.checkConnection()
                     if (result.isSuccess) {
                         val latency = System.currentTimeMillis() - start
-                        _backendStatus.value = BackendStatus.Online(latency, Date())
+                        val onlineStatus = BackendStatus.Online(latency, Date())
+                        _backendStatus.value = onlineStatus
+                        _dbStatus.value = onlineStatus
                         syncWarehouseConfig()
+                        val now = System.currentTimeMillis()
+                        if (now - lastConfigSync > 10 * 60 * 1000) {
+                            val cfgResult = configRepository.refreshConfig()
+                            if (cfgResult.isSuccess) {
+                                lastConfigSync = now
+                            }
+                        }
                     } else {
-                        _backendStatus.value = BackendStatus.Offline(result.exceptionOrNull()?.message ?: "Błąd połączenia", Date())
+                        val offlineStatus = BackendStatus.Offline(result.exceptionOrNull()?.message ?: "Błąd połączenia", Date())
+                        _backendStatus.value = offlineStatus
+                        _dbStatus.value = offlineStatus
                     }
                 }
             } catch (e: Exception) {
-                _backendStatus.value = BackendStatus.Offline(e.message ?: "Timeout/Błąd", Date())
+                val offlineStatus = BackendStatus.Offline(e.message ?: "Timeout/Błąd", Date())
+                _backendStatus.value = offlineStatus
+                _dbStatus.value = offlineStatus
             }
         }
     }
 
     private fun checkDbConnection() {
-        // Assuming DB is OK if Backend is OK (for now, as we don't have separate DB health endpoint)
-        // In a real scenario, we would call a specific endpoint like /actuator/health/db
-        viewModelScope.launch {
-             _dbStatus.value = _backendStatus.value
-        }
     }
 
     private fun checkWebConnection() {
         val currentApiUrl = apiUrl.value
         val webUrl = try {
             val urlObj = URL(currentApiUrl)
-            "${urlObj.protocol}://${urlObj.host}"
+            "http://${urlObj.host}"
         } catch (e: Exception) {
             "http://51.77.59.105"
         }
@@ -278,19 +294,19 @@ class SettingsViewModel @JvmOverloads constructor(
             val start = System.currentTimeMillis()
             
             try {
-                // Perform network request on IO dispatcher
                 val result = kotlinx.coroutines.withContext(Dispatchers.IO) {
                     try {
                         withTimeout(10000) {
                             val url = URL(webUrl)
                             val connection = url.openConnection() as HttpURLConnection
+                            connection.instanceFollowRedirects = false
                             connection.connectTimeout = 5000
                             connection.readTimeout = 5000
                             connection.requestMethod = "HEAD"
-                            
+
                             val code = connection.responseCode
                             connection.disconnect()
-                            
+
                             if (code in 200..399) {
                                 Result.success(code)
                             } else {

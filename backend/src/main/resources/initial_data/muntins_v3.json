@@ -1,0 +1,25 @@
+{
+  "profiles": [
+    {
+      "name": "Profil PVC 82",
+      "glassOffsetX": 32.0,
+      "glassOffsetY": 32.0,
+      "outerConstructionAngleDeg": 90.0
+    }
+  ],
+  "beads": [
+    {
+      "name": "Listwa 25/27,5",
+      "angleFace": 18.0,
+      "effectiveGlassOffset": 26.0
+    }
+  ],
+  "muntins": [
+    {
+      "name": "Szpros 25/12",
+      "width": 25.0,
+      "thickness": 12.0,
+      "wallAngleDeg": 18.0
+    }
+  ]
+}

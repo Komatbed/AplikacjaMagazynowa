@@ -24,3 +24,29 @@ data class ColorDefinition(
     val type: String = "smooth",
     val foilManufacturer: String = ""
 )
+
+data class MuntinsV3ProfileConfig(
+    val name: String,
+    val glassOffsetX: Double,
+    val glassOffsetY: Double,
+    val outerConstructionAngleDeg: Double = 90.0
+)
+
+data class MuntinsV3BeadConfig(
+    val name: String,
+    val angleFace: Double,
+    val effectiveGlassOffset: Double
+)
+
+data class MuntinsV3MuntinConfig(
+    val name: String,
+    val width: Double,
+    val thickness: Double,
+    val wallAngleDeg: Double = 90.0
+)
+
+data class MuntinsV3Config(
+    val profiles: List<MuntinsV3ProfileConfig> = emptyList(),
+    val beads: List<MuntinsV3BeadConfig> = emptyList(),
+    val muntins: List<MuntinsV3MuntinConfig> = emptyList()
+)

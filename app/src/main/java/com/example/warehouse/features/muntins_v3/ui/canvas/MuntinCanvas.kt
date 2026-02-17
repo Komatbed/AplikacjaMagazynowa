@@ -4,9 +4,14 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
-import androidx.compose.runtime.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -15,6 +20,7 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.example.warehouse.features.muntins_v3.geometry.Node
 import com.example.warehouse.features.muntins_v3.geometry.Segment
@@ -32,80 +38,90 @@ fun MuntinCanvas(
     clearanceMuntin: Double = 0.0,
     modifier: Modifier = Modifier
 ) {
-    // Fixed view (zoom/pan wyłączone wg wymagań)
-    val scale = 1f
-    val offset = Offset.Zero
+    val surfaceVariantColor = MaterialTheme.colorScheme.surfaceVariant
+    val glassSurfaceColor = MaterialTheme.colorScheme.surface
+    val glassOutlineColor = MaterialTheme.colorScheme.outline
+    val labelColor = MaterialTheme.colorScheme.onSurface
 
-    Box(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxSize()
-            .background(Color.LightGray)
-            .pointerInput(Unit) {
-                detectTapGestures { tapOffset ->
-                    // Convert screen tap to canvas coordinates
-                    // Screen = Canvas * Scale + Offset
-                    // Canvas = (Screen - Offset) / Scale
-                    val canvasX = (tapOffset.x - offset.x) / scale
-                    val canvasY = (tapOffset.y - offset.y) / scale
-                    val canvasPoint = Offset(canvasX, canvasY)
-
-                    // Find closest segment within threshold (e.g. 20 units)
-                    // We check distance to the axis line of the segment
-                    val touchThreshold = 30.0 // mm
-                    
-                    val closest = segments.minByOrNull { segment ->
-                        distanceToSegment(canvasPoint, segment)
-                    }
-
-                    if (closest != null && distanceToSegment(canvasPoint, closest) < touchThreshold) {
-                        onTap(closest.id, canvasPoint)
-                    } else {
-                        onTap(null, canvasPoint)
-                    }
-                }
-            }
+            .background(surfaceVariantColor)
     ) {
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            withTransform({
-                translate(offset.x, offset.y)
-                scale(scaleX = scale, scaleY = scale, pivot = Offset.Zero)
-            }) {
-                // 1. Draw Glass Bounds (Light)
-                // Assuming (0,0) is top-left of the glass
-                drawRect(
-                    color = Color.White,
-                    topLeft = Offset.Zero,
-                    size = Size(glassWidth.toFloat(), glassHeight.toFloat())
-                )
-                drawRect(
-                    color = Color.Black,
-                    topLeft = Offset.Zero,
-                    size = Size(glassWidth.toFloat(), glassHeight.toFloat()),
-                    style = Stroke(width = 2f)
-                )
+        val density = LocalDensity.current
+        val canvasWidthPx = with(density) { maxWidth.toPx() }
+        val canvasHeightPx = with(density) { maxHeight.toPx() }
+        val safeGlassWidth = glassWidth.coerceAtLeast(1.0).toFloat()
+        val safeGlassHeight = glassHeight.coerceAtLeast(1.0).toFloat()
+        val scale = kotlin.math.min(canvasWidthPx / safeGlassWidth, canvasHeightPx / safeGlassHeight)
+        val offset = Offset(
+            (canvasWidthPx - safeGlassWidth * scale) / 2f,
+            (canvasHeightPx - safeGlassHeight * scale) / 2f
+        )
 
-                // 2. Draw Segments
-                segments.forEach { segment ->
-                    drawSegment(segment, segment.id == selectedSegmentId, clearanceGlobal, clearanceBead, clearanceMuntin)
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput(scale, offset, segments) {
+                    detectTapGestures { tapOffset ->
+                        val canvasX = (tapOffset.x - offset.x) / scale
+                        val canvasY = (tapOffset.y - offset.y) / scale
+                        val canvasPoint = Offset(canvasX, canvasY)
+                        val touchThreshold = 30.0
+                        val closest = segments.minByOrNull { segment ->
+                            distanceToSegment(canvasPoint, segment)
+                        }
+                        if (closest != null && distanceToSegment(canvasPoint, closest) < touchThreshold) {
+                            onTap(closest.id, canvasPoint)
+                        } else {
+                            onTap(null, canvasPoint)
+                        }
+                    }
+                }
+        ) {
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                withTransform({
+                    translate(offset.x, offset.y)
+                    scale(scaleX = scale, scaleY = scale, pivot = Offset.Zero)
+                }) {
+                    drawRect(
+                        color = glassSurfaceColor,
+                        topLeft = Offset.Zero,
+                        size = Size(safeGlassWidth, safeGlassHeight)
+                    )
+                    drawRect(
+                        color = glassOutlineColor,
+                        topLeft = Offset.Zero,
+                        size = Size(safeGlassWidth, safeGlassHeight),
+                        style = Stroke(width = 2f)
+                    )
+                    segments.forEach { segment ->
+                        drawSegment(
+                            segment,
+                            segment.id == selectedSegmentId,
+                            clearanceGlobal,
+                            clearanceBead,
+                            clearanceMuntin
+                        )
+                    }
                 }
             }
-        }
-        val d = androidx.compose.ui.platform.LocalDensity.current
-        segments.forEach { segment ->
-            val sxDp = with(d) { segment.startNode.x.toFloat().toDp() }
-            val syDp = with(d) { segment.startNode.y.toFloat().toDp() }
-            val exDp = with(d) { segment.endNode.x.toFloat().toDp() }
-            val eyDp = with(d) { segment.endNode.y.toFloat().toDp() }
-            androidx.compose.material3.Text(
-                text = "${kotlin.math.round(segment.angleStart * 10) / 10.0}°, g=${clearanceGlobal}, b=${clearanceBead}, m=${clearanceMuntin}",
-                modifier = Modifier.offset(x = sxDp + 5.dp, y = syDp - 14.dp),
-                color = Color.Black
-            )
-            androidx.compose.material3.Text(
-                text = "${kotlin.math.round(segment.angleEnd * 10) / 10.0}°, g=${clearanceGlobal}, b=${clearanceBead}, m=${clearanceMuntin}",
-                modifier = Modifier.offset(x = exDp + 5.dp, y = eyDp - 14.dp),
-                color = Color.Black
-            )
+            segments.forEach { segment ->
+                val sxDp = with(density) { (offset.x + segment.startNode.x.toFloat() * scale).toDp() }
+                val syDp = with(density) { (offset.y + segment.startNode.y.toFloat() * scale).toDp() }
+                val exDp = with(density) { (offset.x + segment.endNode.x.toFloat() * scale).toDp() }
+                val eyDp = with(density) { (offset.y + segment.endNode.y.toFloat() * scale).toDp() }
+                androidx.compose.material3.Text(
+                    text = "${kotlin.math.round(segment.angleStart * 10) / 10.0}°",
+                    modifier = Modifier.offset(x = sxDp + 5.dp, y = syDp - 14.dp),
+                    color = labelColor
+                )
+                androidx.compose.material3.Text(
+                    text = "${kotlin.math.round(segment.angleEnd * 10) / 10.0}°",
+                    modifier = Modifier.offset(x = exDp + 5.dp, y = eyDp - 14.dp),
+                    color = labelColor
+                )
+            }
         }
     }
 }

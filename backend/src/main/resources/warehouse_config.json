@@ -15,8 +15,11 @@
     "Dąb Klejony Pieprzowy Super Mat",
     "Dąb Klejony Coriander Super Mat",
     "Dąb Klejony Miodowy Super Mat",
+    "Kremowo-biały"
+    
+  ],
+  "ral9001EligibleColors": [
     "Czarno-szary",
-    "Kremowo-biały",
     "Bazaltowo-szary",
     "Bazaltowo szary-gładki",
     "Ciemnoszary",
@@ -40,6 +43,7 @@
     "Bazaltowo-szary FS",
     "Łupkowo-szary FS",
     "Ciemnoszary FS",
-    "Czarny FS"
+    "Czarny FS",
+    "Kremowo-biały"
   ]
 }

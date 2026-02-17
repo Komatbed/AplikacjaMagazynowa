@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warehouse Manager - Konfiguracja rdzeni</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div id="navbar-container"></div>
+
+    <div class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div class="bg-white shadow px-4 py-5 sm:rounded-lg sm:p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-lg font-medium leading-6 text-gray-900">Mapowanie kolorów rdzenia</h3>
+                    <p class="mt-1 text-sm text-gray-500">
+                        Edytuj przypisanie rdzenia do koloru zewnętrznego. Zmiany obowiązują po zapisie.
+                    </p>
+                </div>
+                <button id="reloadButton" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none">
+                    Odśwież
+                </button>
+            </div>
+
+            <div id="alert" class="hidden mb-4 p-3 rounded-md"></div>
+
+            <div class="mb-4 flex space-x-2">
+                <input id="filterInput" type="text" placeholder="Filtruj po nazwie koloru..."
+                    class="flex-1 mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-sm">
+                <button id="addRowButton"
+                    class="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
+                    Dodaj wiersz
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 text-sm">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider w-1/2">Nazwa koloru zewnętrznego</th>
+                            <th class="px-4 py-2 text-left font-medium text-gray-500 uppercase tracking-wider w-1/4">Kolor rdzenia</th>
+                            <th class="px-4 py-2 text-right font-medium text-gray-500 uppercase tracking-wider w-1/4">Akcje</th>
+                        </tr>
+                    </thead>
+                    <tbody id="coreMapTable" class="bg-white divide-y divide-gray-200">
+                        <!-- Wiersze wypełniane przez JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-6 flex justify-end space-x-2">
+                <button id="cancelButton"
+                    class="inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                    Odrzuć zmiany
+                </button>
+                <button id="saveButton"
+                    class="inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                    Zapisz zmiany
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/env-config.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        loadNavbar('core-config');
+    </script>
+    <script src="js/core_config.js"></script>
+</body>
+</html>
+

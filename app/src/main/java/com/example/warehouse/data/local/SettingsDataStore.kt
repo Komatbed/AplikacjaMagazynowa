@@ -22,6 +22,7 @@ class SettingsDataStore(private val context: Context) {
         val PREFER_WASTE_RESERVATION = androidx.datastore.preferences.core.booleanPreferencesKey("prefer_waste_reservation")
         val RESERVED_WASTE_LENGTHS = stringPreferencesKey("reserved_waste_lengths") // Comma separated
         val CUSTOM_MULTI_CORE_COLORS = stringPreferencesKey("custom_multi_core_colors") // Comma separated
+        val RAL9001_ELIGIBLE_COLORS = stringPreferencesKey("ral9001_eligible_colors") // Comma separated
         val PREFERRED_PROFILE_ORDER = stringPreferencesKey("preferred_profile_order") // CSV of profile codes
         val PREFERRED_COLOR_ORDER = stringPreferencesKey("preferred_color_order") // CSV of color codes
         val FAVORITE_PROFILE_CODES = stringPreferencesKey("favorite_profile_codes") // CSV of codes
@@ -58,6 +59,10 @@ class SettingsDataStore(private val context: Context) {
 
     val customMultiCoreColors: Flow<String> = context.dataStore.data.map { preferences ->
         preferences[CUSTOM_MULTI_CORE_COLORS] ?: "Złoty Dąb, Orzech, Winchester XA, Dąb Bagienny, Machoń, Daglezja, Sosna Górska, Oregon III, Dąb Rustykalny, Bazaltowo-szary, Ciemnoszary, Antracytowy Ultramatowy, Dąb Sheffield Jasny, Dąb Sheffield Szary, Kwarcowo-szary, Dąb Klejony Miodowy Super Mat, Dąb Klejony Coriander Super Mat, Dąb Klejony Pieprzowy Super Mat"
+    }
+    
+    val ral9001EligibleColors: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[RAL9001_ELIGIBLE_COLORS] ?: ""
     }
     
     val preferredProfileOrder: Flow<String> = context.dataStore.data.map { preferences ->
@@ -137,6 +142,12 @@ class SettingsDataStore(private val context: Context) {
     suspend fun saveCustomMultiCoreColors(colors: String) {
         context.dataStore.edit { preferences ->
             preferences[CUSTOM_MULTI_CORE_COLORS] = colors
+        }
+    }
+
+    suspend fun saveRal9001EligibleColors(colors: String) {
+        context.dataStore.edit { preferences ->
+            preferences[RAL9001_ELIGIBLE_COLORS] = colors
         }
     }
     

@@ -1,0 +1,1090 @@
+{
+  "pallets": [
+    {
+      "label": "01A",
+      "displayName": "01A",
+      "description": "Stojak A, rząd 01 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "A",
+        "row": 1,
+        "type": "FULL_BARS"
+      },
+      "groups": [
+        {
+          "name": "Przykład: profil 103.341 białe",
+          "profileCodes": ["103341", "103.341"],
+          "colorCodes": ["RAL9016", "915205"]
+        },
+        {
+          "name": "Przykład: profil 103.341 dowolny kolor",
+          "profileCodes": ["103341", "103.341"],
+          "colorCodes": []
+        }
+      ]
+    },
+
+    {
+      "label": "01B",
+      "displayName": "01B",
+      "description": "Stojak B, rząd 01 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "B",
+        "row": 1,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "01C",
+      "displayName": "01C",
+      "description": "Stojak C, rząd 01 - odpady",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "C",
+        "row": 1,
+        "type": "WASTE"
+      },
+      "groups": []
+    },
+
+    {
+      "label": "02A",
+      "displayName": "02A",
+      "description": "Stojak A, rząd 02 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "A",
+        "row": 2,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "02B",
+      "displayName": "02B",
+      "description": "Stojak B, rząd 02 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "B",
+        "row": 2,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "02C",
+      "displayName": "02C",
+      "description": "Stojak C, rząd 02 - odpady",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "C",
+        "row": 2,
+        "type": "WASTE"
+      },
+      "groups": []
+    },
+
+    {
+      "label": "03A",
+      "displayName": "03A",
+      "description": "Stojak A, rząd 03 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "A",
+        "row": 3,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "03B",
+      "displayName": "03B",
+      "description": "Stojak B, rząd 03 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "B",
+        "row": 3,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "03C",
+      "displayName": "03C",
+      "description": "Stojak C, rząd 03 - odpady",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "C",
+        "row": 3,
+        "type": "WASTE"
+      },
+      "groups": []
+    },
+
+    {
+      "label": "04A",
+      "displayName": "04A",
+      "description": "Stojak A, rząd 04 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "A",
+        "row": 4,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "04B",
+      "displayName": "04B",
+      "description": "Stojak B, rząd 04 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "B",
+        "row": 4,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "04C",
+      "displayName": "04C",
+      "description": "Stojak C, rząd 04 - odpady",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "C",
+        "row": 4,
+        "type": "WASTE"
+      },
+      "groups": []
+    },
+
+    {
+      "label": "05A",
+      "displayName": "05A",
+      "description": "Stojak A, rząd 05 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "A",
+        "row": 5,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "05B",
+      "displayName": "05B",
+      "description": "Stojak B, rząd 05 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "B",
+        "row": 5,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "05C",
+      "displayName": "05C",
+      "description": "Stojak C, rząd 05 - odpady",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "C",
+        "row": 5,
+        "type": "WASTE"
+      },
+      "groups": []
+    },
+
+    {
+      "label": "06A",
+      "displayName": "06A",
+      "description": "Stojak A, rząd 06 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "A",
+        "row": 6,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "06B",
+      "displayName": "06B",
+      "description": "Stojak B, rząd 06 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "B",
+        "row": 6,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "06C",
+      "displayName": "06C",
+      "description": "Stojak C, rząd 06 - odpady",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "C",
+        "row": 6,
+        "type": "WASTE"
+      },
+      "groups": []
+    },
+
+    {
+      "label": "07A",
+      "displayName": "07A",
+      "description": "Stojak A, rząd 07 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "A",
+        "row": 7,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "07B",
+      "displayName": "07B",
+      "description": "Stojak B, rząd 07 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "B",
+        "row": 7,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "07C",
+      "displayName": "07C",
+      "description": "Stojak C, rząd 07 - odpady",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "C",
+        "row": 7,
+        "type": "WASTE"
+      },
+      "groups": []
+    },
+
+    {
+      "label": "08A",
+      "displayName": "08A",
+      "description": "Stojak A, rząd 08 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "A",
+        "row": 8,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "08B",
+      "displayName": "08B",
+      "description": "Stojak B, rząd 08 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "B",
+        "row": 8,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "08C",
+      "displayName": "08C",
+      "description": "Stojak C, rząd 08 - odpady",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "C",
+        "row": 8,
+        "type": "WASTE"
+      },
+      "groups": []
+    },
+
+    {
+      "label": "09A",
+      "displayName": "09A",
+      "description": "Stojak A, rząd 09 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "A",
+        "row": 9,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "09B",
+      "displayName": "09B",
+      "description": "Stojak B, rząd 09 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "B",
+        "row": 9,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "09C",
+      "displayName": "09C",
+      "description": "Stojak C, rząd 09 - odpady",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "C",
+        "row": 9,
+        "type": "WASTE"
+      },
+      "groups": []
+    },
+
+    {
+      "label": "10A",
+      "displayName": "10A",
+      "description": "Stojak A, rząd 10 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "A",
+        "row": 10,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "10B",
+      "displayName": "10B",
+      "description": "Stojak B, rząd 10 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "B",
+        "row": 10,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "10C",
+      "displayName": "10C",
+      "description": "Stojak C, rząd 10 - odpady",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "C",
+        "row": 10,
+        "type": "WASTE"
+      },
+      "groups": []
+    },
+
+    {
+      "label": "11A",
+      "displayName": "11A",
+      "description": "Stojak A, rząd 11 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "A",
+        "row": 11,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "11B",
+      "displayName": "11B",
+      "description": "Stojak B, rząd 11 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "B",
+        "row": 11,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "11C",
+      "displayName": "11C",
+      "description": "Stojak C, rząd 11 - odpady",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "C",
+        "row": 11,
+        "type": "WASTE"
+      },
+      "groups": []
+    },
+
+    {
+      "label": "12A",
+      "displayName": "12A",
+      "description": "Stojak A, rząd 12 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "A",
+        "row": 12,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "12B",
+      "displayName": "12B",
+      "description": "Stojak B, rząd 12 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "B",
+        "row": 12,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "12C",
+      "displayName": "12C",
+      "description": "Stojak C, rząd 12 - odpady",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "C",
+        "row": 12,
+        "type": "WASTE"
+      },
+      "groups": []
+    },
+
+    {
+      "label": "13A",
+      "displayName": "13A",
+      "description": "Stojak A, rząd 13 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "A",
+        "row": 13,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "13B",
+      "displayName": "13B",
+      "description": "Stojak B, rząd 13 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "B",
+        "row": 13,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "13C",
+      "displayName": "13C",
+      "description": "Stojak C, rząd 13 - odpady",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "C",
+        "row": 13,
+        "type": "WASTE"
+      },
+      "groups": []
+    },
+
+    {
+      "label": "14A",
+      "displayName": "14A",
+      "description": "Stojak A, rząd 14 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "A",
+        "row": 14,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "14B",
+      "displayName": "14B",
+      "description": "Stojak B, rząd 14 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "B",
+        "row": 14,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "14C",
+      "displayName": "14C",
+      "description": "Stojak C, rząd 14 - odpady",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "C",
+        "row": 14,
+        "type": "WASTE"
+      },
+      "groups": []
+    },
+
+    {
+      "label": "15A",
+      "displayName": "15A",
+      "description": "Stojak A, rząd 15 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "A",
+        "row": 15,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "15B",
+      "displayName": "15B",
+      "description": "Stojak B, rząd 15 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "B",
+        "row": 15,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "15C",
+      "displayName": "15C",
+      "description": "Stojak C, rząd 15 - odpady",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "C",
+        "row": 15,
+        "type": "WASTE"
+      },
+      "groups": []
+    },
+
+    {
+      "label": "16A",
+      "displayName": "16A",
+      "description": "Stojak A, rząd 16 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "A",
+        "row": 16,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "16B",
+      "displayName": "16B",
+      "description": "Stojak B, rząd 16 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "B",
+        "row": 16,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "16C",
+      "displayName": "16C",
+      "description": "Stojak C, rząd 16 - odpady",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "C",
+        "row": 16,
+        "type": "WASTE"
+      },
+      "groups": []
+    },
+
+    {
+      "label": "17A",
+      "displayName": "17A",
+      "description": "Stojak A, rząd 17 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "A",
+        "row": 17,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "17B",
+      "displayName": "17B",
+      "description": "Stojak B, rząd 17 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "B",
+        "row": 17,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "17C",
+      "displayName": "17C",
+      "description": "Stojak C, rząd 17 - odpady",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "C",
+        "row": 17,
+        "type": "WASTE"
+      },
+      "groups": []
+    },
+
+    {
+      "label": "18A",
+      "displayName": "18A",
+      "description": "Stojak A, rząd 18 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "A",
+        "row": 18,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "18B",
+      "displayName": "18B",
+      "description": "Stojak B, rząd 18 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "B",
+        "row": 18,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "18C",
+      "displayName": "18C",
+      "description": "Stojak C, rząd 18 - odpady",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "C",
+        "row": 18,
+        "type": "WASTE"
+      },
+      "groups": []
+    },
+
+    {
+      "label": "19A",
+      "displayName": "19A",
+      "description": "Stojak A, rząd 19 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "A",
+        "row": 19,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "19B",
+      "displayName": "19B",
+      "description": "Stojak B, rząd 19 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "B",
+        "row": 19,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "19C",
+      "displayName": "19C",
+      "description": "Stojak C, rząd 19 - odpady",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "C",
+        "row": 19,
+        "type": "WASTE"
+      },
+      "groups": []
+    },
+
+    {
+      "label": "20A",
+      "displayName": "20A",
+      "description": "Stojak A, rząd 20 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "A",
+        "row": 20,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "20B",
+      "displayName": "20B",
+      "description": "Stojak B, rząd 20 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "B",
+        "row": 20,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "20C",
+      "displayName": "20C",
+      "description": "Stojak C, rząd 20 - odpady",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "C",
+        "row": 20,
+        "type": "WASTE"
+      },
+      "groups": []
+    },
+
+    {
+      "label": "21A",
+      "displayName": "21A",
+      "description": "Stojak A, rząd 21 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "A",
+        "row": 21,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "21B",
+      "displayName": "21B",
+      "description": "Stojak B, rząd 21 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "B",
+        "row": 21,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "21C",
+      "displayName": "21C",
+      "description": "Stojak C, rząd 21 - odpady",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "C",
+        "row": 21,
+        "type": "WASTE"
+      },
+      "groups": []
+    },
+
+    {
+      "label": "22A",
+      "displayName": "22A",
+      "description": "Stojak A, rząd 22 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "A",
+        "row": 22,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "22B",
+      "displayName": "22B",
+      "description": "Stojak B, rząd 22 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "B",
+        "row": 22,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "22C",
+      "displayName": "22C",
+      "description": "Stojak C, rząd 22 - odpady",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "C",
+        "row": 22,
+        "type": "WASTE"
+      },
+      "groups": []
+    },
+
+    {
+      "label": "23A",
+      "displayName": "23A",
+      "description": "Stojak A, rząd 23 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "A",
+        "row": 23,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "23B",
+      "displayName": "23B",
+      "description": "Stojak B, rząd 23 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "B",
+        "row": 23,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "23C",
+      "displayName": "23C",
+      "description": "Stojak C, rząd 23 - odpady",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "C",
+        "row": 23,
+        "type": "WASTE"
+      },
+      "groups": []
+    },
+
+    {
+      "label": "24A",
+      "displayName": "24A",
+      "description": "Stojak A, rząd 24 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "A",
+        "row": 24,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "24B",
+      "displayName": "24B",
+      "description": "Stojak B, rząd 24 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "B",
+        "row": 24,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "24C",
+      "displayName": "24C",
+      "description": "Stojak C, rząd 24 - odpady",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "C",
+        "row": 24,
+        "type": "WASTE"
+      },
+      "groups": []
+    },
+
+    {
+      "label": "25A",
+      "displayName": "25A",
+      "description": "Stojak A, rząd 25 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "A",
+        "row": 25,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "25B",
+      "displayName": "25B",
+      "description": "Stojak B, rząd 25 - pełne sztangi",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "B",
+        "row": 25,
+        "type": "FULL_BARS"
+      },
+      "groups": []
+    },
+    {
+      "label": "25C",
+      "displayName": "25C",
+      "description": "Stojak C, rząd 25 - odpady",
+      "capacity": 70,
+      "overflowThresholdPercent": 90,
+      "fillAnimation": "vertical",
+      "details": {
+        "zone": "C",
+        "row": 25,
+        "type": "WASTE"
+      },
+      "groups": []
+    }
+  ]
+}
