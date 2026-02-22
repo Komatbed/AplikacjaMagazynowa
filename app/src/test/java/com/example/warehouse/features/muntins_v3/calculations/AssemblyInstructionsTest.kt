@@ -71,13 +71,13 @@ class AssemblyInstructionsTest {
         
         // Find vertical instruction
         val vInstr = instructions.find { it.segment.id == "v1" }!!
-        assertTrue(vInstr.positionLabel.contains("300.0 mm od lewej"))
+        assertEquals("Oś: 30.0 mm od lewej krawędzi skrzydła", vInstr.positionLabel)
         assertTrue(vInstr.description.contains("PION"))
 
         // Find horizontal instruction
         val hInstr = instructions.find { it.segment.id == "h1" }!!
-        // Y=600 from top means 400 from bottom
-        assertTrue(hInstr.positionLabel.contains("400.0 mm od dołu"))
+        // Y=600 from top means 400 from bottom (40.0 in current scaling)
+        assertEquals("Oś: 40.0 mm od dolnej krawędzi skrzydła", hInstr.positionLabel)
         assertTrue(hInstr.description.contains("POZIOM"))
     }
 }

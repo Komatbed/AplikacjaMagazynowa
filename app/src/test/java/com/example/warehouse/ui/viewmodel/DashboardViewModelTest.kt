@@ -49,6 +49,24 @@ class DashboardViewModelTest {
     }
 
     @Test
+    fun `stats are default for empty items`() = runTest {
+        every { repository.getItemsFlow() } returns flowOf(emptyList())
+
+        viewModel = DashboardViewModel(application, repository)
+
+        val results = mutableListOf<DashboardStats>()
+        backgroundScope.launch {
+            viewModel.stats.take(1).toList(results)
+        }
+
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val stats = results.last()
+        assertEquals(0, stats.totalItems)
+        assertEquals(500, stats.freePalettes)
+    }
+
+    @Test
     fun `stats updates correctly based on items flow`() = runTest {
         // Given
         val mockItems = listOf(

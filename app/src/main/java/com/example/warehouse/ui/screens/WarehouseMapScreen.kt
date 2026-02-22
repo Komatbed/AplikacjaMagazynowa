@@ -5,8 +5,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -21,6 +19,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.warehouse.data.model.InventoryItemDto
 import com.example.warehouse.data.model.LocationStatusDto
 import com.example.warehouse.ui.theme.SafetyOrange
 import com.example.warehouse.ui.theme.DarkGrey
@@ -36,10 +35,11 @@ fun WarehouseMapScreen(
     val locations by viewModel.locations
     val isLoading by viewModel.isLoading
     val error by viewModel.error
-    
-    // Stan dla wybranej palety (do podglądu)
-    var selectedLocation by remember { mutableStateOf<LocationStatusDto?>(null) }
-    
+    val selectedLocation by viewModel.selectedLocation
+    val locationItems by viewModel.locationItems
+    val selectedPalletDetails by viewModel.selectedPalletDetails
+    val isPalletDetailsLoading by viewModel.isPalletDetailsLoading
+
     // Stan dla edycji pojemności
     var showCapacityDialog by remember { mutableStateOf(false) }
     var newCapacityStr by remember { mutableStateOf("") }
@@ -73,9 +73,6 @@ fun WarehouseMapScreen(
         )
     }
 
-    // Group by Rack Column (1, 2, 3... 25)
-    // We want to display these groups horizontally (01, 02, 03...)
-    // Inside each group, we stack cells vertically (01A, 01B, 01C)
     val rackColumns = remember(locations) {
         locations.groupBy { it.rowNumber } // Group by 1..25
             .toSortedMap()
@@ -140,7 +137,6 @@ fun WarehouseMapScreen(
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     rackColumns.forEach { (colNum, locs) ->
-                        // Vertical Strip for each Rack Column
                         Column(
                             modifier = Modifier
                                 .width(160.dp) // Zwiększona szerokość dla etykiet
@@ -149,7 +145,6 @@ fun WarehouseMapScreen(
                                 .padding(8.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            // Header (01, 02...)
                             Text(
                                 text = "Kolumna $colNum",
                                 style = MaterialTheme.typography.titleLarge,
@@ -160,12 +155,11 @@ fun WarehouseMapScreen(
                                     .padding(bottom = 8.dp)
                             )
                             
-                            // Cells (A, B, C)
                             locs.forEach { loc ->
                                 LocationCell(
                                     location = loc, 
                                     isSelected = selectedLocation?.id == loc.id,
-                                    onClick = { selectedLocation = loc }
+                                    onClick = { viewModel.selectLocation(loc) }
                                 )
                             }
                         }
@@ -207,30 +201,83 @@ fun WarehouseMapScreen(
                             
                             HorizontalDivider(color = Color.Gray)
                             
-                            // Capacity Row
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "Pojemność: ${selectedLocation?.itemCount} / ${selectedLocation?.capacity ?: 50}",
+                                    text = if (selectedPalletDetails != null) {
+                                        "Pojemność: ${selectedPalletDetails?.totalItems} / ${selectedPalletDetails?.capacity} szt."
+                                    } else {
+                                        "Pojemność: ${selectedLocation?.itemCount} / ${selectedLocation?.capacity ?: 50} szt."
+                                    },
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = Color.White
                                 )
                                 IconButton(onClick = { 
-                                    newCapacityStr = (selectedLocation?.capacity ?: 50).toString()
+                                    val baseCapacity = selectedPalletDetails?.capacity ?: selectedLocation?.capacity ?: 50
+                                    newCapacityStr = baseCapacity.toString()
                                     showCapacityDialog = true 
                                 }) {
                                     Icon(androidx.compose.material.icons.Icons.Filled.Edit, "Edytuj", tint = SafetyOrange)
                                 }
                             }
-                            
-                            // Visualisation
-                            val capacity = selectedLocation?.capacity ?: 50
-                            val count = selectedLocation?.itemCount ?: 0
-                            val percent = (count.toFloat() / capacity).coerceIn(0f, 1f)
-                            val coreColors = selectedLocation?.coreColors ?: emptyList()
+                            if (isPalletDetailsLoading) {
+                                Text(
+                                    text = "Ładowanie szczegółów palety...",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color.Gray
+                                )
+                            } else {
+                                selectedPalletDetails?.let { details ->
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "Dostępne: ${details.itemsAvailable}",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = Color.White
+                                        )
+                                        Text(
+                                            text = "Rezerwacje: ${details.itemsReserved}",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = Color.White
+                                        )
+                                        Text(
+                                            text = "Odpady: ${details.itemsWaste}",
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = Color.White
+                                        )
+                                    }
+                                    val metaLine = buildString {
+                                        if (!details.zone.isNullOrBlank()) {
+                                            append("Strefa ${details.zone}")
+                                        }
+                                        if (details.row != null) {
+                                            if (isNotEmpty()) append(" • ")
+                                            append("Rząd ${details.row}")
+                                        }
+                                        if (!details.type.isNullOrBlank()) {
+                                            if (isNotEmpty()) append(" • ")
+                                            append(details.type)
+                                        }
+                                    }
+                                    if (metaLine.isNotBlank()) {
+                                        Text(
+                                            text = metaLine,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = Color.Gray
+                                        )
+                                    }
+                                }
+                            }
+                            val capacity = selectedPalletDetails?.capacity ?: selectedLocation?.capacity ?: 50
+                            val occupancySource = selectedPalletDetails?.occupancyPercentage ?: selectedLocation?.occupancyPercent ?: 0
+                            val percent = (occupancySource / 100f).coerceIn(0f, 1f)
+                            val coreColors = selectedPalletDetails?.coreColors ?: selectedLocation?.coreColors ?: emptyList()
 
                             Box(
                                 modifier = Modifier
@@ -271,13 +318,70 @@ fun WarehouseMapScreen(
                                 )
                             }
 
-                            val codes = selectedLocation?.profileCodes ?: emptyList()
+                            Spacer(modifier = Modifier.height(12.dp))
+
                             Text(
-                                text = if (codes.isNotEmpty()) "Zawartość: ${codes.joinToString(", ")}" else "Zawartość: Pusta",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = Color.White.copy(alpha = 0.8f),
-                                maxLines = 3
+                                text = "Widok palety",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = Color.White
                             )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            val squares = remember(locationItems, capacity) {
+                                buildTetrisSquares(locationItems, capacity)
+                            }
+
+                            TetrisGrid(
+                                squares = squares,
+                                capacity = capacity
+                            )
+
+                            val legendEntries = remember(locationItems) {
+                                buildTetrisLegend(locationItems)
+                            }
+
+                            if (legendEntries.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(8.dp))
+                                legendEntries.forEach { entry ->
+                                    val label = if (entry.colorName.isNotBlank()) {
+                                        "${entry.profileCode} – ${entry.colorName} (${entry.totalQty} szt.)"
+                                    } else {
+                                        "${entry.profileCode} – rdzeń nieznany (${entry.totalQty} szt.)"
+                                    }
+                                    LegendItem(
+                                        color = parseCoreColor(entry.colorName),
+                                        text = label
+                                    )
+                                }
+                            }
+
+                            val contentLines = remember(locationItems) {
+                                buildContentSummary(locationItems)
+                            }
+
+                            if (contentLines.isNotEmpty()) {
+                                Text(
+                                    text = "Zawartość:",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.White.copy(alpha = 0.8f)
+                                )
+                                Spacer(modifier = Modifier.height(4.dp))
+                                contentLines.forEach { line ->
+                                    Text(
+                                        text = line,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = Color.White.copy(alpha = 0.8f),
+                                        maxLines = 1
+                                    )
+                                }
+                            } else {
+                                Text(
+                                    text = "Zawartość: Pusta",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = Color.White.copy(alpha = 0.8f)
+                                )
+                            }
                         }
                     }
                 } else {
@@ -314,17 +418,138 @@ fun LegendItem(color: Color, text: String) {
     }
 }
 
+fun buildTetrisSquares(items: List<InventoryItemDto>, capacity: Int): List<String> {
+    if (capacity <= 0) return emptyList()
+    val result = mutableListOf<String>()
+    val sorted = items.sortedWith(
+        compareBy<InventoryItemDto>({ it.profileCode }, { it.coreColor ?: "" }, { it.lengthMm })
+    )
+    for (item in sorted) {
+        val colorName = item.coreColor ?: ""
+        repeat(item.quantity.coerceAtLeast(0)) {
+            if (result.size < capacity) {
+                result.add(colorName)
+            }
+        }
+        if (result.size >= capacity) break
+    }
+    return result
+}
+
+data class TetrisLegendEntry(
+    val colorName: String,
+    val profileCode: String,
+    val totalQty: Int
+)
+
+fun buildTetrisLegend(items: List<InventoryItemDto>, limit: Int = 5): List<TetrisLegendEntry> {
+    if (items.isEmpty()) return emptyList()
+    val grouped = items.groupBy { Pair(it.profileCode, it.coreColor ?: "") }
+    val entries = grouped.map { (key, group) ->
+        val total = group.sumOf { it.quantity }
+        TetrisLegendEntry(
+            colorName = key.second,
+            profileCode = key.first,
+            totalQty = total
+        )
+    }.sortedByDescending { it.totalQty }
+    return entries.take(limit)
+}
+
+data class ContentEntry(
+    val profileCode: String,
+    val coreColor: String,
+    val lengthMm: Int,
+    val totalQty: Int
+)
+
+fun buildContentSummary(items: List<InventoryItemDto>, limit: Int = 8): List<String> {
+    if (items.isEmpty()) return emptyList()
+    val grouped = items.groupBy { Triple(it.profileCode, it.coreColor ?: "", it.lengthMm) }
+    val entries = grouped.map { (key, group) ->
+        val total = group.sumOf { it.quantity }
+        ContentEntry(
+            profileCode = key.first,
+            coreColor = key.second,
+            lengthMm = key.third,
+            totalQty = total
+        )
+    }.sortedWith(
+        compareByDescending<ContentEntry> { it.totalQty }
+            .thenBy { it.profileCode }
+            .thenByDescending { it.lengthMm }
+    )
+    val lines = mutableListOf<String>()
+    for (entry in entries.take(limit)) {
+        val colorLabel = if (entry.coreColor.isNotBlank()) entry.coreColor else "-"
+        val qtyPart = if (entry.totalQty > 1) " (${entry.totalQty} szt.)" else ""
+        lines.add("${entry.profileCode}, $colorLabel, ${entry.lengthMm} mm$qtyPart")
+    }
+    if (entries.size > limit) {
+        val remaining = entries.size - limit
+        lines.add("+$remaining pozycji")
+    }
+    return lines
+}
+
+@Composable
+fun TetrisGrid(
+    squares: List<String>,
+    capacity: Int
+) {
+    val columns = 10
+    val rows = kotlin.math.max(1, kotlin.math.ceil(capacity / columns.toDouble()).toInt())
+    val totalCells = rows * columns
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height((rows * 16).dp)
+    ) {
+        for (row in 0 until rows) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                for (col in 0 until columns) {
+                    val index = row * columns + col
+                    if (index >= totalCells || index >= capacity) {
+                        Spacer(modifier = Modifier.size(0.dp))
+                    } else {
+                        val filled = index < squares.size
+                        val colorName = if (filled) squares[index] else ""
+                        val color = if (filled) parseCoreColor(colorName) else Color.Transparent
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .padding(1.dp)
+                                .border(0.5.dp, Color.DarkGray, RoundedCornerShape(2.dp))
+                                .background(color, RoundedCornerShape(2.dp))
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
 @Composable
 fun LocationCell(
     location: LocationStatusDto, 
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val isFull = location.itemCount >= 50
+    val occupancy = location.occupancyPercent
+    val threshold = location.overflowThresholdPercent
+    val isFull = occupancy >= 100
+    val isOverflow = occupancy >= threshold && threshold < 100
+
     val baseColor = when {
         location.itemCount == 0 -> Color.Gray.copy(alpha = 0.3f)
         location.isWaste -> SafetyOrange.copy(alpha = 0.8f)
         isFull -> Color.Red.copy(alpha = 0.8f)
+        isOverflow -> Color(0xFFFFC107).copy(alpha = 0.9f)
         else -> Color(0xFF4CAF50).copy(alpha = 0.8f)
     }
     

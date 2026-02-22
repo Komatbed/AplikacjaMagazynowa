@@ -8,6 +8,8 @@ data class LocationStatusDto(
     val isWaste: Boolean,
     val itemCount: Int,
     val capacity: Int,
+    val occupancyPercent: Int,
+    val overflowThresholdPercent: Int,
     val profileCodes: List<String>,
     val coreColors: List<String>
 )

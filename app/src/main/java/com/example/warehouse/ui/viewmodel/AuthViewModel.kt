@@ -461,12 +461,18 @@ import kotlinx.coroutines.launch
                 com.example.warehouse.data.NetworkModule.api.createUser(req)
                 val users = com.example.warehouse.data.NetworkModule.api.getUsers()
                 val mapped = users.map {
+                    val mr = when {
+                        it.role.equals("ADMIN", ignoreCase = true) -> "Administrator"
+                        it.role.equals("KIEROWNIK", ignoreCase = true) -> "Kierownik"
+                        it.role.equals("BRYGADZISTA", ignoreCase = true) -> "Brygadzista"
+                        else -> "Pracownik"
+                    }
                     User(
                         id = it.id,
                         username = it.username,
                         password = "",
-                        role = it.role,
-                        requiresPasswordChange = false
+                        role = mr,
+                        requiresPasswordChange = it.requiresPasswordChange
                     )
                 }
                 _uiState.value = _uiState.value.copy(users = mapped, message = "Dodano użytkownika ${event.username}", error = null)
@@ -482,12 +488,18 @@ import kotlinx.coroutines.launch
                 com.example.warehouse.data.NetworkModule.api.deleteUser(event.userId)
                 val users = com.example.warehouse.data.NetworkModule.api.getUsers()
                 val mapped = users.map {
+                    val mr = when {
+                        it.role.equals("ADMIN", ignoreCase = true) -> "Administrator"
+                        it.role.equals("KIEROWNIK", ignoreCase = true) -> "Kierownik"
+                        it.role.equals("BRYGADZISTA", ignoreCase = true) -> "Brygadzista"
+                        else -> "Pracownik"
+                    }
                     User(
                         id = it.id,
                         username = it.username,
                         password = "",
-                        role = it.role,
-                        requiresPasswordChange = false
+                        role = mr,
+                        requiresPasswordChange = it.requiresPasswordChange
                     )
                 }
                 _uiState.value = _uiState.value.copy(users = mapped, message = "Usunięto użytkownika", error = null)

@@ -3,6 +3,8 @@ package com.example.warehouse
 import com.example.warehouse.controller.QualityController
 import com.example.warehouse.controller.ShortageController
 import com.example.warehouse.dto.InventoryReceiptRequest
+import com.example.warehouse.dto.InventoryTakeRequest
+import com.example.warehouse.dto.InventoryWasteRequest
 import com.example.warehouse.model.*
 import com.example.warehouse.repository.*
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -78,6 +80,118 @@ class FunctionalTests {
         mockMvc.perform(get("/api/v1/inventory/history"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$[0].operationType").value("RECEIPT"))
+    }
+
+    @Test
+    @WithMockUser(username = "warehouse_worker", roles = ["WAREHOUSE"])
+    fun `Inventory Flow - Issue reduces quantity and logs history`() {
+        val location = locationRepository.save(Location(rowNumber = 1, paletteNumber = 2, label = "A-01-02"))
+
+        inventoryItemRepository.save(
+            InventoryItem(
+                location = location,
+                profileCode = "P-456",
+                lengthMm = 6000,
+                quantity = 100,
+                internalColor = "White",
+                externalColor = "Anthracite"
+            )
+        )
+
+        val takeRequest = InventoryTakeRequest(
+            locationLabel = "A-01-02",
+            profileCode = "P-456",
+            lengthMm = 6000,
+            quantity = 40,
+            reason = "PRODUCTION",
+            force = true
+        )
+
+        mockMvc.perform(
+            post("/api/v1/inventory/issue")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(takeRequest))
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.status").value("SUCCESS"))
+            .andExpect(jsonPath("$.newQuantity").value(60))
+
+        val itemsAfter = inventoryItemRepository.findAll()
+        assertEquals(1, itemsAfter.size)
+        assertEquals(60, itemsAfter[0].quantity)
+
+        mockMvc.perform(get("/api/v1/inventory/history"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$[0].operationType").value("ISSUE"))
+    }
+
+    @Test
+    @WithMockUser(username = "warehouse_worker", roles = ["WAREHOUSE"])
+    fun `Inventory Flow - Waste merges similar items`() {
+        val location = locationRepository.save(Location(rowNumber = 1, paletteNumber = 3, label = "A-02-01"))
+
+        inventoryItemRepository.save(
+            InventoryItem(
+                location = location,
+                profileCode = "P-WASTE",
+                lengthMm = 500,
+                quantity = 10,
+                internalColor = "White",
+                externalColor = "Anthracite",
+                coreColor = null
+            )
+        )
+
+        val wasteRequest = InventoryWasteRequest(
+            sourceProfileId = null,
+            lengthMm = 500,
+            locationLabel = "A-02-01",
+            quantity = 5,
+            profileCode = "P-WASTE",
+            internalColor = "White",
+            externalColor = "Anthracite",
+            coreColor = null
+        )
+
+        mockMvc.perform(
+            post("/api/v1/inventory/waste")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(mapper.writeValueAsString(wasteRequest))
+        )
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.quantity").value(15))
+
+        val itemsAfter = inventoryItemRepository.findAll()
+        assertEquals(1, itemsAfter.size)
+        assertEquals(15, itemsAfter[0].quantity)
+    }
+
+    @Test
+    @WithMockUser(username = "warehouse_worker", roles = ["WAREHOUSE"])
+    fun `Inventory Flow - Delete is idempotent`() {
+        val location = locationRepository.save(Location(rowNumber = 1, paletteNumber = 4, label = "A-03-01"))
+
+        val item = inventoryItemRepository.save(
+            InventoryItem(
+                location = location,
+                profileCode = "P-DEL",
+                lengthMm = 6000,
+                quantity = 20,
+                internalColor = "White",
+                externalColor = "Anthracite"
+            )
+        )
+
+        mockMvc.perform(
+            delete("/api/v1/inventory/items/${item.id}")
+        )
+
+        mockMvc.perform(
+            delete("/api/v1/inventory/items/${item.id}")
+        )
+
+        val itemsAfter = inventoryItemRepository.findAll()
+        assertEquals(0, itemsAfter.size)
     }
 
     @Test

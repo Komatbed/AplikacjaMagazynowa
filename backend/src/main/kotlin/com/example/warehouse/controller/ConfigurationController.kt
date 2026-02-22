@@ -2,6 +2,7 @@ package com.example.warehouse.controller
 
 import com.example.warehouse.config.WarehouseConfig
 import com.example.warehouse.config.MuntinsV3Config
+import com.example.warehouse.config.PalletConfig
 import com.example.warehouse.model.ColorDefinition
 import com.example.warehouse.model.ProfileDefinition
 import com.example.warehouse.repository.ColorDefinitionRepository
@@ -24,6 +25,7 @@ class ConfigurationController(
     private val coreColorService: CoreColorService,
     private val warehouseConfig: WarehouseConfig,
     private val muntinsV3Config: MuntinsV3Config,
+    private val palletConfig: PalletConfig,
     private val objectMapper: ObjectMapper
 ) {
 
@@ -36,6 +38,25 @@ class ConfigurationController(
             "reserveWasteLengths" to warehouseConfig.reserveWasteLengths,
             "customMultiCoreColors" to warehouseConfig.customMultiCoreColors,
             "ral9001EligibleColors" to warehouseConfig.ral9001EligibleColors
+        )
+    }
+
+    @GetMapping("/pallets")
+    fun getPalletConfig(): Map<String, Any> {
+        val pallets = palletConfig.getAllPallets()
+        return mapOf(
+            "pallets" to pallets
+        )
+    }
+
+    @GetMapping("/pallet-summary")
+    fun getPalletSummary(): Map<String, Any> {
+        val pallets = palletConfig.getAllPallets()
+        val byType = pallets.groupBy { it.details?.type ?: "UNKNOWN" }
+        val counts = byType.mapValues { it.value.size }
+        return mapOf(
+            "counts" to counts,
+            "types" to counts.keys.sorted()
         )
     }
 

@@ -319,6 +319,41 @@ class AddInventoryViewModel(application: Application) : AndroidViewModel(applica
         }
     }
 
+    fun addToInventoryWithAutoLocation(lengthMm: Int, quantity: Int, onResult: (String?) -> Unit) {
+        val profile = _selectedProfile.value ?: return
+        val external = _selectedExternalColor.value ?: return
+        val internal = when (_internalColorMode.value) {
+            InternalColorMode.WHITE -> "biały"
+            InternalColorMode.RAL_9001 -> "RAL 9001"
+            InternalColorMode.SAME_AS_EXTERNAL -> external.code
+        }
+        val core = _calculatedCoreColor.value
+        viewModelScope.launch {
+            val suggestion = inventoryRepository.suggestLocationForReceipt(
+                profileCode = profile.code,
+                internalColor = internal,
+                externalColor = external.code,
+                coreColor = if (_isCoreSelectionEnabled.value) core else core,
+                lengthMm = lengthMm,
+                isWaste = false
+            )
+            val label = suggestion.getOrNull()
+            if (label != null) {
+                inventoryRepository.addItem(
+                    locationLabel = label,
+                    profileCode = profile.code,
+                    internalColor = internal,
+                    externalColor = external.code,
+                    coreColor = if (_isCoreSelectionEnabled.value) core else core,
+                    lengthMm = lengthMm,
+                    quantity = quantity,
+                    status = "AVAILABLE"
+                )
+            }
+            onResult(label)
+        }
+    }
+
     enum class InternalColorMode {
         WHITE, RAL_9001, SAME_AS_EXTERNAL
     }

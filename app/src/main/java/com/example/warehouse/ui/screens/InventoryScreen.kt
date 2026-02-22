@@ -21,10 +21,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.platform.LocalContext
-import com.example.warehouse.util.HapticFeedbackManager
 import com.example.warehouse.data.model.InventoryItemDto
 import com.example.warehouse.data.model.InventoryTakeRequest
-import com.example.warehouse.ui.theme.SafetyOrange
 import com.example.warehouse.ui.viewmodel.InventoryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -37,6 +35,7 @@ fun InventoryScreen(
     val profiles by viewModel.profiles.collectAsState()
     val colors by viewModel.colors.collectAsState()
     val isLoading by viewModel.isLoading
+    val pendingCount by viewModel.pendingCount
 
     // Filters
     var selectedProfile by remember { mutableStateOf<String?>(null) }
@@ -71,41 +70,44 @@ fun InventoryScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("STAN MAGAZYNOWY", color = SafetyOrange) },
+                title = { Text("STAN MAGAZYNOWY") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Wstecz", tint = Color.White)
                     }
                 },
                 actions = {
+                    if (pendingCount > 0) {
+                        AssistChip(
+                            onClick = {},
+                            label = { Text("Sync: $pendingCount", color = Color.White, fontSize = 12.sp) },
+                            colors = AssistChipDefaults.assistChipColors(
+                                containerColor = Color(0xFFB45309)
+                            )
+                        )
+                    }
                     IconButton(onClick = { viewModel.exportToCsv(context) }) {
                         Icon(Icons.Default.Share, "Eksportuj CSV", tint = Color.White)
                     }
                     IconButton(onClick = { showFilters = !showFilters }) {
-                        Icon(Icons.Default.FilterList, "Filtry", tint = if(showFilters) SafetyOrange else Color.White)
+                        Icon(Icons.Default.FilterList, "Filtry", tint = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = SafetyOrange
+                    containerColor = MaterialTheme.colorScheme.background
                 )
             )
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
-        ) {
+        Column(modifier = Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
             if (showFilters) {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Filtrowanie", style = MaterialTheme.typography.titleMedium, color = SafetyOrange)
+                        Text("Filtrowanie", style = MaterialTheme.typography.titleMedium)
                         
                         // Profile Dropdown (Simplified as TextField for now, ideally ExposedDropdownMenu)
                         DropdownField("Profil", profiles, selectedProfile) { selectedProfile = it }
@@ -128,7 +130,7 @@ fun InventoryScreen(
 
             if (isLoading) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = SafetyOrange)
+                    CircularProgressIndicator()
                 }
             } else {
                 LazyColumn(
@@ -174,7 +176,7 @@ fun InventoryItemRow(
             Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                 Text(text = "Profil: ${item.profileCode}", style = MaterialTheme.typography.titleMedium, color = Color.White)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                     Text(text = "${item.lengthMm} mm", style = MaterialTheme.typography.titleMedium, color = SafetyOrange)
+                     Text(text = "${item.lengthMm} mm", style = MaterialTheme.typography.titleMedium, color = Color.White)
                      IconButton(onClick = onEditLength) {
                          Icon(Icons.Default.Edit, "Edytuj długość", tint = Color.Gray, modifier = Modifier.size(16.dp))
                      }
@@ -187,9 +189,9 @@ fun InventoryItemRow(
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
                 TextButton(onClick = onReserve) {
-                    Icon(Icons.Default.ShoppingCart, null, tint = SafetyOrange)
+                    Icon(Icons.Default.ShoppingCart, null)
                     Spacer(Modifier.width(4.dp))
-                    Text("Rezerwuj", color = SafetyOrange)
+                    Text("Rezerwuj")
                 }
                 TextButton(onClick = onDelete) {
                     Icon(Icons.Default.Delete, null, tint = Color.Red)
@@ -211,7 +213,7 @@ fun EditLengthDialog(
     
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Edycja Długości", color = SafetyOrange) },
+        title = { Text("Edycja Długości") },
         text = {
             Column {
                 Text("Profil: ${item.profileCode}", color = Color.White)
@@ -234,7 +236,7 @@ fun EditLengthDialog(
                     }
                 }
             ) {
-                Text("Zapisz", color = SafetyOrange)
+                Text("Zapisz")
             }
         },
         dismissButton = {
@@ -242,9 +244,7 @@ fun EditLengthDialog(
                 Text("Anuluj", color = Color.Gray)
             }
         },
-        containerColor = MaterialTheme.colorScheme.surface,
-        titleContentColor = SafetyOrange,
-        textContentColor = Color.White
+        containerColor = MaterialTheme.colorScheme.surface
     )
 }
 

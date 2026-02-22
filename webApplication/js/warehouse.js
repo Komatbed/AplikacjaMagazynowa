@@ -24,7 +24,19 @@ function switchTab(tabName) {
 async function handleReceipt(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
-    const data = Object.fromEntries(formData.entries());
+    const raw = Object.fromEntries(formData.entries());
+    const quantity = parseInt(raw.quantity, 10);
+    const lengthMm = parseInt(raw.lengthMm, 10);
+
+    const data = {
+        profileCode: raw.profileCode,
+        locationLabel: raw.locationLabel,
+        lengthMm: isNaN(lengthMm) ? 0 : lengthMm,
+        quantity: isNaN(quantity) ? 0 : quantity,
+        internalColor: raw.internalColor,
+        externalColor: raw.externalColor,
+        coreColor: raw.coreColor || null
+    };
 
     try {
         await api.postReceipt(data);
@@ -46,7 +58,18 @@ async function handleReceipt(e) {
 async function handleIssue(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
-    const data = Object.fromEntries(formData.entries());
+    const raw = Object.fromEntries(formData.entries());
+    const quantity = parseInt(raw.quantity, 10);
+    const lengthMm = parseInt(raw.lengthMm, 10);
+
+    const data = {
+        locationLabel: raw.locationLabel,
+        profileCode: raw.profileCode,
+        lengthMm: isNaN(lengthMm) ? 0 : lengthMm,
+        quantity: isNaN(quantity) ? 0 : quantity,
+        reason: raw.orderId && raw.orderId.trim() !== '' ? `PRODUCTION:${raw.orderId.trim()}` : 'PRODUCTION',
+        force: false
+    };
 
     try {
         await api.postIssue(data);
@@ -91,7 +114,12 @@ async function loadHistory() {
 
 function renderHistoryTable(history) {
     const tableBody = document.getElementById('historyTableBody');
-    tableBody.innerHTML = history.map(item => `
+    const rows = history.map(mapHistoryItem);
+    if (rows.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">Brak danych</td></tr>';
+        return;
+    }
+    tableBody.innerHTML = rows.map(item => `
         <tr>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.date}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium ${item.type === 'PZ' ? 'text-green-600' : 'text-red-600'}">${item.type}</td>
@@ -101,4 +129,32 @@ function renderHistoryTable(history) {
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.doc}</td>
         </tr>
     `).join('');
+}
+
+function mapHistoryItem(item) {
+    const date = item.date || item.timestamp || '';
+    const rawType = item.type || item.operationType || '';
+    let type;
+    if (rawType === 'RECEIPT') {
+        type = 'PZ';
+    } else if (rawType === 'ISSUE') {
+        type = 'WZ';
+    } else if (rawType) {
+        type = rawType;
+    } else {
+        type = '-';
+    }
+
+    const profile = item.profile ||
+        (item.inventoryItem && item.inventoryItem.profileCode) ||
+        '-';
+
+    const qty = item.qty != null
+        ? item.qty
+        : (item.quantityChange != null ? item.quantityChange : 0);
+
+    const user = item.user || item.userId || '-';
+    const doc = item.doc || item.reason || '-';
+
+    return { date, type, profile, qty, user, doc };
 }

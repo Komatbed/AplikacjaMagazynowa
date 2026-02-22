@@ -44,6 +44,24 @@ class ConfigurationIntegrationTest {
         colorRepository.deleteAll()
     }
 
+    @Test
+    fun `should return pallet summary grouped by type`() {
+        val result = mockMvc.perform(get("/api/v1/config/pallet-summary"))
+            .andExpect(status().isOk)
+            .andReturn()
+
+        val json = result.response.contentAsString
+        val node = objectMapper.readTree(json)
+        val counts = node.get("counts")
+
+        val fieldNames = counts.fieldNames().asSequence().toList()
+        assertTrue(fieldNames.isNotEmpty())
+        fieldNames.forEach { type ->
+            val count = counts.get(type).asInt()
+            assertTrue(count > 0)
+        }
+    }
+
     // --- PROFILE TESTS ---
 
     @Test
@@ -106,20 +124,12 @@ class ConfigurationIntegrationTest {
 
     @Test
     fun `should reload defaults from json files`() {
-        // Given: Repository is empty (cleared in setup)
         assertEquals(0, profileRepository.count())
 
-        // When: Call reload-defaults endpoint
         mockMvc.perform(post("/api/v1/config/reload-defaults"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.profiles").exists())
             .andExpect(jsonPath("$.beans").exists())
-
-        // Then: Profiles should be loaded from file/resource
-        val count = profileRepository.count()
-        // We assume there are profiles in the default json.
-        // If this fails, it means the json is empty or missing.
-        // For now, let's just assert the call was successful.
     }
 
     @Test

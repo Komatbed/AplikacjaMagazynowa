@@ -34,12 +34,12 @@ sealed class BackendStatus {
 
 class SettingsViewModel @JvmOverloads constructor(
     application: Application,
-    private val repository: InventoryRepository = InventoryRepository(application)
+    private val repository: InventoryRepository = InventoryRepository(application),
+    private val printerService: PrinterService = PrinterService(),
+    private val configRepository: ConfigRepository = ConfigRepository(application),
+    val bluetoothPrinterManager: BluetoothPrinterManager = BluetoothPrinterManager(application)
 ) : AndroidViewModel(application) {
     private val settingsDataStore = SettingsDataStore(application)
-    private val printerService = PrinterService()
-    private val configRepository = ConfigRepository(application)
-    val bluetoothPrinterManager = BluetoothPrinterManager(application)
 
     private var lastConfigSync: Long = 0L
 

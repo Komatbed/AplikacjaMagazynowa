@@ -39,7 +39,9 @@ class MuntinViewModelV2Test {
     }
 
     private fun createViewModel(): MuntinViewModelV2 {
-        return MuntinViewModelV2(application, configRepository)
+        val vm = MuntinViewModelV2(application, configRepository)
+        testDispatcher.scheduler.advanceUntilIdle()
+        return vm
     }
 
     @Test

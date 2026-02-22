@@ -3,24 +3,19 @@
     {
       "label": "01A",
       "displayName": "01A",
-      "description": "Stojak A, rząd 01 - pełne sztangi",
+      "description": "101350",
       "capacity": 70,
       "overflowThresholdPercent": 90,
       "fillAnimation": "vertical",
       "details": {
         "zone": "A",
         "row": 1,
-        "type": "FULL_BARS"
+        "type": "MIXED"
       },
       "groups": [
         {
-          "name": "Przykład: profil 103.341 białe",
-          "profileCodes": ["103341", "103.341"],
-          "colorCodes": ["RAL9016", "915205"]
-        },
-        {
-          "name": "Przykład: profil 103.341 dowolny kolor",
-          "profileCodes": ["103341", "103.341"],
+          "name": "Softline 76",
+          "profileCodes": ["101350"],
           "colorCodes": []
         }
       ]
@@ -29,7 +24,7 @@
     {
       "label": "01B",
       "displayName": "01B",
-      "description": "Stojak B, rząd 01 - pełne sztangi",
+      "description": "101290 Całe",
       "capacity": 70,
       "overflowThresholdPercent": 90,
       "fillAnimation": "vertical",
@@ -43,21 +38,21 @@
     {
       "label": "01C",
       "displayName": "01C",
-      "description": "Stojak C, rząd 01 - odpady",
+      "description": "103341 nietyp",
       "capacity": 70,
       "overflowThresholdPercent": 90,
       "fillAnimation": "vertical",
       "details": {
         "zone": "C",
         "row": 1,
-        "type": "WASTE"
+        "type": "MIXED"
       },
       "groups": []
     },
 
     {
       "label": "02A",
-      "displayName": "02A",
+      "displayName": "Szwajcaria",
       "description": "Stojak A, rząd 02 - pełne sztangi",
       "capacity": 70,
       "overflowThresholdPercent": 90,
@@ -65,13 +60,13 @@
       "details": {
         "zone": "A",
         "row": 2,
-        "type": "FULL_BARS"
+        "type": "MIXED"
       },
       "groups": []
     },
     {
       "label": "02B",
-      "displayName": "02B",
+      "displayName": "102316",
       "description": "Stojak B, rząd 02 - pełne sztangi",
       "capacity": 70,
       "overflowThresholdPercent": 90,
@@ -85,7 +80,7 @@
     },
     {
       "label": "02C",
-      "displayName": "02C",
+      "displayName": "102311",
       "description": "Stojak C, rząd 02 - odpady",
       "capacity": 70,
       "overflowThresholdPercent": 90,
@@ -93,14 +88,14 @@
       "details": {
         "zone": "C",
         "row": 2,
-        "type": "WASTE"
+        "type": "FULL_BARS"
       },
       "groups": []
     },
 
     {
       "label": "03A",
-      "displayName": "03A",
+      "displayName": "102312",
       "description": "Stojak A, rząd 03 - pełne sztangi",
       "capacity": 70,
       "overflowThresholdPercent": 90,
@@ -108,7 +103,7 @@
       "details": {
         "zone": "A",
         "row": 3,
-        "type": "FULL_BARS"
+        "type": "MIXED"
       },
       "groups": []
     },

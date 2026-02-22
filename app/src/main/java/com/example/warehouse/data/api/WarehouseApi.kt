@@ -18,6 +18,9 @@ import com.example.warehouse.data.model.ColorDefinition
 import com.example.warehouse.data.model.MuntinsV3Config
 import com.example.warehouse.data.model.LoginRequest
 import com.example.warehouse.data.model.AuthResponse
+import com.example.warehouse.data.model.PalletDetailsDto
+import com.example.warehouse.data.model.PalletSuggestionRequest
+import com.example.warehouse.data.model.PalletSuggestionResponse
 import retrofit2.http.DELETE
 import retrofit2.http.Path
 import retrofit2.http.PUT
@@ -87,6 +90,12 @@ interface WarehouseApi {
     @GET("locations/map")
     suspend fun getWarehouseMap(): List<LocationStatusDto>
 
+    @GET("inventory/pallet/{label}")
+    suspend fun getPalletDetails(@Path("label") label: String): PalletDetailsDto
+
+    @POST("inventory/suggest-location")
+    suspend fun suggestLocation(@Body request: PalletSuggestionRequest): PalletSuggestionResponse
+
     @PUT("locations/{id}/capacity")
     suspend fun updateLocationCapacity(@Path("id") id: Int, @Body capacity: Int): Any
 
@@ -96,8 +105,8 @@ interface WarehouseApi {
     @PUT("inventory/items/{id}/length")
     suspend fun updateItemLength(@Path("id") id: String, @Body length: Int): InventoryItemDto
     
-    @POST("inventory/items")
-    suspend fun addItem(@Body item: InventoryItemDto): InventoryItemDto
+    @POST("inventory/receipt")
+    suspend fun registerReceipt(@Body request: com.example.warehouse.data.model.InventoryReceiptRequest): InventoryItemDto
     
     @DELETE("inventory/items/{id}")
     suspend fun deleteItem(@Path("id") id: String): Any

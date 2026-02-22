@@ -67,6 +67,8 @@ android {
     }
 }
 
+// androidComponents block removed due to compatibility issues with current AGP version
+
 dependencies {
 
     implementation("androidx.core:core-ktx:1.12.0")

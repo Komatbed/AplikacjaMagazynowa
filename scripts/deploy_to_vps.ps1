@@ -4,11 +4,22 @@
 $VPS_IP = "51.77.59.105"
 $VPS_USER = "deployer"
 $REMOTE_DIR = "/home/deployer/warehouse"
+$SSH_KEY_PATH = "$HOME\.ssh\id_ed25519"
 
 # Set working directory to project root
 $ScriptPath = $PSScriptRoot
 $ProjectRoot = Resolve-Path "$ScriptPath\.."
 Set-Location $ProjectRoot
+
+$sshKeyArg = ""
+if ($SSH_KEY_PATH -and (Test-Path $SSH_KEY_PATH)) {
+    $sshKeyArg = @("-i", $SSH_KEY_PATH)
+    Write-Host "Używam klucza SSH: $SSH_KEY_PATH"
+} else {
+    $sshKeyArg = @()
+    Write-Host "Brak klucza SSH lub plik nie istnieje ($SSH_KEY_PATH). Połączenie będzie wymagać hasła." -ForegroundColor Yellow
+}
+
 Write-Host "Katalog roboczy ustawiony na: $ProjectRoot"
 
 Write-Host "=== Deployment na VPS ($VPS_IP) ===" -ForegroundColor Cyan
@@ -22,7 +33,7 @@ if (Get-Command ssh-keygen -ErrorAction SilentlyContinue) {
 # 1. Sprawdzenie połączenia SSH
 Write-Host "1. Sprawdzanie połączenia..."
 try {
-    ssh -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=5 $VPS_USER@$VPS_IP "echo Connection OK" | Out-Null
+    ssh @sshKeyArg -o StrictHostKeyChecking=no -o BatchMode=yes -o ConnectTimeout=5 $VPS_USER@$VPS_IP "echo Connection OK" | Out-Null
     Write-Host "   Połączenie SSH aktywne." -ForegroundColor Green
 } catch {
     Write-Host "   Brak klucza SSH lub błąd połączenia. Hasło może być wymagane." -ForegroundColor Yellow
@@ -58,8 +69,23 @@ $RemoteScriptLines = @(
     "",
     "# Restart Docker",
     "echo 'Restarting Docker containers...'",
-    "sudo docker-compose -f docker-compose.prod.yml down --remove-orphans",
-    "sudo docker-compose -f docker-compose.prod.yml up -d --build",
+    "if command -v docker >/dev/null 2>&1; then",
+    "    if docker compose version >/dev/null 2>&1; then",
+    '        COMPOSE_CMD="docker compose"',
+    "    elif command -v docker-compose >/dev/null 2>&1; then",
+    '        COMPOSE_CMD="docker-compose"',
+    "    else",
+    "        echo 'docker compose/docker-compose not found on server' >&2",
+    "        exit 1",
+    "    fi",
+    "elif command -v docker-compose >/dev/null 2>&1; then",
+    '    COMPOSE_CMD="docker-compose"',
+    "else",
+    "    echo 'Docker is not installed on server' >&2",
+    "    exit 1",
+    "fi",
+    "`$COMPOSE_CMD -f docker-compose.prod.yml down --remove-orphans",
+    "`$COMPOSE_CMD -f docker-compose.prod.yml up -d --build",
     "",
     "echo 'Deployment finished! Check:'",
     "echo 'Web: http://$VPS_IP'",
@@ -83,16 +109,16 @@ $RemoteScriptPath = Join-Path $ProjectRoot "remote_deploy.sh"
         if ($LASTEXITCODE -ne 0) { throw "Local tar creation failed" }
 
         # Ensure remote directory exists
-        ssh -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_IP} "mkdir -p ${REMOTE_DIR}"
+        ssh @sshKeyArg -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_IP} "mkdir -p ${REMOTE_DIR}"
 
         # SCP the file
         Write-Host "   Uploading package..."
-        scp -o StrictHostKeyChecking=no $DeployPackage "${VPS_USER}@${VPS_IP}:${REMOTE_DIR}/$DeployPackage"
+        scp @sshKeyArg -o StrictHostKeyChecking=no $DeployPackage "${VPS_USER}@${VPS_IP}:${REMOTE_DIR}/$DeployPackage"
         if ($LASTEXITCODE -ne 0) { throw "SCP failed" }
 
         # Untar on remote
         Write-Host "   Extracting on remote..."
-        ssh -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_IP} "tar -xf ${REMOTE_DIR}/$DeployPackage -C ${REMOTE_DIR} && rm ${REMOTE_DIR}/$DeployPackage"
+        ssh @sshKeyArg -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_IP} "tar -xf ${REMOTE_DIR}/$DeployPackage -C ${REMOTE_DIR} && rm ${REMOTE_DIR}/$DeployPackage"
         if ($LASTEXITCODE -ne 0) { throw "Remote extraction failed" }
 
         Write-Host "   Transfer success." -ForegroundColor Green
@@ -114,7 +140,7 @@ try {
     # Make executable and run
     # Use -f format operator to avoid variable expansion issues inside string
     $RemoteCmd = 'chmod +x {0}/remote_deploy.sh && {0}/remote_deploy.sh && rm {0}/remote_deploy.sh' -f $REMOTE_DIR
-    ssh -t -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_IP} $RemoteCmd
+    ssh @sshKeyArg -t -o StrictHostKeyChecking=no ${VPS_USER}@${VPS_IP} $RemoteCmd
 } catch {
     Write-Error "Error running remote script: $_"
 } finally {

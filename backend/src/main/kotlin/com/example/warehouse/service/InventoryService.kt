@@ -1,5 +1,6 @@
 package com.example.warehouse.service
 
+import com.example.warehouse.config.PalletConfig
 import com.example.warehouse.config.WarehouseConfig
 import com.example.warehouse.dto.AlertLevel
 import com.example.warehouse.dto.InventoryReceiptRequest
@@ -7,6 +8,9 @@ import com.example.warehouse.dto.InventoryTakeRequest
 import com.example.warehouse.dto.InventoryTakeResponse
 import com.example.warehouse.dto.InventoryWasteRequest
 import com.example.warehouse.dto.MapUpdateDTO
+import com.example.warehouse.dto.PalletDetailsDto
+import com.example.warehouse.dto.PalletSuggestionRequest
+import com.example.warehouse.dto.PalletSuggestionResponse
 import com.example.warehouse.controller.NotificationMessage
 import com.example.warehouse.model.InventoryItem
 import com.example.warehouse.model.ItemStatus
@@ -27,7 +31,8 @@ class InventoryService(
     private val locationRepository: LocationRepository,
     private val operationLogRepository: OperationLogRepository,
     private val messagingTemplate: SimpMessagingTemplate,
-    private val warehouseConfig: WarehouseConfig
+    private val warehouseConfig: WarehouseConfig,
+    private val palletConfig: PalletConfig
 ) {
 
     @Transactional
@@ -168,6 +173,97 @@ class InventoryService(
         
         return result
     }
+
+    @Transactional
+    fun deleteItem(id: UUID) {
+        val optional = inventoryItemRepository.findById(id)
+        if (optional.isEmpty) {
+            return
+        }
+        val item = optional.get()
+        val locationLabel = item.location.label
+        val quantity = item.quantity
+
+        inventoryItemRepository.delete(item)
+
+        val authentication = SecurityContextHolder.getContext().authentication
+        val userId = if (authentication != null && authentication.principal is User) {
+            (authentication.principal as User).id
+        } else {
+            null
+        }
+
+        val log = OperationLog(
+            operationType = "DELETE",
+            inventoryItem = null,
+            location = item.location,
+            quantityChange = -quantity,
+            reason = "Usunięcie pozycji z magazynu",
+            userId = userId,
+            timestamp = java.time.LocalDateTime.now()
+        )
+        operationLogRepository.save(log)
+
+        broadcastLocationUpdate(locationLabel)
+    }
+
+    @Transactional(readOnly = true)
+    fun getPalletDetails(label: String): PalletDetailsDto {
+        val items = inventoryItemRepository.findByLocation_Label(label)
+        val totalItems = items.sumOf { it.quantity }
+
+        val palletDefinition = palletConfig.getPallet(label)
+        val configuredCapacity = palletDefinition?.capacity
+
+        val location = locationRepository.findByLabel(label)
+        val locationCapacity = location?.capacity
+
+        val maxCapacity = when {
+            configuredCapacity != null && configuredCapacity > 0 -> configuredCapacity
+            locationCapacity != null && locationCapacity > 0 -> locationCapacity
+            else -> warehouseConfig.defaultPalletCapacity
+        }
+
+        val occupancy = if (maxCapacity > 0) {
+            (totalItems * 100) / maxCapacity
+        } else {
+            0
+        }
+
+        val available = items.filter { it.status == ItemStatus.AVAILABLE }.sumOf { it.quantity }
+        val reserved = items.filter { it.status == ItemStatus.RESERVED }.sumOf { it.quantity }
+        val waste = items.filter { it.status == ItemStatus.WASTE }.sumOf { it.quantity }
+
+        val profiles = items.map { it.profileCode }.distinct().sorted().take(5)
+        val coreColors = items.mapNotNull { it.coreColor }.filter { it.isNotEmpty() }.distinct().sorted().take(5)
+
+        return PalletDetailsDto(
+            label = label,
+            zone = palletDefinition?.details?.zone,
+            row = palletDefinition?.details?.row,
+            type = palletDefinition?.details?.type,
+            capacity = maxCapacity,
+            occupancyPercentage = occupancy,
+            totalItems = totalItems,
+            itemsAvailable = available,
+            itemsReserved = reserved,
+            itemsWaste = waste,
+            profiles = profiles,
+            coreColors = coreColors
+        )
+    }
+
+    @Transactional(readOnly = true)
+    fun suggestPallet(request: PalletSuggestionRequest): PalletSuggestionResponse {
+        val label = palletConfig.suggestPalletLabel(
+            profileCode = request.profileCode,
+            internalColor = request.internalColor,
+            externalColor = request.externalColor,
+            coreColor = request.coreColor,
+            isWaste = request.isWaste
+        )
+        return PalletSuggestionResponse(label = label)
+    }
     
     @Transactional
     fun updateItemLength(id: UUID, newLength: Int): InventoryItem {
@@ -297,28 +393,51 @@ class InventoryService(
     }
 
     private fun broadcastLocationUpdate(locationLabel: String) {
-        // Recalculate stats for the location
         val items = inventoryItemRepository.findByLocation_Label(locationLabel)
         val totalItems = items.sumOf { it.quantity }
-        
-        // Logic for Occupancy & Alert
-        // Assume simplified max capacity = 100 items for every location
-        val maxCapacity = 100
-        val occupancy = (totalItems * 100) / maxCapacity
-        
+
+        val palletDefinition = palletConfig.getPallet(locationLabel)
+        val configuredCapacity = palletDefinition?.capacity
+
+        val location = locationRepository.findByLabel(locationLabel)
+        val locationCapacity = location?.capacity
+
+        val maxCapacity = when {
+            configuredCapacity != null && configuredCapacity > 0 -> configuredCapacity
+            locationCapacity != null && locationCapacity > 0 -> locationCapacity
+            else -> warehouseConfig.defaultPalletCapacity
+        }
+
+        val occupancy = if (maxCapacity > 0) {
+            (totalItems * 100) / maxCapacity
+        } else {
+            0
+        }
+
+        val overflowThreshold = palletDefinition?.overflowThresholdPercent ?: 100
+
         val alert = when {
             occupancy > 100 -> AlertLevel.CRITICAL
-            occupancy > 80 -> AlertLevel.WARNING
+            occupancy >= overflowThreshold && overflowThreshold < 100 -> AlertLevel.WARNING
             else -> AlertLevel.NONE
         }
-        
-        // Find dominant color (Mock logic, as InventoryItem doesn't store color directly yet, 
-        // we'd normally join with ProfileType table. For now, we hash the profile code to get a color)
+
         val dominantColor = if (items.isNotEmpty()) {
-            val mostFrequent = items.maxByOrNull { it.quantity }!!
-            // Mock color based on profile code
-            if (mostFrequent.profileCode.endsWith("W")) "#FFFFFF" else "#8B4513"
-        } else "#888888"
+            val groupedByColor = items
+                .groupBy { it.coreColor?.lowercase().orEmpty() }
+                .filterKeys { it.isNotEmpty() }
+
+            if (groupedByColor.isNotEmpty()) {
+                val (colorCode, colorItems) = groupedByColor.maxByOrNull { entry ->
+                    entry.value.sumOf { it.quantity }
+                }!!
+                "#${colorCode}"
+            } else {
+                "#888888"
+            }
+        } else {
+            "#888888"
+        }
 
         val update = MapUpdateDTO(
             locationLabel = locationLabel,
@@ -327,10 +446,9 @@ class InventoryService(
             dominantColorHex = dominantColor,
             alertLevel = alert
         )
-        
+
         messagingTemplate.convertAndSend("/topic/warehouse/map", update)
 
-        // Send Push Notification for alerts
         if (alert == AlertLevel.CRITICAL || alert == AlertLevel.WARNING) {
             val msg = NotificationMessage(
                 title = "Alert Magazynowy: $locationLabel",
@@ -341,4 +459,3 @@ class InventoryService(
         }
     }
 }
-

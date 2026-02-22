@@ -15,6 +15,7 @@ import com.example.warehouse.data.local.entity.PendingOperationEntity
 import com.example.warehouse.data.model.InventoryItemDto
 import com.example.warehouse.data.model.LocationDto
 import com.example.warehouse.data.repository.InventoryRepository
+import com.example.warehouse.data.repository.ConfigRepository
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -45,6 +46,7 @@ class UserFlowRegressionTest {
     private val auditLogDao = mockk<AuditLogDao>(relaxed = true)
     private val workManager = mockk<WorkManager>(relaxed = true)
     private val api = mockk<WarehouseApi>(relaxed = true)
+    private val configRepository = mockk<ConfigRepository>(relaxed = true)
     
     private lateinit var repository: InventoryRepository
     private lateinit var dashboardViewModel: DashboardViewModel
@@ -71,7 +73,10 @@ class UserFlowRegressionTest {
         
         // Setup ViewModels
         dashboardViewModel = DashboardViewModel(application, repository)
-        inventoryViewModel = InventoryViewModel(application, repository)
+        every { configRepository.getProfilesFlow() } returns flowOf(emptyList())
+        every { configRepository.getColorsFlow() } returns flowOf(emptyList())
+        coEvery { configRepository.refreshConfig() } returns Result.success(Unit)
+        inventoryViewModel = InventoryViewModel(application, repository, configRepository)
     }
 
     @After

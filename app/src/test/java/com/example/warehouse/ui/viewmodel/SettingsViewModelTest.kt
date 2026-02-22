@@ -3,6 +3,9 @@ package com.example.warehouse.ui.viewmodel
 import android.app.Application
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import com.example.warehouse.data.repository.InventoryRepository
+import com.example.warehouse.data.repository.ConfigRepository
+import com.example.warehouse.device.PrinterService
+import com.example.warehouse.device.BluetoothPrinterManager
 import io.mockk.coEvery
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -27,13 +30,18 @@ class SettingsViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private val application = mockk<Application>(relaxed = true)
     private val repository = mockk<InventoryRepository>(relaxed = true)
-    
+    private val printerService = mockk<PrinterService>(relaxed = true)
+    private val configRepository = mockk<ConfigRepository>(relaxed = true)
+    private val bluetoothPrinterManager = mockk<BluetoothPrinterManager>(relaxed = true)
+ 
     private lateinit var viewModel: SettingsViewModel
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        viewModel = SettingsViewModel(application, repository)
+        viewModel = SettingsViewModel(application, repository, printerService, configRepository, bluetoothPrinterManager)
+        coEvery { configRepository.getWarehouseConfig() } returns Result.success(emptyMap())
+        coEvery { configRepository.refreshConfig() } returns Result.success(Unit)
     }
 
     @After

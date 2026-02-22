@@ -49,8 +49,18 @@ class InventoryViewModel @JvmOverloads constructor(
     private val _error = mutableStateOf<String?>(null)
     val error: State<String?> = _error
 
+    private val _pendingCount = mutableStateOf(0)
+    val pendingCount: State<Int> = _pendingCount
+
     init {
         // Observe configs immediately
+        viewModelScope.launch {
+            try {
+                val count = repository.getPendingOperationsCount()
+                _pendingCount.value = count
+            } catch (_: Exception) {
+            }
+        }
     }
 
     fun loadItems(
@@ -99,6 +109,46 @@ class InventoryViewModel @JvmOverloads constructor(
             repository.registerWaste(request)
             onSuccess() // Optimistic UI update
             _isLoading.value = false
+            try {
+                val count = repository.getPendingOperationsCount()
+                _pendingCount.value = count
+            } catch (_: Exception) {
+            }
+        }
+    }
+    
+    fun registerWasteWithAutoLocation(
+        request: InventoryWasteRequest,
+        onResult: (InventoryWasteRequest, String?) -> Unit
+    ) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            val suggestion = try {
+                repository.suggestLocationForReceipt(
+                    profileCode = request.profileCode,
+                    internalColor = request.internalColor,
+                    externalColor = request.externalColor,
+                    coreColor = request.coreColor,
+                    lengthMm = request.lengthMm,
+                    isWaste = true
+                )
+            } catch (e: Exception) {
+                Result.failure<String?>(e)
+            }
+            val label = suggestion.getOrNull()
+            val finalRequest = if (label != null) {
+                request.copy(locationLabel = label)
+            } else {
+                request
+            }
+            repository.registerWaste(finalRequest)
+            _isLoading.value = false
+            onResult(finalRequest, label)
+            try {
+                val count = repository.getPendingOperationsCount()
+                _pendingCount.value = count
+            } catch (_: Exception) {
+            }
         }
     }
     
@@ -108,6 +158,11 @@ class InventoryViewModel @JvmOverloads constructor(
             repository.takeItem(request)
             onSuccess() // Optimistic UI update
             _isLoading.value = false
+            try {
+                val count = repository.getPendingOperationsCount()
+                _pendingCount.value = count
+            } catch (_: Exception) {
+            }
         }
     }
 
@@ -121,6 +176,11 @@ class InventoryViewModel @JvmOverloads constructor(
                 currentItems[index] = item.copy(lengthMm = newLength)
                 _items.value = currentItems
             }
+            try {
+                val count = repository.getPendingOperationsCount()
+                _pendingCount.value = count
+            } catch (_: Exception) {
+            }
         }
     }
     
@@ -131,6 +191,11 @@ class InventoryViewModel @JvmOverloads constructor(
             result.onFailure { _error.value = it.message }
             _isLoading.value = false
             onSuccess()
+            try {
+                val count = repository.getPendingOperationsCount()
+                _pendingCount.value = count
+            } catch (_: Exception) {
+            }
         }
     }
 

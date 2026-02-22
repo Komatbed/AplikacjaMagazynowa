@@ -50,6 +50,12 @@ function renderTable(items) {
     }
 
     items.forEach(item => {
+        const locationLabel = typeof item.location === 'string'
+            ? item.location
+            : (item.location && item.location.label) ? item.location.label : '';
+        const length = typeof item.length === 'number'
+            ? item.length
+            : (typeof item.lengthMm === 'number' ? item.lengthMm : '');
         const row = document.createElement('tr');
         
         const statusColor = item.status === 'AVAILABLE' ? 'green' : (item.status === 'RESERVED' ? 'yellow' : 'red');
@@ -58,8 +64,8 @@ function renderTable(items) {
         row.innerHTML = `
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.profileCode}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.internalColor}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.location}</td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.length}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${locationLabel}</td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${length}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${statusBadge}</td>
         `;
         tableBody.appendChild(row);

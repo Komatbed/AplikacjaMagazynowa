@@ -32,7 +32,8 @@ class DataInitializer(
         locationRepo: LocationRepository,
         inventoryRepo: InventoryItemRepository,
         authService: AuthService,
-        warehouseConfig: WarehouseConfig
+        warehouseConfig: WarehouseConfig,
+        palletConfig: PalletConfig
     ): CommandLineRunner {
         return CommandLineRunner {
             // Seed Admin User
@@ -65,22 +66,61 @@ class DataInitializer(
                 println("Seeded initial colors (${if (loadedColors != null) "from JSON" else "defaults"})")
             }
 
-            // Seed Locations
             if (locationRepo.count() == 0L) {
-                val locations = mutableListOf<Location>()
-                val capacity = warehouseConfig.defaultPalletCapacity
-                // Create A-01-01 to A-05-02
-                for (row in 1..5) {
-                    for (palette in 1..2) {
-                        val label = "A-%02d-%02d".format(row, palette)
-                        locations.add(Location(rowNumber = row, paletteNumber = palette, label = label, isWastePalette = false, capacity = capacity))
+                val pallets = palletConfig.getAllPallets()
+                if (pallets.isNotEmpty()) {
+                    val locations = pallets.map { def ->
+                        val details = def.details
+                        val zone = details?.zone
+                        val row = details?.row ?: 0
+                        val paletteNumber = when (zone) {
+                            "A" -> 1
+                            "B" -> 2
+                            "C" -> 3
+                            else -> 0
+                        }
+                        val isWaste = details?.type == "WASTE"
+                        val capacity = def.capacity ?: warehouseConfig.defaultPalletCapacity
+
+                        Location(
+                            rowNumber = row,
+                            paletteNumber = paletteNumber,
+                            label = def.label,
+                            isWastePalette = isWaste,
+                            capacity = capacity
+                        )
                     }
+                    locationRepo.saveAll(locations)
+                    println("Seeded initial locations from pallet_config (${locations.size})")
+                } else {
+                    val locations = mutableListOf<Location>()
+                    val capacity = warehouseConfig.defaultPalletCapacity
+                    for (row in 1..5) {
+                        for (palette in 1..2) {
+                            val label = "A-%02d-%02d".format(row, palette)
+                            locations.add(
+                                Location(
+                                    rowNumber = row,
+                                    paletteNumber = palette,
+                                    label = label,
+                                    isWastePalette = false,
+                                    capacity = capacity
+                                )
+                            )
+                        }
+                    }
+                    locations.add(
+                        Location(
+                            rowNumber = 99,
+                            paletteNumber = 1,
+                            label = "WASTE-01",
+                            isWastePalette = true,
+                            capacity = capacity
+                        )
+                    )
+                    locationRepo.saveAll(locations)
+                    println("Seeded initial locations (fallback, capacity: $capacity)")
                 }
-                // Add one waste palette
-                locations.add(Location(rowNumber = 99, paletteNumber = 1, label = "WASTE-01", isWastePalette = true, capacity = capacity))
-                
-                locationRepo.saveAll(locations)
-                println("Seeded initial locations (capacity: $capacity)")
             }
 
             // Seed Inventory Items

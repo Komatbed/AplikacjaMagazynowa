@@ -20,6 +20,7 @@ import com.example.warehouse.data.model.InventoryTakeResponse
 import com.example.warehouse.data.model.InventoryWasteRequest
 import com.example.warehouse.data.model.LocationDto
 import com.example.warehouse.data.model.InventoryItemUpdatePayload
+import com.example.warehouse.data.model.PalletDetailsDto
 import com.example.warehouse.work.SyncWorker
 import com.example.warehouse.data.api.WarehouseApi
 import com.example.warehouse.data.local.dao.AuditLogDao
@@ -28,6 +29,7 @@ import com.example.warehouse.data.local.dao.InventoryDao
 import com.example.warehouse.data.local.dao.PendingOperationDao
 import com.example.warehouse.data.local.entity.AuditLogEntity
 import com.google.gson.Gson
+import com.example.warehouse.data.model.PalletSuggestionRequest
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -144,33 +146,29 @@ class InventoryRepository(
                 details = "Dodano: $profileCode $lengthMm mm ($quantity) do $locationLabel"
             ))
             try {
-                val dto = InventoryItemDto(
-                    id = id,
-                    location = mapLocation(locationLabel),
+                val request = com.example.warehouse.data.model.InventoryReceiptRequest(
+                    locationLabel = locationLabel,
                     profileCode = profileCode,
-                    internalColor = internalColor,
-                    externalColor = externalColor,
-                    coreColor = coreColor,
                     lengthMm = lengthMm,
                     quantity = quantity,
-                    status = status
+                    internalColor = internalColor,
+                    externalColor = externalColor,
+                    coreColor = coreColor
                 )
-                api.addItem(dto)
+                api.registerReceipt(request)
             } catch (e: Exception) {
-                val dto = InventoryItemDto(
-                    id = id,
-                    location = mapLocation(locationLabel),
+                val request = com.example.warehouse.data.model.InventoryReceiptRequest(
+                    locationLabel = locationLabel,
                     profileCode = profileCode,
-                    internalColor = internalColor,
-                    externalColor = externalColor,
-                    coreColor = coreColor,
                     lengthMm = lengthMm,
                     quantity = quantity,
-                    status = status
+                    internalColor = internalColor,
+                    externalColor = externalColor,
+                    coreColor = coreColor
                 )
                 val op = PendingOperationEntity(
                     type = OperationType.ADD_ITEM,
-                    payloadJson = gson.toJson(dto)
+                    payloadJson = gson.toJson(request)
                 )
                 pendingDao.insert(op)
                 scheduleSync()
@@ -259,6 +257,40 @@ class InventoryRepository(
         }
     }
 
+    suspend fun getPalletDetails(label: String): Result<PalletDetailsDto> {
+        return try {
+            val details = api.getPalletDetails(label)
+            Result.success(details)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun suggestLocationForReceipt(
+        profileCode: String,
+        internalColor: String,
+        externalColor: String,
+        coreColor: String?,
+        lengthMm: Int,
+        isWaste: Boolean = false
+    ): Result<String?> {
+        return try {
+            val request = PalletSuggestionRequest(
+                profileCode = profileCode,
+                lengthMm = lengthMm,
+                quantity = 1,
+                internalColor = internalColor,
+                externalColor = externalColor,
+                coreColor = coreColor,
+                isWaste = isWaste
+            )
+            val response = api.suggestLocation(request)
+            Result.success(response.label)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun updateLocationCapacity(id: Int, capacity: Int): Result<Unit> {
         return try {
             api.updateLocationCapacity(id, capacity)
@@ -300,6 +332,14 @@ class InventoryRepository(
             }
         } catch (e: Exception) {
             Result.failure(e)
+        }
+    }
+
+    suspend fun getPendingOperationsCount(): Int {
+        return try {
+            pendingDao.getPendingCount()
+        } catch (e: Exception) {
+            0
         }
     }
 

@@ -143,9 +143,9 @@ class MuntinCalculatorV2Test {
         )
         
         assertEquals(3, marks.size)
-        assertEquals("Pion 1: 500.0 mm od lewej", marks[0])
-        assertEquals("Poziom 1: 300.0 mm od góry", marks[1])
-        assertEquals("Poziom 2: 700.0 mm od góry", marks[2])
+        assertEquals("Pion 1 (V1): Oś = 500,0 mm od lewej krawędzi zewn.", marks[0])
+        assertEquals("Poziom 1 (H1): Oś = 300,0 mm od górnej krawędzi zewn.", marks[1])
+        assertEquals("Poziom 2 (H2): Oś = 700,0 mm od górnej krawędzi zewn.", marks[2])
     }
 
     // --- Angular Tests (V2 Angular) ---

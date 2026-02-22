@@ -351,15 +351,28 @@ fun AddInventoryScreen(
                 onClick = {
                     val len = length.toIntOrNull() ?: 0
                     val qty = quantity.toIntOrNull() ?: 1
-                    if (selectedProfile != null && selectedExtColor != null && location.isNotBlank() && len > 0 && qty > 0) {
-                        viewModel.addToInventory(location, len, qty)
-                        Toast.makeText(context, "Dodano do magazynu", Toast.LENGTH_SHORT).show()
-                        length = ""
-                        quantity = "1"
+                    if (selectedProfile != null && selectedExtColor != null && len > 0 && qty > 0) {
+                        if (location.isBlank()) {
+                            viewModel.addToInventoryWithAutoLocation(len, qty) { suggestedLabel ->
+                                if (suggestedLabel != null) {
+                                    location = suggestedLabel
+                                    Toast.makeText(context, "Dodano do magazynu (paleta $suggestedLabel)", Toast.LENGTH_SHORT).show()
+                                    length = ""
+                                    quantity = "1"
+                                } else {
+                                    Toast.makeText(context, "Nie udało się automatycznie przypisać palety. Uzupełnij lokalizację ręcznie.", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        } else {
+                            viewModel.addToInventory(location, len, qty)
+                            Toast.makeText(context, "Dodano do magazynu", Toast.LENGTH_SHORT).show()
+                            length = ""
+                            quantity = "1"
+                        }
                     } else {
                         Toast.makeText(
                             context,
-                            "Uzupełnij profil, kolor, lokalizację, długość i ilość",
+                            "Uzupełnij profil, kolor, długość i ilość",
                             Toast.LENGTH_SHORT
                         ).show()
                     }

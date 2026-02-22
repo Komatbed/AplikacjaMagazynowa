@@ -299,21 +299,23 @@ class MainActivity : ComponentActivity() {
                             ocrResult = result,
                             onDismiss = { ocrResult = null },
                             onConfirm = { request ->
-                                inventoryViewModel.registerWaste(request) {
-                                    Toast.makeText(context, "Zapisano w bazie", Toast.LENGTH_SHORT).show()
+                                inventoryViewModel.registerWasteWithAutoLocation(request) { finalRequest, suggestedLabel ->
+                                    if (suggestedLabel != null) {
+                                        Toast.makeText(context, "Odłóż profil na paletę - ${suggestedLabel}", Toast.LENGTH_LONG).show()
+                                    } else {
+                                        Toast.makeText(context, "Zapisano odpad (bez automatycznej palety)", Toast.LENGTH_SHORT).show()
+                                    }
                                     
-                                    // Print Label
                                     scope.launch {
                                         try {
                                             val zpl = ZplPrinter.generateZpl(
-                                                profileCode = request.profileCode,
-                                                lengthMm = request.lengthMm,
-                                                colorName = "${request.internalColor}/${request.externalColor}",
+                                                profileCode = finalRequest.profileCode,
+                                                lengthMm = finalRequest.lengthMm,
+                                                colorName = "${finalRequest.internalColor}/${finalRequest.externalColor}",
                                                 wasteId = "WASTE-${System.currentTimeMillis()}",
-                                                location = request.locationLabel
+                                                location = finalRequest.locationLabel
                                             )
                                             
-                                            // Use configured IP
                                             val ip = settingsViewModel.printerIp.value
                                             val port = settingsViewModel.printerPort.value
                                             

@@ -9,7 +9,7 @@ param(
 Write-Host "=== Sprawdzanie stanu backendu na VPS ===" -ForegroundColor Cyan
 Write-Host "Host: $HostName" 
 Write-Host "HTTP:  http://$HostName$HealthPath"
-Write-Host "HTTPS: https://$HostName$HealthPath"
+Write-Host "HTTPS: https://$HostName$HealthPath (opcjonalne, jeśli SSL jest skonfigurowany)"
 Write-Host ""
 
 function Test-TcpPort {
@@ -71,14 +71,23 @@ function Invoke-HealthCheck {
 
         if ($code -eq 200) {
             try {
-                $json = $response.Content | ConvertFrom-Json
-                if ($json.status -eq "UP") {
-                    Write-Host " - status: UP" -ForegroundColor Green
+                $content = [string]$response.Content
+                $json = $content | ConvertFrom-Json
+                if ($null -ne $json.status -and $json.status -ne "") {
+                    if ($json.status -eq "UP") {
+                        Write-Host " - status: UP" -ForegroundColor Green
+                    } else {
+                        Write-Host " - status: $($json.status)" -ForegroundColor Yellow
+                    }
                 } else {
-                    Write-Host " - status: $($json.status)" -ForegroundColor Yellow
+                    $preview = $content.Substring(0, [Math]::Min($content.Length, 200))
+                    Write-Host " - treść (200 znaków): $preview" -ForegroundColor DarkGray
                 }
             } catch {
+                $content = [string]$response.Content
+                $preview = $content.Substring(0, [Math]::Min($content.Length, 200))
                 Write-Host " - Nie udało się sparsować JSON (ale odpowiedź 200)." -ForegroundColor Yellow
+                Write-Host " - treść (200 znaków): $preview" -ForegroundColor DarkGray
             }
         } else {
             Write-Host " - Odpowiedź inna niż 200." -ForegroundColor Yellow
@@ -88,11 +97,46 @@ function Invoke-HealthCheck {
     }
 }
 
-# Health przez HTTP (może zwrócić 301 przy wymuszonym HTTPS)
-$healthHttp = "http://$HostName$HealthPath"
-Invoke-HealthCheck -Url $healthHttp -Label "HTTP (oczekiwany 301 -> HTTPS)"
+function Invoke-ApiCheck {
+    param(
+        [string]$Url,
+        [string]$Label
+    )
 
-# Health przez HTTPS (docelowy wariant produkcyjny, pomijamy self-signed cert)
+    Write-Host (" - [{0}] {1}" -f $Label, $Url)
+    try {
+        $resp = Invoke-WebRequest -Uri $Url -UseBasicParsing -TimeoutSec 5
+        $code = [int]$resp.StatusCode
+        Write-Host ("   -> HTTP {0}" -f $code) -ForegroundColor Green
+    } catch {
+        $ex = $_.Exception
+        $resp = $ex.Response
+        if ($resp -ne $null) {
+            try {
+                $code = [int]$resp.StatusCode
+                Write-Host ("   -> HTTP {0}" -f $code) -ForegroundColor Yellow
+                $stream = $resp.GetResponseStream()
+                if ($stream) {
+                    $reader = New-Object System.IO.StreamReader($stream)
+                    $body = $reader.ReadToEnd()
+                    if ($body.Length -gt 0) {
+                        $preview = $body.Substring(0, [Math]::Min($body.Length, 300))
+                        Write-Host "   -> Body (300 znaków):" -ForegroundColor DarkGray
+                        Write-Host "      $preview" -ForegroundColor DarkGray
+                    }
+                }
+            } catch {
+                Write-Host ("   -> Błąd: {0}" -f $ex.Message) -ForegroundColor Yellow
+            }
+        } else {
+            Write-Host ("   -> Błąd: {0}" -f $ex.Message) -ForegroundColor Yellow
+        }
+    }
+}
+
+$healthHttp = "http://$HostName$HealthPath"
+Invoke-HealthCheck -Url $healthHttp -Label "HTTP"
+
 try {
     $healthHttps = "https://$HostName$HealthPath"
     Write-Host ""
@@ -115,19 +159,14 @@ try {
         Write-Host " - Odpowiedź inna niż 200." -ForegroundColor Yellow
     }
 } catch {
-    Write-Host " - BŁĄD HTTPS: $($_.Exception.Message)" -ForegroundColor Yellow
+    Write-Host " - HTTPS niedostępny (prawdopodobnie brak SSL na 443)." -ForegroundColor Yellow
 }
 
-# Prosty test API (opcjonalnie)
 Write-Host ""
-Write-Host "4) Test przykładowego endpointu API..." 
-$apiUrl = "https://$HostName$ApiBasePath/inventory/config"
-try {
-    $resp = Invoke-WebRequest -Uri $apiUrl -UseBasicParsing -TimeoutSec 5 -SkipCertificateCheck
-    Write-Host " - API HTTP status: $([int]$resp.StatusCode)" -ForegroundColor Green
-} catch {
-    Write-Host " - BŁĄD API: $($_.Exception.Message)" -ForegroundColor Yellow
-}
+Write-Host "4) Test przykładowych endpointów API..." 
+$baseHttp = "http://$HostName$ApiBasePath"
+Invoke-ApiCheck -Url "$baseHttp/config" -Label "CONFIG"
+Invoke-ApiCheck -Url "$baseHttp/inventory/items?size=1" -Label "INVENTORY"
 
 Write-Host ""
 Write-Host "=== Koniec sprawdzania ==="

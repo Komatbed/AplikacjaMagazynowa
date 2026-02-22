@@ -132,7 +132,6 @@ fun SettingsScreen(
         }
     }
     
-    // Hidden Admin Login Dialog
     if (showAdminLoginDialog) {
         AlertDialog(
             onDismissRequest = { showAdminLoginDialog = false },
@@ -154,13 +153,15 @@ fun SettingsScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        if (adminPassword == "admin") {
-                            authViewModel.onEvent(AuthEvent.AdminLogin)
-                            showAdminLoginDialog = false
-                            adminError = null
-                        } else {
-                            adminError = "Nieprawidłowe hasło"
-                        }
+                        authViewModel.onEvent(
+                            AuthEvent.Login(
+                                username = "admin",
+                                password = adminPassword,
+                                rememberMe = false
+                            )
+                        )
+                        showAdminLoginDialog = false
+                        adminError = null
                     }
                 ) {
                     Text("Zaloguj")
@@ -928,7 +929,7 @@ fun UserManagementContent(
                             newUsername = ""
                             newPassword = ""
                             newFullName = ""
-                            newRole = "Operator"
+                            newRole = "Pracownik"
                         }
                     }
                 ) {

@@ -76,8 +76,8 @@ class SyncWorker(
                         api.addColor(payload)
                     }
                     OperationType.ADD_ITEM -> {
-                        val payload = gson.fromJson(op.payloadJson, com.example.warehouse.data.model.InventoryItemDto::class.java)
-                        api.addItem(payload)
+                        val payload = gson.fromJson(op.payloadJson, com.example.warehouse.data.model.InventoryReceiptRequest::class.java)
+                        api.registerReceipt(payload)
                     }
                     OperationType.DELETE_ITEM -> {
                         val payload = gson.fromJson(op.payloadJson, com.example.warehouse.data.model.InventoryItemDeletePayload::class.java)
