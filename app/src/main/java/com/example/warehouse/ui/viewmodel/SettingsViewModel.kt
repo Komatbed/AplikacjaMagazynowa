@@ -284,9 +284,10 @@ class SettingsViewModel @JvmOverloads constructor(
         val currentApiUrl = apiUrl.value
         val webUrl = try {
             val urlObj = URL(currentApiUrl)
-            "http://${urlObj.host}"
+            val portPart = if (urlObj.port != -1) ":${urlObj.port}" else ""
+            "${urlObj.protocol}://${urlObj.host}$portPart/health"
         } catch (e: Exception) {
-            "http://51.77.59.105"
+            "http://51.77.59.105:8000/health"
         }
 
         viewModelScope.launch {

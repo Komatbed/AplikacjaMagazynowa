@@ -1,15 +1,15 @@
 package com.example.warehouse.data.model
 
 data class InventoryItemDto(
-    val id: String,
-    val location: LocationDto,
-    val profileCode: String,
-    val internalColor: String = "UNKNOWN",
-    val externalColor: String = "UNKNOWN",
+    val id: String?,
+    val location: LocationDto?,
+    val profileCode: String?,
+    val internalColor: String? = "UNKNOWN",
+    val externalColor: String? = "UNKNOWN",
     val coreColor: String? = null,
-    val lengthMm: Int,
-    val quantity: Int,
-    val status: String,
+    val lengthMm: Int?,
+    val quantity: Int?,
+    val status: String?,
     val reservedBy: String? = null,
     val reservationDate: String? = null
 )
@@ -25,22 +25,22 @@ data class InventoryReceiptRequest(
 )
 
 data class LocationDto(
-    val id: Long,
-    val rowNumber: Int,
-    val paletteNumber: Int,
-    val label: String
+    val id: Long? = 0,
+    val rowNumber: Int? = 0,
+    val paletteNumber: Int? = 0,
+    val label: String?
 )
 
 data class LocationStatusDto(
-    val id: Int,
+    val id: Int?,
     val label: String?,
-    val rowNumber: Int,
-    val paletteNumber: Int,
-    val isWaste: Boolean,
-    val itemCount: Int,
-    val capacity: Int = 50,
-    val occupancyPercent: Int = 0,
-    val overflowThresholdPercent: Int = 100,
+    val rowNumber: Int?,
+    val paletteNumber: Int?,
+    val isWaste: Boolean?,
+    val itemCount: Int?,
+    val capacity: Int? = 50,
+    val occupancyPercent: Int? = 0,
+    val overflowThresholdPercent: Int? = 100,
     val profileCodes: List<String>?,
     val coreColors: List<String>? = null
 )
@@ -52,18 +52,18 @@ data class IssueReportRequest(
 )
 
 data class PalletDetailsDto(
-    val label: String,
+    val label: String?,
     val zone: String?,
     val row: Int?,
     val type: String?,
-    val capacity: Int,
-    val occupancyPercentage: Int,
-    val totalItems: Int,
-    val itemsAvailable: Int,
-    val itemsReserved: Int,
-    val itemsWaste: Int,
-    val profiles: List<String>,
-    val coreColors: List<String>
+    val capacity: Int?,
+    val occupancyPercentage: Int?,
+    val totalItems: Int?,
+    val itemsAvailable: Int?,
+    val itemsReserved: Int?,
+    val itemsWaste: Int?,
+    val profiles: List<String>?,
+    val coreColors: List<String>?
 )
 
 data class PalletSuggestionRequest(
@@ -86,18 +86,18 @@ data class PalletSuggestionResponse(
 // OptimizationRequest and WasteRecommendationResponse are in OptimizationModels.kt
 
 data class UserDto(
-    val id: String,
-    val username: String,
+    val id: String?,
+    val username: String?,
     val fullName: String?,
-    val role: String,
-    val requiresPasswordChange: Boolean
+    val role: String?,
+    val requiresPasswordChange: Boolean? = false
 )
 
 data class UserPreferencesDto(
-    val favoriteProfileCodes: String,
-    val favoriteColorCodes: String,
-    val preferredProfileOrder: String,
-    val preferredColorOrder: String
+    val favoriteProfileCodes: String? = "",
+    val favoriteColorCodes: String? = "",
+    val preferredProfileOrder: String? = "",
+    val preferredColorOrder: String? = ""
 )
 
 data class UserCreateRequest(

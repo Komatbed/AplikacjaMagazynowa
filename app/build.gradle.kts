@@ -118,6 +118,8 @@ dependencies {
 
     // ML Kit Text Recognition
     implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.0")
+    // ML Kit Barcode Scanning
+    implementation("com.google.android.gms:play-services-mlkit-barcode-scanning:18.3.0")
 
     // Security (SQLCipher & AndroidX Security)
     implementation("net.zetetic:android-database-sqlcipher:4.5.4")

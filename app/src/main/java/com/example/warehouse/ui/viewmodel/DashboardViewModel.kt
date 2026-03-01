@@ -50,16 +50,16 @@ class DashboardViewModel @JvmOverloads constructor(
         )
 
     private fun calculateStats(items: List<InventoryItemDto>): DashboardStats {
-        val totalItems = items.sumOf { it.quantity }
-        val wasteCount = items.filter { it.status == "WASTE" || it.lengthMm < 6000 }.sumOf { it.quantity }
-        val fullCount = items.filter { it.status == "FULL" || it.lengthMm >= 6000 }.sumOf { it.quantity }
+        val totalItems = items.sumOf { it.quantity ?: 0 }
+        val wasteCount = items.filter { (it.status == "WASTE") || ((it.lengthMm ?: 0) < 6000) }.sumOf { it.quantity ?: 0 }
+        val fullCount = items.filter { (it.status == "FULL") || ((it.lengthMm ?: 0) >= 6000) }.sumOf { it.quantity ?: 0 }
         val uniqueProfiles = items.map { it.profileCode }.distinct().count()
         
-        val reservationCount = items.filter { it.status == "RESERVED" || it.status == "IN_PROGRESS" }.sumOf { it.quantity }
+        val reservationCount = items.filter { it.status == "RESERVED" || it.status == "IN_PROGRESS" }.sumOf { it.quantity ?: 0 }
             
             // Mocking warehouse capacity data since LocationRepository is separate
             // Assuming total capacity ~500 palettes
-            val occupiedPalettes = items.map { it.location.paletteNumber }.distinct().count()
+            val occupiedPalettes = items.mapNotNull { it.location?.paletteNumber }.distinct().count()
             val totalPalettes = 500
         val freePalettes = totalPalettes - occupiedPalettes
         val occupancyPercent = (occupiedPalettes.toDouble() / totalPalettes.toDouble()) * 100.0
@@ -70,7 +70,7 @@ class DashboardViewModel @JvmOverloads constructor(
         return DashboardStats(
             totalItems = totalItems,
             totalItemsChange = 5.2, // Mocked change
-            totalLength = items.sumOf { it.lengthMm * it.quantity },
+            totalLength = items.sumOf { (it.lengthMm ?: 0) * (it.quantity ?: 0) },
             wasteCount = wasteCount,
             fullCount = fullCount,
             uniqueProfiles = uniqueProfiles,

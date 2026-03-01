@@ -83,12 +83,19 @@ fun ManualTakeScreen(
                 Button(
                     onClick = {
                         val qty = takeQuantity.toIntOrNull() ?: 0
-                        if (qty > 0 && qty <= (selectedItem?.quantity ?: 0)) {
+                        val currentItem = selectedItem
+                        if (currentItem != null && 
+                            qty > 0 && 
+                            qty <= (currentItem.quantity ?: 0) &&
+                            currentItem.profileCode != null &&
+                            currentItem.lengthMm != null &&
+                            currentItem.location?.label != null
+                        ) {
                             viewModel.takeItem(
                                 InventoryTakeRequest(
-                                    profileCode = selectedItem!!.profileCode,
-                                    lengthMm = selectedItem!!.lengthMm,
-                                    locationLabel = selectedItem!!.location.label,
+                                    profileCode = currentItem.profileCode,
+                                    lengthMm = currentItem.lengthMm,
+                                    locationLabel = currentItem.location.label,
                                     quantity = qty,
                                     reason = "MANUAL_TAKE"
                                 )
@@ -105,7 +112,7 @@ fun ManualTakeScreen(
                                 )
                             }
                         } else {
-                            onShowMessage("Nieprawidłowa ilość")
+                            onShowMessage("Nieprawidłowa ilość lub niepełne dane elementu")
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = SafetyOrange)
@@ -258,7 +265,7 @@ fun InventoryItemRow(item: InventoryItemDto, onClick: () -> Unit) {
         ) {
             Column {
                 Text(
-                    text = "Profil: ${item.profileCode}",
+                    text = "Profil: ${item.profileCode ?: "BRAK"}",
                     style = MaterialTheme.typography.titleMedium,
                     color = Color.White
                 )
@@ -268,7 +275,7 @@ fun InventoryItemRow(item: InventoryItemDto, onClick: () -> Unit) {
                     color = Color.LightGray
                 )
                 Text(
-                    text = "Długość: ${item.lengthMm} mm",
+                    text = "Długość: ${item.lengthMm ?: 0} mm",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.Gray
                 )
@@ -276,13 +283,13 @@ fun InventoryItemRow(item: InventoryItemDto, onClick: () -> Unit) {
             
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = item.location.label,
+                    text = item.location?.label ?: "BRAK",
                     style = MaterialTheme.typography.headlineSmall,
                     color = SafetyOrange,
                     fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                 )
                 Text(
-                    text = "Ilość: ${item.quantity}",
+                    text = "Ilość: ${item.quantity ?: 0}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White
                 )

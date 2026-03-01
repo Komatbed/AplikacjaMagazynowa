@@ -253,11 +253,11 @@ fun OptimizationScreen(
                     ) {
                         Column(modifier = Modifier.padding(8.dp).fillMaxSize()) {
                             Text(
-                                "Wynik (Wydajność: ${String.format("%.1f", res.efficiency)}%)",
+                                "Wynik (Wydajność: ${String.format("%.1f", res.efficiency ?: 0.0)}%)",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = Color.Green
                             )
-                            Text("Odpad całkowity: ${res.totalWasteMm} mm", style = MaterialTheme.typography.bodySmall)
+                            Text("Odpad całkowity: ${res.totalWasteMm ?: 0} mm", style = MaterialTheme.typography.bodySmall)
                             
                             HorizontalDivider(Modifier.padding(vertical = 4.dp))
                             
@@ -267,21 +267,23 @@ fun OptimizationScreen(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 modifier = Modifier.weight(1f)
                             ) {
-                                items(res.steps) { step ->
+                                items(res.steps ?: emptyList()) { step ->
                                     Card(
                                         colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.5f))
                                     ) {
                                         Column(modifier = Modifier.padding(8.dp)) {
-                                            val source = if(step.isNewBar) "NOWA" else "ODPAD"
-                                            Text("$source (${step.sourceLengthMm})", 
+                                            val isNew = step.isNewBar == true
+                                            val source = if(isNew) "NOWA" else "ODPAD"
+                                            Text("$source (${step.sourceLengthMm ?: 0})", 
                                                 style = MaterialTheme.typography.labelMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, color = SafetyOrange)
-                                            if (!step.isNewBar) {
-                                                Text("ID: ${step.sourceItemId?.take(4)}...", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                                            if (!isNew) {
+                                                Text("ID: ${step.sourceItemId?.take(4) ?: "-"}...", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
                                             }
                                             Spacer(Modifier.height(4.dp))
-                                            Text("Cięcia: ${step.cuts.joinToString(", ")}", style = MaterialTheme.typography.bodySmall, color = Color.White)
+                                            Text("Cięcia: ${(step.cuts ?: emptyList()).joinToString(", ")}", style = MaterialTheme.typography.bodySmall, color = Color.White)
                                             Spacer(Modifier.height(4.dp))
-                                            Text("Odpad: ${step.remainingWasteMm} mm", style = MaterialTheme.typography.labelSmall, color = if(step.remainingWasteMm > 1000) Color.Green else Color.Yellow)
+                                            val remaining = step.remainingWasteMm ?: 0
+                                            Text("Odpad: $remaining mm", style = MaterialTheme.typography.labelSmall, color = if(remaining > 1000) Color.Green else Color.Yellow)
                                             Text("@ ${step.locationLabel ?: "-"}", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
                                         }
                                     }

@@ -132,29 +132,29 @@ class MuntinV3ViewModel(
                         cfg.profiles.forEach {
                             repository.saveProfile(
                                 ProfileEntity(
-                                    name = it.name,
-                                    glassOffsetX = it.glassOffsetX,
-                                    glassOffsetY = it.glassOffsetY,
-                                    outerConstructionAngleDeg = it.outerConstructionAngleDeg
+                                    name = it.name ?: "",
+                                    glassOffsetX = it.glassOffsetX ?: 0.0,
+                                    glassOffsetY = it.glassOffsetY ?: 0.0,
+                                    outerConstructionAngleDeg = it.outerConstructionAngleDeg ?: 90.0
                                 )
                             )
                         }
                         cfg.beads.forEach {
                             repository.saveGlassBead(
                                 GlassBeadEntity(
-                                    name = it.name,
-                                    angleFace = it.angleFace,
-                                    effectiveGlassOffset = it.effectiveGlassOffset
+                                    name = it.name ?: "",
+                                    angleFace = it.angleFace ?: 0.0,
+                                    effectiveGlassOffset = it.effectiveGlassOffset ?: 0.0
                                 )
                             )
                         }
                         cfg.muntins.forEach {
                             repository.saveMuntin(
                                 MuntinEntity(
-                                    name = it.name,
-                                    width = it.width,
-                                    thickness = it.thickness,
-                                    wallAngleDeg = it.wallAngleDeg
+                                    name = it.name ?: "",
+                                    width = it.width ?: 0.0,
+                                    thickness = it.thickness ?: 0.0,
+                                    wallAngleDeg = it.wallAngleDeg ?: 0.0
                                 )
                             )
                         }

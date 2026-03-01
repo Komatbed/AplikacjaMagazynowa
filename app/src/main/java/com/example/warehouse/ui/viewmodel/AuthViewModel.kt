@@ -138,25 +138,25 @@ import kotlinx.coroutines.launch
                 }
                 
                 val mappedRole = when {
-                    response.role.equals("ADMIN", ignoreCase = true) -> "Administrator"
-                    response.role.equals("KIEROWNIK", ignoreCase = true) -> "Kierownik"
-                    response.role.equals("BRYGADZISTA", ignoreCase = true) -> "Brygadzista"
+                    response.role?.equals("ADMIN", ignoreCase = true) == true -> "Administrator"
+                    response.role?.equals("KIEROWNIK", ignoreCase = true) == true -> "Kierownik"
+                    response.role?.equals("BRYGADZISTA", ignoreCase = true) == true -> "Brygadzista"
                     else -> "Pracownik"
                 }
                 val user = User(
-                    id = response.username,
-                    username = response.username,
+                    id = response.username ?: "",
+                    username = response.username ?: "",
                     password = event.password,
                     role = mappedRole,
-                    requiresPasswordChange = response.requiresPasswordChange
+                    requiresPasswordChange = response.requiresPasswordChange ?: false
                 )
                 
                 try {
                     val prefs = com.example.warehouse.data.NetworkModule.api.getUserPreferences()
-                    settingsDataStore.saveFavoriteProfiles(prefs.favoriteProfileCodes)
-                    settingsDataStore.saveFavoriteColors(prefs.favoriteColorCodes)
-                    settingsDataStore.savePreferredProfileOrder(prefs.preferredProfileOrder)
-                    settingsDataStore.savePreferredColorOrder(prefs.preferredColorOrder)
+                    settingsDataStore.saveFavoriteProfiles(prefs.favoriteProfileCodes ?: "")
+                    settingsDataStore.saveFavoriteColors(prefs.favoriteColorCodes ?: "")
+                    settingsDataStore.savePreferredProfileOrder(prefs.preferredProfileOrder ?: "")
+                    settingsDataStore.savePreferredColorOrder(prefs.preferredColorOrder ?: "")
                 } catch (_: Exception) { }
                 
                 handleSuccessfulLogin(user)
@@ -310,11 +310,11 @@ import kotlinx.coroutines.launch
                         else -> "Pracownik"
                     }
                 User(
-                    id = it.id,
-                    username = it.username,
+                    id = it.id ?: "",
+                    username = it.username ?: "",
                     password = "",
                     role = mr,
-                    requiresPasswordChange = it.requiresPasswordChange
+                    requiresPasswordChange = it.requiresPasswordChange ?: false
                 )
             }
             _uiState.value = _uiState.value.copy(users = mapped, message = null, error = null)
@@ -403,11 +403,11 @@ import kotlinx.coroutines.launch
                         else -> "Pracownik"
                     }
                     User(
-                        id = it.id,
-                        username = it.username,
+                        id = it.id ?: "",
+                        username = it.username ?: "",
                         password = "",
                         role = mr,
-                        requiresPasswordChange = it.requiresPasswordChange
+                        requiresPasswordChange = it.requiresPasswordChange ?: false
                     )
                 }
                 _uiState.value = _uiState.value.copy(users = mapped, message = null, error = null)
@@ -468,11 +468,11 @@ import kotlinx.coroutines.launch
                         else -> "Pracownik"
                     }
                     User(
-                        id = it.id,
-                        username = it.username,
+                        id = it.id ?: "",
+                        username = it.username ?: "",
                         password = "",
                         role = mr,
-                        requiresPasswordChange = it.requiresPasswordChange
+                        requiresPasswordChange = it.requiresPasswordChange ?: false
                     )
                 }
                 _uiState.value = _uiState.value.copy(users = mapped, message = "Dodano użytkownika ${event.username}", error = null)
@@ -495,11 +495,11 @@ import kotlinx.coroutines.launch
                         else -> "Pracownik"
                     }
                     User(
-                        id = it.id,
-                        username = it.username,
+                        id = it.id ?: "",
+                        username = it.username ?: "",
                         password = "",
                         role = mr,
-                        requiresPasswordChange = it.requiresPasswordChange
+                        requiresPasswordChange = it.requiresPasswordChange ?: false
                     )
                 }
                 _uiState.value = _uiState.value.copy(users = mapped, message = "Usunięto użytkownika", error = null)

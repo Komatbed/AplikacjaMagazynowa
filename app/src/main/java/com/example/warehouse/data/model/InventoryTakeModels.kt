@@ -10,8 +10,8 @@ data class InventoryTakeRequest(
 )
 
 data class InventoryTakeResponse(
-    val status: String, // SUCCESS, WARNING
-    val newQuantity: Int,
+    val status: String?, // SUCCESS, WARNING
+    val newQuantity: Int?,
     val warning: String? = null,
     val code: String? = null
 )

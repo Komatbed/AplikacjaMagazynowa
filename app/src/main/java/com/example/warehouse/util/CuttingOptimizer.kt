@@ -123,8 +123,8 @@ object CuttingOptimizer {
         }
         
         val wasteSources = availableWaste
-            .filter { it.lengthMm >= usefulWasteMinLength }
-            .map { Source(it.id, it.lengthMm, true, it.location.label) }
+            .filter { (it.lengthMm ?: 0) >= usefulWasteMinLength }
+            .map { Source(it.id, it.lengthMm ?: 0, true, it.location?.label) }
             .toMutableList()
         
         val newBarSources = mutableListOf<Source>()
@@ -169,9 +169,9 @@ object CuttingOptimizer {
         }
         
         val totalStockUsed = newBarSources.size * stockLength
-        val totalInput = steps.sumOf { it.sourceLengthMm }
+        val totalInput = steps.sumOf { it.sourceLengthMm ?: 0 }
         val totalCutsLen = requiredPieces.sum()
-        val totalWaste = steps.sumOf { it.remainingWasteMm }
+        val totalWaste = steps.sumOf { it.remainingWasteMm ?: 0 }
         
         val efficiency = if (totalInput > 0) (totalCutsLen.toDouble() / totalInput) * 100.0 else 0.0
         

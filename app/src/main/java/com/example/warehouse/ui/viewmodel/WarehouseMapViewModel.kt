@@ -77,14 +77,16 @@ class WarehouseMapViewModel(application: Application) : AndroidViewModel(applica
             _isPalletDetailsLoading.value = false
             return
         }
+        
+        val label = location.label!!
 
         itemsJob = viewModelScope.launch {
             try {
-                repository.refreshItems(location = location.label)
+                repository.refreshItems(location = label)
             } catch (_: Exception) {
             }
 
-            repository.getItemsFlow(location = location.label).collect { items ->
+            repository.getItemsFlow(location = label).collect { items ->
                 _locationItems.value = items
             }
         }
@@ -92,7 +94,7 @@ class WarehouseMapViewModel(application: Application) : AndroidViewModel(applica
         viewModelScope.launch {
             _isPalletDetailsLoading.value = true
             _error.value = null
-            val result = repository.getPalletDetails(location.label)
+            val result = repository.getPalletDetails(label)
             result.onSuccess {
                 _selectedPalletDetails.value = it
             }.onFailure {

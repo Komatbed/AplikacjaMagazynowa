@@ -7,8 +7,8 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object NetworkModule {
-    // Default to VPS IP
-    private var currentUrl = "https://51.77.59.105/api/v1/"
+    // Default to VPS IP (HTTP port 8000)
+    private var currentUrl = "http://51.77.59.105:8000/api/v1/"
     
     // Auth Token
     var authToken: String? = null

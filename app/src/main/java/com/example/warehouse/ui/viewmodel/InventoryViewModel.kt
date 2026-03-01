@@ -210,7 +210,9 @@ class InventoryViewModel @JvmOverloads constructor(
                 
                 // Data
                 _items.value.forEach { item ->
-                    writer.append("${item.id},${item.status},${item.profileCode},${item.internalColor},${item.externalColor},${item.lengthMm},${item.location.label}\n")
+                    val locLabel = item.location?.label ?: "BRAK"
+                    val len = item.lengthMm ?: 0
+                    writer.append("${item.id},${item.status},${item.profileCode},${item.internalColor},${item.externalColor},$len,$locLabel\n")
                 }
                 
                 writer.flush()

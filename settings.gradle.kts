@@ -18,6 +18,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "WarehouseApp"
+rootProject.name = "Ferplast-magazyn"
 include(":app")
 include(":backend")

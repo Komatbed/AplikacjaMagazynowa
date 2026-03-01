@@ -60,8 +60,9 @@ fun WarehouseMapScreen(
                 TextButton(
                     onClick = {
                         val cap = newCapacityStr.toIntOrNull()
-                        if (cap != null && cap > 0) {
-                            viewModel.updateCapacity(selectedLocation!!.id, cap)
+                        val locId = selectedLocation?.id
+                        if (cap != null && cap > 0 && locId != null) {
+                            viewModel.updateCapacity(locId, cap)
                             showCapacityDialog = false
                         }
                     }
@@ -74,7 +75,7 @@ fun WarehouseMapScreen(
     }
 
     val rackColumns = remember(locations) {
-        locations.groupBy { it.rowNumber } // Group by 1..25
+        locations.filter { it.rowNumber != null }.groupBy { it.rowNumber!! } // Group by 1..25
             .toSortedMap()
             .mapValues { (_, locs) -> 
                 // Sort by palette letter (A, B, C...)
@@ -208,9 +209,9 @@ fun WarehouseMapScreen(
                             ) {
                                 Text(
                                     text = if (selectedPalletDetails != null) {
-                                        "Pojemność: ${selectedPalletDetails?.totalItems} / ${selectedPalletDetails?.capacity} szt."
+                                        "Pojemność: ${selectedPalletDetails?.totalItems ?: 0} / ${selectedPalletDetails?.capacity ?: 0} szt."
                                     } else {
-                                        "Pojemność: ${selectedLocation?.itemCount} / ${selectedLocation?.capacity ?: 50} szt."
+                                        "Pojemność: ${selectedLocation?.itemCount ?: 0} / ${selectedLocation?.capacity ?: 50} szt."
                                     },
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = Color.White
@@ -237,17 +238,17 @@ fun WarehouseMapScreen(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            text = "Dostępne: ${details.itemsAvailable}",
+                                            text = "Dostępne: ${details.itemsAvailable ?: 0}",
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = Color.White
                                         )
                                         Text(
-                                            text = "Rezerwacje: ${details.itemsReserved}",
+                                            text = "Rezerwacje: ${details.itemsReserved ?: 0}",
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = Color.White
                                         )
                                         Text(
-                                            text = "Odpady: ${details.itemsWaste}",
+                                            text = "Odpady: ${details.itemsWaste ?: 0}",
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = Color.White
                                         )
@@ -275,7 +276,9 @@ fun WarehouseMapScreen(
                                 }
                             }
                             val capacity = selectedPalletDetails?.capacity ?: selectedLocation?.capacity ?: 50
-                            val occupancySource = selectedPalletDetails?.occupancyPercentage ?: selectedLocation?.occupancyPercent ?: 0
+                            val occupancySource = (selectedPalletDetails?.occupancyPercentage?.toFloat()) 
+                                ?: (selectedLocation?.occupancyPercent?.toFloat()) 
+                                ?: 0f
                             val percent = (occupancySource / 100f).coerceIn(0f, 1f)
                             val coreColors = selectedPalletDetails?.coreColors ?: selectedLocation?.coreColors ?: emptyList()
 
@@ -426,7 +429,7 @@ fun buildTetrisSquares(items: List<InventoryItemDto>, capacity: Int): List<Strin
     )
     for (item in sorted) {
         val colorName = item.coreColor ?: ""
-        repeat(item.quantity.coerceAtLeast(0)) {
+        repeat((item.quantity ?: 0).coerceAtLeast(0)) {
             if (result.size < capacity) {
                 result.add(colorName)
             }
@@ -444,9 +447,9 @@ data class TetrisLegendEntry(
 
 fun buildTetrisLegend(items: List<InventoryItemDto>, limit: Int = 5): List<TetrisLegendEntry> {
     if (items.isEmpty()) return emptyList()
-    val grouped = items.groupBy { Pair(it.profileCode, it.coreColor ?: "") }
+    val grouped = items.groupBy { Pair(it.profileCode ?: "", it.coreColor ?: "") }
     val entries = grouped.map { (key, group) ->
-        val total = group.sumOf { it.quantity }
+        val total = group.sumOf { it.quantity ?: 0 }
         TetrisLegendEntry(
             colorName = key.second,
             profileCode = key.first,
@@ -465,9 +468,9 @@ data class ContentEntry(
 
 fun buildContentSummary(items: List<InventoryItemDto>, limit: Int = 8): List<String> {
     if (items.isEmpty()) return emptyList()
-    val grouped = items.groupBy { Triple(it.profileCode, it.coreColor ?: "", it.lengthMm) }
+    val grouped = items.groupBy { Triple(it.profileCode ?: "", it.coreColor ?: "", it.lengthMm ?: 0) }
     val entries = grouped.map { (key, group) ->
-        val total = group.sumOf { it.quantity }
+        val total = group.sumOf { it.quantity ?: 0 }
         ContentEntry(
             profileCode = key.first,
             coreColor = key.second,
@@ -540,14 +543,14 @@ fun LocationCell(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val occupancy = location.occupancyPercent
-    val threshold = location.overflowThresholdPercent
+    val occupancy = location.occupancyPercent ?: 0
+    val threshold = location.overflowThresholdPercent ?: 100
     val isFull = occupancy >= 100
     val isOverflow = occupancy >= threshold && threshold < 100
 
     val baseColor = when {
         location.itemCount == 0 -> Color.Gray.copy(alpha = 0.3f)
-        location.isWaste -> SafetyOrange.copy(alpha = 0.8f)
+        location.isWaste == true -> SafetyOrange.copy(alpha = 0.8f)
         isFull -> Color.Red.copy(alpha = 0.8f)
         isOverflow -> Color(0xFFFFC107).copy(alpha = 0.9f)
         else -> Color(0xFF4CAF50).copy(alpha = 0.8f)

@@ -105,14 +105,14 @@ class MuntinViewModelV2 @JvmOverloads constructor(
                 // Filter by Type and Map to V2 Models
                 val sashes = definitions.filter { 
                         it.type == "SASH" || 
-                        (it.type == "OTHER" && (it.description.contains("Skrzydło", ignoreCase = true) || it.description.contains("Rama", ignoreCase = true)))
+                        (it.type == "OTHER" && ((it.description?.contains("Skrzydło", ignoreCase = true) == true) || (it.description?.contains("Rama", ignoreCase = true) == true)))
                     }
                     .map { 
                         SashProfileV2(
-                            profileNo = it.code,
-                            widthMm = it.widthMm,
-                            heightMm = it.heightMm,
-                            rebateHeightMm = it.beadHeightMm,
+                            profileNo = it.code ?: "",
+                            widthMm = it.widthMm ?: 0,
+                            heightMm = it.heightMm ?: 0,
+                            rebateHeightMm = it.beadHeightMm ?: 0,
                             outerConstructionAngleDeg = 45.0 // Default or from data if available
                         )
                     }
@@ -120,27 +120,27 @@ class MuntinViewModelV2 @JvmOverloads constructor(
 
                 val beads = definitions.filter { 
                         it.type == "BEAD" ||
-                        (it.type == "OTHER" && it.description.contains("Listwa", ignoreCase = true))
+                        (it.type == "OTHER" && (it.description?.contains("Listwa", ignoreCase = true) == true))
                     }
                     .map {
                         BeadProfileV2(
-                            profileNo = it.code,
-                            widthMm = it.widthMm,
-                            heightMm = if (it.beadHeightMm > 0) it.beadHeightMm else it.heightMm, // Use beadHeightMm if set
-                            innerBeadAngleDeg = if (it.beadAngle > 0) it.beadAngle else 45.0
+                            profileNo = it.code ?: "",
+                            widthMm = it.widthMm ?: 0,
+                            heightMm = if ((it.beadHeightMm ?: 0) > 0) (it.beadHeightMm ?: 0) else (it.heightMm ?: 0), // Use beadHeightMm if set
+                            innerBeadAngleDeg = if ((it.beadAngle ?: 0.0) > 0) (it.beadAngle ?: 0.0) else 45.0
                         )
                     }
                     .ifEmpty { V2ProfileCatalog.beadProfiles }
 
                 val muntins = definitions.filter { 
                         it.type == "MUNTIN" ||
-                        (it.type == "OTHER" && (it.description.contains("Szpros", ignoreCase = true) || it.description.contains("Słupek", ignoreCase = true)))
+                        (it.type == "OTHER" && ((it.description?.contains("Szpros", ignoreCase = true) == true) || (it.description?.contains("Słupek", ignoreCase = true) == true)))
                     }
                     .map {
                         MuntinProfileV2(
-                            profileNo = it.code,
-                            widthMm = it.widthMm,
-                            heightMm = it.heightMm,
+                            profileNo = it.code ?: "",
+                            widthMm = it.widthMm ?: 0,
+                            heightMm = it.heightMm ?: 0,
                             wallAngleDeg = 0.0
                         )
                     }

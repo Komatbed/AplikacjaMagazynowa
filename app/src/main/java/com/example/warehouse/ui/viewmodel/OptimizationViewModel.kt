@@ -81,10 +81,13 @@ class OptimizationViewModel(application: Application) : AndroidViewModel(applica
                     coreColor = coreColor
                 ).first() // Take snapshot
 
+                // Filter invalid items to prevent null pointer exceptions in algorithm
+                val validWaste = waste.filter { it.lengthMm != null && it.lengthMm > 0 }
+
                 // 2. Run Algorithm
                 val plan = CuttingOptimizer.calculate(
                     requiredPieces = pieces,
-                    availableWaste = waste,
+                    availableWaste = validWaste,
                     mode = selectedMode.value,
                     usefulWasteMinLength = reservedWasteLengths.firstOrNull() ?: 1000
                 )

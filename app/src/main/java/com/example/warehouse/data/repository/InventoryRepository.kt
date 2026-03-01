@@ -94,17 +94,17 @@ class InventoryRepository(
             // as we can't easily delete "partial" matches without a complex DELETE query matching the API filter logic.
 
             // Save to DB
-            val entities = response.map { dto ->
-                InventoryItemEntity(
-                    id = dto.id,
-                    locationLabel = dto.location.label,
-                    profileCode = dto.profileCode,
-                    internalColor = dto.internalColor,
-                    externalColor = dto.externalColor,
+            val entities = response.filter { !it.id.isNullOrBlank() }.map { dto ->
+                com.example.warehouse.data.local.entity.InventoryItemEntity(
+                    id = dto.id!!,
+                    locationLabel = dto.location?.label ?: "UNKNOWN",
+                    profileCode = dto.profileCode ?: "UNKNOWN",
+                    internalColor = dto.internalColor ?: "UNKNOWN",
+                    externalColor = dto.externalColor ?: "UNKNOWN",
                     coreColor = dto.coreColor,
-                    lengthMm = dto.lengthMm,
-                    quantity = dto.quantity,
-                    status = dto.status
+                    lengthMm = dto.lengthMm ?: 0,
+                    quantity = dto.quantity ?: 0,
+                    status = dto.status ?: "UNKNOWN"
                 )
             }
             inventoryDao.insertAll(entities)
@@ -220,23 +220,25 @@ class InventoryRepository(
     
     suspend fun updateItemLength(item: InventoryItemDto, newLength: Int) {
         // Optimistic UI Update
-        inventoryDao.updateLength(item.id, newLength)
+        if (item.id != null) {
+            inventoryDao.updateLength(item.id, newLength)
 
-        // Add to Pending Queue
-        val payload = InventoryItemUpdatePayload(item.id, newLength)
-        val operation = PendingOperationEntity(
-            type = OperationType.UPDATE_ITEM_LENGTH,
-            payloadJson = gson.toJson(payload)
-        )
-        pendingDao.insert(operation)
-        
-        auditLogDao.insert(AuditLogEntity(
-            action = "UPDATE_LENGTH",
-            itemType = "INVENTORY",
-            details = "Zmiana długości ID ${item.id}: ${item.lengthMm}mm -> ${newLength}mm"
-        ))
+            // Add to Pending Queue
+            val payload = InventoryItemUpdatePayload(item.id, newLength)
+            val operation = PendingOperationEntity(
+                type = OperationType.UPDATE_ITEM_LENGTH,
+                payloadJson = gson.toJson(payload)
+            )
+            pendingDao.insert(operation)
+            
+            auditLogDao.insert(AuditLogEntity(
+                action = "UPDATE_LENGTH",
+                itemType = "INVENTORY",
+                details = "Zmiana długości ID ${item.id}: ${item.lengthMm}mm -> ${newLength}mm"
+            ))
 
-        scheduleSync()
+            scheduleSync()
+        }
     }
     
     suspend fun checkConnection(): Result<Unit> {

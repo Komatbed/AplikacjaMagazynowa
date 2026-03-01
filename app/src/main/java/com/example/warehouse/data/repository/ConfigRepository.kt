@@ -55,31 +55,31 @@ class ConfigRepository(
             val colors = api.getColors()
             val coreRules = api.getCoreRules()
 
-            configDao.insertProfiles(profiles.map { 
+            configDao.insertProfiles(profiles.filter { !it.code.isNullOrBlank() }.map { 
                 ProfileEntity(
-                    code = it.code, 
+                    code = it.code!!, 
                     id = it.id ?: java.util.UUID.randomUUID().toString(), 
-                    description = it.description,
-                    heightMm = it.heightMm,
-                    widthMm = it.widthMm,
-                    beadHeightMm = it.beadHeightMm,
-                    beadAngle = it.beadAngle,
-                    standardLengthMm = it.standardLengthMm,
-                    system = it.system,
-                    manufacturer = it.manufacturer,
-                    type = it.type
+                    description = it.description ?: "",
+                    heightMm = it.heightMm ?: 0,
+                    widthMm = it.widthMm ?: 0,
+                    beadHeightMm = it.beadHeightMm ?: 0,
+                    beadAngle = it.beadAngle ?: 0.0,
+                    standardLengthMm = it.standardLengthMm ?: 6500,
+                    system = it.system ?: "",
+                    manufacturer = it.manufacturer ?: "",
+                    type = it.type ?: "OTHER"
                 ) 
             })
-            configDao.insertColors(colors.map { 
+            configDao.insertColors(colors.filter { !it.code.isNullOrBlank() }.map { 
                 ColorEntity(
-                    code = it.code, 
+                    code = it.code!!, 
                     id = it.id ?: java.util.UUID.randomUUID().toString(), 
-                    description = it.description,
-                    name = it.name,
-                    paletteCode = it.paletteCode,
-                    vekaCode = it.vekaCode,
-                    type = it.type,
-                    foilManufacturer = it.foilManufacturer
+                    description = it.description ?: "",
+                    name = it.name ?: "",
+                    paletteCode = it.paletteCode ?: "",
+                    vekaCode = it.vekaCode ?: "",
+                    type = it.type ?: "smooth",
+                    foilManufacturer = it.foilManufacturer ?: ""
                 ) 
             })
 
@@ -134,17 +134,17 @@ class ConfigRepository(
         try {
             configDao.insertProfiles(listOf(
                 ProfileEntity(
-                    code = profile.code,
+                    code = profile.code ?: "",
                     id = profile.id ?: java.util.UUID.randomUUID().toString(),
-                    description = profile.description,
-                    heightMm = profile.heightMm,
-                    widthMm = profile.widthMm,
-                    beadHeightMm = profile.beadHeightMm,
-                    beadAngle = profile.beadAngle,
-                    standardLengthMm = profile.standardLengthMm,
-                    system = profile.system,
-                    manufacturer = profile.manufacturer,
-                    type = profile.type
+                    description = profile.description ?: "",
+                    heightMm = profile.heightMm ?: 0,
+                    widthMm = profile.widthMm ?: 0,
+                    beadHeightMm = profile.beadHeightMm ?: 0,
+                    beadAngle = profile.beadAngle ?: 0.0,
+                    standardLengthMm = profile.standardLengthMm ?: 0,
+                    system = profile.system ?: "",
+                    manufacturer = profile.manufacturer ?: "",
+                    type = profile.type ?: "OTHER"
                 )
             ))
         } catch (e: Exception) {
@@ -192,24 +192,24 @@ class ConfigRepository(
             // For offline/local simulation, we just upsert to DB
             configDao.insertProfiles(listOf(
                 ProfileEntity(
-                    code = profile.code,
+                    code = profile.code ?: "",
                     id = profile.id ?: java.util.UUID.randomUUID().toString(),
-                    description = profile.description,
-                    heightMm = profile.heightMm,
-                    widthMm = profile.widthMm,
-                    beadHeightMm = profile.beadHeightMm,
-                    beadAngle = profile.beadAngle,
-                    standardLengthMm = profile.standardLengthMm,
-                    system = profile.system,
-                    manufacturer = profile.manufacturer,
-                    type = profile.type
+                    description = profile.description ?: "",
+                    heightMm = profile.heightMm ?: 0,
+                    widthMm = profile.widthMm ?: 0,
+                    beadHeightMm = profile.beadHeightMm ?: 0,
+                    beadAngle = profile.beadAngle ?: 0.0,
+                    standardLengthMm = profile.standardLengthMm ?: 0,
+                    system = profile.system ?: "",
+                    manufacturer = profile.manufacturer ?: "",
+                    type = profile.type ?: "OTHER"
                 )
             ))
 
             auditLogDao.insert(AuditLogEntity(
                 action = "UPDATE_PROFILE",
                 itemType = "CONFIG",
-                details = "Zaktualizowano profil: ${profile.code}"
+                details = "Zaktualizowano profil: ${profile.code ?: ""}"
             ))
             
             Result.success(Unit)
@@ -223,23 +223,23 @@ class ConfigRepository(
             try {
                  configDao.insertProfiles(listOf(
                     ProfileEntity(
-                        code = profile.code,
+                        code = profile.code ?: "",
                         id = profile.id ?: java.util.UUID.randomUUID().toString(),
-                        description = profile.description,
-                        heightMm = profile.heightMm,
-                        widthMm = profile.widthMm,
-                        beadHeightMm = profile.beadHeightMm,
-                        beadAngle = profile.beadAngle,
-                        standardLengthMm = profile.standardLengthMm,
-                        system = profile.system,
-                        manufacturer = profile.manufacturer,
-                        type = profile.type
+                        description = profile.description ?: "",
+                        heightMm = profile.heightMm ?: 0,
+                        widthMm = profile.widthMm ?: 0,
+                        beadHeightMm = profile.beadHeightMm ?: 0,
+                        beadAngle = profile.beadAngle ?: 0.0,
+                        standardLengthMm = profile.standardLengthMm ?: 0,
+                        system = profile.system ?: "",
+                        manufacturer = profile.manufacturer ?: "",
+                        type = profile.type ?: "OTHER"
                     )
                 ))
                  auditLogDao.insert(AuditLogEntity(
                     action = "UPDATE_PROFILE_LOCAL",
                     itemType = "CONFIG",
-                    details = "Zaktualizowano profil (offline): ${profile.code}"
+                    details = "Zaktualizowano profil (offline): ${profile.code ?: ""}"
                 ))
                 Result.success(Unit)
             } catch (localEx: Exception) {
@@ -274,14 +274,14 @@ class ConfigRepository(
         try {
             configDao.insertColors(listOf(
                 ColorEntity(
-                    code = color.code,
+                    code = color.code ?: "",
                     id = color.id ?: java.util.UUID.randomUUID().toString(),
-                    description = color.description,
-                    name = color.name,
-                    paletteCode = color.paletteCode,
-                    vekaCode = color.vekaCode,
-                    type = color.type,
-                    foilManufacturer = color.foilManufacturer
+                    description = color.description ?: "",
+                    name = color.name ?: "",
+                    paletteCode = color.paletteCode ?: "",
+                    vekaCode = color.vekaCode ?: "",
+                    type = color.type ?: "OTHER",
+                    foilManufacturer = color.foilManufacturer ?: ""
                 )
             ))
         } catch (e: Exception) {
@@ -321,21 +321,21 @@ class ConfigRepository(
             }
             configDao.insertColors(listOf(
                 ColorEntity(
-                    code = color.code,
+                    code = color.code ?: "",
                     id = color.id ?: java.util.UUID.randomUUID().toString(),
-                    description = color.description,
-                    name = color.name,
-                    paletteCode = color.paletteCode,
-                    vekaCode = color.vekaCode,
-                    type = color.type,
-                    foilManufacturer = color.foilManufacturer
+                    description = color.description ?: "",
+                    name = color.name ?: "",
+                    paletteCode = color.paletteCode ?: "",
+                    vekaCode = color.vekaCode ?: "",
+                    type = color.type ?: "OTHER",
+                    foilManufacturer = color.foilManufacturer ?: ""
                 )
             ))
             
             auditLogDao.insert(AuditLogEntity(
                 action = "UPDATE_COLOR",
                 itemType = "CONFIG",
-                details = "Zaktualizowano kolor: ${color.code}"
+                details = "Zaktualizowano kolor: ${color.code ?: ""}"
             ))
             Result.success(Unit)
         } catch (e: Exception) {
@@ -347,20 +347,20 @@ class ConfigRepository(
              try {
                 configDao.insertColors(listOf(
                     ColorEntity(
-                        code = color.code,
+                        code = color.code ?: "",
                         id = color.id ?: java.util.UUID.randomUUID().toString(),
-                        description = color.description,
-                        name = color.name,
-                        paletteCode = color.paletteCode,
-                        vekaCode = color.vekaCode,
-                        type = color.type,
-                        foilManufacturer = color.foilManufacturer
+                        description = color.description ?: "",
+                        name = color.name ?: "",
+                        paletteCode = color.paletteCode ?: "",
+                        vekaCode = color.vekaCode ?: "",
+                        type = color.type ?: "OTHER",
+                        foilManufacturer = color.foilManufacturer ?: ""
                     )
                 ))
                 auditLogDao.insert(AuditLogEntity(
                     action = "UPDATE_COLOR_LOCAL",
                     itemType = "CONFIG",
-                    details = "Zaktualizowano kolor (offline): ${color.code}"
+                    details = "Zaktualizowano kolor (offline): ${color.code ?: ""}"
                 ))
                 Result.success(Unit)
             } catch (localEx: Exception) {
@@ -404,31 +404,31 @@ class ConfigRepository(
             if (profiles.isNotEmpty()) {
                 configDao.insertProfiles(profiles.map {
                     ProfileEntity(
-                        code = it.code,
+                        code = it.code ?: "",
                         id = it.id ?: java.util.UUID.randomUUID().toString(),
-                        description = it.description,
-                        heightMm = it.heightMm,
-                        widthMm = it.widthMm,
-                        beadHeightMm = it.beadHeightMm,
-                        beadAngle = it.beadAngle,
-                        standardLengthMm = it.standardLengthMm,
-                        system = it.system,
-                        manufacturer = it.manufacturer,
-                        type = it.type
+                        description = it.description ?: "",
+                        heightMm = it.heightMm ?: 0,
+                        widthMm = it.widthMm ?: 0,
+                        beadHeightMm = it.beadHeightMm ?: 0,
+                        beadAngle = it.beadAngle ?: 0.0,
+                        standardLengthMm = it.standardLengthMm ?: 0,
+                        system = it.system ?: "",
+                        manufacturer = it.manufacturer ?: "",
+                        type = it.type ?: "OTHER"
                     )
                 })
             }
             if (colors.isNotEmpty()) {
                 configDao.insertColors(colors.map {
                     ColorEntity(
-                        code = it.code,
+                        code = it.code ?: "",
                         id = it.id ?: java.util.UUID.randomUUID().toString(),
-                        description = it.description,
-                        name = it.name,
-                        paletteCode = it.paletteCode,
-                        vekaCode = it.vekaCode,
-                        type = it.type,
-                        foilManufacturer = it.foilManufacturer
+                        description = it.description ?: "",
+                        name = it.name ?: "",
+                        paletteCode = it.paletteCode ?: "",
+                        vekaCode = it.vekaCode ?: "",
+                        type = it.type ?: "OTHER",
+                        foilManufacturer = it.foilManufacturer ?: ""
                     )
                 })
             }

@@ -16,7 +16,9 @@ import javax.crypto.SecretKey
 class JwtService {
 
     // 256-bit key for HS256
-    private val SECRET_KEY = "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970"
+    // Prefer APP_SECRET_KEY env (base64), fallback to static default for dev
+    private val SECRET_KEY: String = System.getenv("APP_SECRET_KEY")
+        ?: "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970"
 
     fun extractUsername(token: String): String {
         return extractClaim(token, Claims::getSubject)

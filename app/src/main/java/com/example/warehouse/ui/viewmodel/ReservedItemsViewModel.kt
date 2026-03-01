@@ -52,7 +52,7 @@ class ReservedItemsViewModel @JvmOverloads constructor(
                         (item.status == "RESERVED" || item.status == "IN_PROGRESS") &&
                         (filterUser.value.isEmpty() || item.reservedBy?.contains(filterUser.value, ignoreCase = true) == true) &&
                         (filterDate.value.isEmpty() || item.reservationDate?.contains(filterDate.value) == true)
-                    }
+                    }.sortedByDescending { it.reservationDate }
                     _items.value = filtered
                     _isLoading.value = false
                 }

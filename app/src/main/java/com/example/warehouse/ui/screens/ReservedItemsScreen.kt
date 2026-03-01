@@ -111,20 +111,20 @@ fun ReservedItemCard(item: InventoryItemDto) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = item.profileCode,
+                    text = item.profileCode ?: "",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = SafetyOrange
                 )
                 Text(
-                    text = item.status,
+                    text = item.status ?: "",
                     color = if (item.status == "RESERVED") Color.Yellow else Color.Cyan,
                     fontWeight = FontWeight.Bold
                 )
             }
-            Text("Lokalizacja: ${item.location.label}", color = Color.White)
-            Text("Długość: ${item.lengthMm} mm", color = Color.White)
-            Text("Ilość: ${item.quantity}", color = Color.White)
+            Text("Lokalizacja: ${item.location?.label ?: ""}", color = Color.White)
+            Text("Długość: ${item.lengthMm ?: 0} mm", color = Color.White)
+            Text("Ilość: ${item.quantity ?: 0}", color = Color.White)
             if (item.reservedBy != null) {
                 Text("Rezerwacja: ${item.reservedBy} (${item.reservationDate ?: ""})", color = Color.Gray)
             }

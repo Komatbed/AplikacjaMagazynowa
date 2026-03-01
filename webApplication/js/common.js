@@ -6,7 +6,7 @@ function loadNavbar(activePage) {
         <div class="max-w-7xl mx-auto px-4">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
-                    <span class="text-xl font-bold text-gray-800 mr-8">Warehouse Manager</span>
+                    <span class="text-xl font-bold text-gray-800 mr-8">Ferplast-magazyn</span>
                     <div class="hidden md:block">
                         <div class="ml-10 flex items-baseline space-x-4">
                             <a href="dashboard.html" class="${activePage === 'dashboard' ? 'bg-blue-600 text-white' : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'} px-3 py-2 rounded-md text-sm font-medium">Dashboard</a>

@@ -26,7 +26,7 @@ class SecurityConfig(
             .cors { it.configurationSource(corsConfigurationSource()) }
             .authorizeHttpRequests { auth ->
                 auth
-                    .requestMatchers("/api/v1/auth/**", "/ws/**", "/error", "/actuator/**", "/api/v1/config/**", "/api/v1/inventory/config").permitAll()
+                    .requestMatchers("/api/v1/auth/**", "/ws/**", "/error", "/actuator/**", "/api/v1/config/**", "/api/v1/inventory/config", "/health", "/api/v1/locations/map", "/api/v1/inventory/pallet/**").permitAll()
                     .requestMatchers("/api/v1/users/me/password", "/api/v1/users/me/password-with-old").authenticated()
                     .requestMatchers("/api/v1/users/me/preferences/**").authenticated()
                     .requestMatchers("/api/v1/users/**").hasRole("ADMIN")

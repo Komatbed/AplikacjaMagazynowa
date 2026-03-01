@@ -140,15 +140,17 @@ fun InventoryScreen(
                         InventoryItemRow(item, 
                             onReserve = { 
                                 viewModel.takeItem(InventoryTakeRequest(
-                                    locationLabel = item.location.label,
+                                    locationLabel = item.location?.label ?: "UNKNOWN",
                                     profileCode = item.profileCode,
-                                    lengthMm = item.lengthMm,
+                                    lengthMm = item.lengthMm ?: 0,
                                     quantity = 1,
                                     reason = "PRODUCTION"
                                 )) {}
                             },
                             onDelete = {
-                                viewModel.deleteItem(item.id) {}
+                                if (!item.id.isNullOrBlank()) {
+                                    viewModel.deleteItem(item.id) {}
+                                }
                             },
                             onEditLength = {
                                 showEditLengthDialog = item
@@ -174,17 +176,17 @@ fun InventoryItemRow(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
-                Text(text = "Profil: ${item.profileCode}", style = MaterialTheme.typography.titleMedium, color = Color.White)
+                Text(text = "Profil: ${item.profileCode ?: "-"}", style = MaterialTheme.typography.titleMedium, color = Color.White)
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                     Text(text = "${item.lengthMm} mm", style = MaterialTheme.typography.titleMedium, color = Color.White)
+                     Text(text = "${item.lengthMm ?: 0} mm", style = MaterialTheme.typography.titleMedium, color = Color.White)
                      IconButton(onClick = onEditLength) {
                          Icon(Icons.Default.Edit, "Edytuj długość", tint = Color.Gray, modifier = Modifier.size(16.dp))
                      }
                 }
             }
             Spacer(Modifier.height(4.dp))
-            Text(text = "Kolory: ${item.internalColor} / ${item.externalColor} (Rdzeń: ${item.coreColor ?: "-"})", color = Color.Gray)
-            Text(text = "Paleta: ${item.location.label} | Ilość: ${item.quantity}", color = Color.Gray)
+            Text(text = "Kolory: ${item.internalColor ?: "-"} / ${item.externalColor ?: "-"} (Rdzeń: ${item.coreColor ?: "-"})", color = Color.Gray)
+            Text(text = "Paleta: ${item.location?.label ?: "UNKNOWN"} | Ilość: ${item.quantity ?: 0}", color = Color.Gray)
             
             Spacer(Modifier.height(8.dp))
             Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {

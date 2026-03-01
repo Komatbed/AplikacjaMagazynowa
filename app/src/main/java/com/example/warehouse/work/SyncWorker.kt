@@ -99,14 +99,18 @@ class SyncWorker(
             try {
                 val items = api.getItems()
                 // Map DTO to Entity and update DB
-                val entities = items.map { dto ->
+                val entities = items.mapNotNull { dto ->
+                    if (dto.id == null) return@mapNotNull null
                     com.example.warehouse.data.local.entity.InventoryItemEntity(
                         id = dto.id,
-                        locationLabel = dto.location.label,
-                        profileCode = dto.profileCode,
-                        lengthMm = dto.lengthMm,
-                        quantity = dto.quantity,
-                        status = dto.status
+                        locationLabel = dto.location?.label ?: "UNKNOWN",
+                        profileCode = dto.profileCode ?: "UNKNOWN",
+                        internalColor = dto.internalColor ?: "UNKNOWN",
+                        externalColor = dto.externalColor ?: "UNKNOWN",
+                        coreColor = dto.coreColor,
+                        lengthMm = dto.lengthMm ?: 0,
+                        quantity = dto.quantity ?: 0,
+                        status = dto.status ?: "UNKNOWN"
                     )
                 }
                 db.inventoryDao().clearAll() // Or smarter update

@@ -231,11 +231,11 @@ fun WasteFinderScreen(
                     Column(modifier = Modifier.padding(24.dp)) {
                         Text("ZNALAZŁEM!", color = SafetyOrange, style = MaterialTheme.typography.headlineSmall)
                         Spacer(Modifier.height(8.dp))
-                        Text("Długość: ${item.lengthMm} mm", style = MaterialTheme.typography.headlineMedium, color = Color.White)
-                        Text("Lokalizacja: ${item.location.label}", style = MaterialTheme.typography.titleLarge, color = Color.Yellow)
+                        Text("Długość: ${item.lengthMm ?: 0} mm", style = MaterialTheme.typography.headlineMedium, color = Color.White)
+                        Text("Lokalizacja: ${item.location?.label ?: "-"}", style = MaterialTheme.typography.titleLarge, color = Color.Yellow)
                         Spacer(Modifier.height(8.dp))
-                        Text("ID: ${item.id}", color = Color.Gray)
-                        Text("Kolor: ${item.internalColor}/${item.externalColor}", color = Color.Gray)
+                        Text("ID: ${item.id ?: "-"}", color = Color.Gray)
+                        Text("Kolor: ${item.internalColor ?: "-"}/${item.externalColor ?: "-"}", color = Color.Gray)
                     }
                 }
             }
